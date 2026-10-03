@@ -11,17 +11,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      # Public settings baked into the app at build time. Add both under
-      # Settings -> Secrets and variables -> Actions -> New repository secret.
-      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
-      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      # Public settings baked into the app at build time. Add these two under
+      # Settings -> Secrets and variables -> Actions -> New repository secret:
+      #   SUPABASE_URL       (https://<project>.supabase.co)
+      #   SUPABASE_ANON_KEY  (the publishable key, starts with sb_publishable_)
+      # (The old names EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY still work.)
+      # The EXPO_PUBLIC_ prefix below is only the label the app framework needs for settings
+      # that go inside the app; it does not use any Expo account or service.
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Check the two app settings exist
         run: |
-          test -n "$EXPO_PUBLIC_SUPABASE_URL" || { echo "Missing secret EXPO_PUBLIC_SUPABASE_URL"; exit 1; }
-          test -n "$EXPO_PUBLIC_SUPABASE_ANON_KEY" || { echo "Missing secret EXPO_PUBLIC_SUPABASE_ANON_KEY"; exit 1; }
+          test -n "$EXPO_PUBLIC_SUPABASE_URL" || { echo "Missing secret SUPABASE_URL"; exit 1; }
+          test -n "$EXPO_PUBLIC_SUPABASE_ANON_KEY" || { echo "Missing secret SUPABASE_ANON_KEY"; exit 1; }
 
       - uses: actions/setup-node@v4
         with:
