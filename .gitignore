@@ -45,3 +45,6 @@ yarn-error.*
 
 # local Claude Code session files
 .claude/
+
+# Cloudflare Wrangler local state
+.wrangler/
