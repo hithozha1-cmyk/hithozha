@@ -630,7 +630,8 @@
       "payouts": "Payouts",
       "categories": "Categories",
       "audit": "Audit log",
-      "disputes": "Disputes"
+      "disputes": "Disputes",
+      "identity": "Identity checks"
     },
     "overview": {
       "needsYou": "Needs you",
@@ -657,7 +658,9 @@
       "perMonth": "By month",
       "noRevenue": "No completed orders yet.",
       "orderCount": "{{count}} orders",
-      "disputes": "Open disputes"
+      "disputes": "Open disputes",
+      "identities": "Identity checks waiting",
+      "photosToDelete": "ID photos to delete"
     },
     "users": {
       "search": "Search by name or email",
@@ -763,7 +766,11 @@
         "add_category": "Category added",
         "edit_category": "Category edited",
         "resolve_dispute": "Dispute decided",
-        "view_dispute_chat": "Read a dispute's chat"
+        "view_dispute_chat": "Read a dispute's chat",
+        "view_identity": "Opened ID photos",
+        "verify_identity": "Identity verified",
+        "reject_identity": "Identity rejected",
+        "delete_identity_files": "ID photos deleted"
       }
     },
     "categories": {
@@ -810,6 +817,31 @@
       "noteNeeded": "Explain your decision in a few words.",
       "splitInvalid": "A split must refund part of the payment, not nothing and not everything.",
       "referenceNeeded": "Enter the bank reference (UTR) of the refund."
+    },
+    "identity": {
+      "policy": "ID photos and selfies are private and used only to check identity. After you approve or reject a check, delete its photos here. We do not keep them. Photos open as links that expire after 60 seconds, and every open, decision and deletion is recorded in the audit log.",
+      "filter": "Show",
+      "pending": "Waiting for review",
+      "toDelete": "Photos to delete",
+      "verified": "Verified",
+      "rejected": "Rejected",
+      "review": "Review",
+      "show": "Show the photos",
+      "linkNote": "The photos open as links that expire after 60 seconds. Opening them is recorded.",
+      "idPhoto": "ID photo",
+      "selfie": "Selfie",
+      "approve": "Verify this person",
+      "reject": "Reject",
+      "rejectConfirm": "Reject now",
+      "reason": "Reason (the person sees this)",
+      "delete": "Delete the photos",
+      "deleteTitle": "Delete these photos?",
+      "deleteBody": "The ID photo and selfie are removed from storage for good. The decision stays on record.",
+      "deleteAllButton": "Delete all photos ({{count}})",
+      "deleteAllTitle": "Delete photos of {{count}} checks?",
+      "deleteAll": "Delete all",
+      "someFailed": "{{count}} could not be deleted. Try again.",
+      "deletedOn": "Photos deleted {{when}}"
     }
   },
   "dispute": {
@@ -828,5 +860,40 @@
     "decidedRelease": "The work was accepted and the payment goes to the freelancer.",
     "refundSentClient": "We send refunds by bank transfer to your account.",
     "refundSentFreelancer": "The refund goes to the client by bank transfer."
+  },
+  "identity": {
+    "action": "Verify your identity",
+    "title": "Verify your identity",
+    "intro": "Send a photo of an ID and a selfie so clients know a real person is behind your profile.",
+    "privacy": "Your photos are private. Only the Hithozha team can see them, only to check your identity. We delete them after we verify you.",
+    "idType": "Which ID are you sending?",
+    "types": {
+      "aadhaar": "Aadhaar",
+      "pan": "PAN card",
+      "voter": "Voter ID",
+      "driving_licence": "Driving licence",
+      "passport": "Passport"
+    },
+    "idHint": "A clear photo of the front of your ID. Make sure the name is readable.",
+    "idPick": "Choose ID photo",
+    "idDone": "ID photo added",
+    "selfieHint": "A selfie of your face in good light.",
+    "selfiePick": "Take a selfie",
+    "selfieDone": "Selfie added",
+    "submit": "Send for verification",
+    "bothNeeded": "Add both photos first.",
+    "denied": "Please allow access to your photos or camera in your phone settings.",
+    "uploadFailed": "We could not upload the photo. Please try again.",
+    "submitFailed": "We could not send your details. Please try again.",
+    "status": {
+      "pending": "Under review",
+      "verified": "Verified",
+      "rejected": "Not verified"
+    },
+    "statusBody": {
+      "pending": "Our team is checking your photos. We will delete them once the check is done.",
+      "verified": "Your identity is verified. Our team deletes the photos after verification.",
+      "rejected": "We could not verify you from those photos. You can send new ones."
+    }
   }
 }

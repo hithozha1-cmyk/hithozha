@@ -33,6 +33,20 @@ const bootstrap = `
   alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
   alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
   create publication supabase_realtime;
+  -- Just enough of Supabase Storage for the identity-photo policies.
+  create schema storage;
+  create table storage.buckets (
+    id text primary key, name text, public boolean default false, file_size_limit bigint, allowed_mime_types text[]
+  );
+  create table storage.objects (
+    id uuid primary key default gen_random_uuid(), bucket_id text references storage.buckets (id), name text, owner uuid default auth.uid()
+  );
+  alter table storage.objects enable row level security;
+  create function storage.foldername(name text) returns text[] language sql immutable as
+    $$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
+  grant usage on schema storage to anon, authenticated, service_role;
+  grant all on storage.buckets, storage.objects to authenticated, service_role;
+  grant execute on function storage.foldername(text) to anon, authenticated, service_role;
 `;
 
 (async () => {
@@ -567,6 +581,81 @@ const bootstrap = `
   check('resolved disputes are listed with their decision', (await user(admin, () => q(`select * from public.admin_disputes('resolved', 10, 0)`))).some((d) => d.resolution === 'split' && d.refund_paise === 40000));
   const dpLog = (await user(admin, () => q(`select action, details from public.admin_audit_log_list(100, 0)`)));
   check('the audit log records disputes decided and chats read', dpLog.some((l) => l.action === 'resolve_dispute' && l.details.resolution === 'split') && dpLog.some((l) => l.action === 'view_dispute_chat'));
+
+  // ---- migration 0012: identity photos and checks -----------------------
+  const putFile = (uid, name) => user(uid, () => q(`insert into storage.objects (bucket_id, name) values ('identity', $1)`, [name]));
+  const idPath = `${freelancerF}/100-id.jpg`;
+  const selfiePath = `${freelancerF}/100-selfie.jpg`;
+  await rejects('people cannot upload into someone else\'s folder', () => putFile(freelancerG, idPath), '42501');
+  await rejects('signed-out users cannot upload identity photos', () => anon(() => q(`insert into storage.objects (bucket_id, name) values ('identity', 'x/y.jpg')`)), '42501');
+  await putFile(freelancerF, idPath);
+  check('people can upload into their own folder', (await one(`select count(*)::int as n from storage.objects where bucket_id = 'identity'`)).n === 1);
+  check('nobody can read the photos back, not even the owner', (await user(freelancerF, () => q(`select * from storage.objects where bucket_id = 'identity'`))).length === 0);
+  check('other people cannot read the photos either', (await user(clientA, () => q(`select * from storage.objects where bucket_id = 'identity'`))).length === 0);
+  check('an admin can read the photos', (await user(admin, () => q(`select * from storage.objects where bucket_id = 'identity'`))).length === 1);
+  await user(freelancerF, () => q(`delete from storage.objects where bucket_id = 'identity'`));
+  check('the owner cannot delete the photos', (await one(`select count(*)::int as n from storage.objects where bucket_id = 'identity'`)).n === 1);
+  check('the identity bucket is private', (await one(`select public from storage.buckets where id = 'identity'`)).public === false);
+
+  const submitId = (uid, type, a, b) => user(uid, () => one(`select public.submit_identity_verification($1, $2, $3) as id`, [type, a, b]));
+  await rejects('only freelancers can submit an identity check', () => submitId(clientA, 'aadhaar', `${clientA}/1-id.jpg`, `${clientA}/1-selfie.jpg`), '42501');
+  await rejects('a selfie must exist in storage', () => submitId(freelancerF, 'aadhaar', idPath, selfiePath), '22023');
+  await putFile(freelancerF, selfiePath);
+  await rejects('paths must be in the person\'s own folder', () => submitId(freelancerF, 'aadhaar', `${freelancerG}/100-id.jpg`, selfiePath), '22023');
+  await rejects('the two photos must be different files', () => submitId(freelancerF, 'aadhaar', idPath, idPath), '22023');
+  await rejects('an unknown ID type is refused', () => submitId(freelancerF, 'library-card', idPath, selfiePath), '22023');
+  await rejects('a path with dots and slashes is refused', () => submitId(freelancerF, 'aadhaar', `${freelancerF}/../x.jpg`, selfiePath), '22023');
+  const idv = (await submitId(freelancerF, 'aadhaar', idPath, selfiePath)).id;
+  check('submitting marks the profile as pending', (await user(clientA, () => one(`select verification_status from public.profiles where id = $1`, [freelancerF]))).verification_status === 'pending');
+  await rejects('a second submission while pending is refused', () => submitId(freelancerF, 'pan', idPath, selfiePath), '55000');
+  check('people can read the status of their own check', (await user(freelancerF, () => one(`select status from public.identity_verifications`))).status === 'pending');
+  await rejects('the file paths are not readable from the app', () => user(freelancerF, () => q(`select id_path from public.identity_verifications`)), '42501');
+  check('other people cannot see anyone\'s check', (await user(clientA, () => q(`select id from public.identity_verifications`))).length === 0);
+  await rejects('checks cannot be written directly', () => user(freelancerF, () => q(`update public.identity_verifications set status = 'verified' where id = $1`, [idv])), '42501');
+
+  await rejects('non-admins cannot list identity checks', () => user(clientA, () => q(`select * from public.admin_identities('pending', 10, 0)`)), '42501');
+  await rejects('non-admins cannot get the photo paths', () => user(freelancerF, () => q(`select * from public.admin_identity_files($1, 'view')`, [idv])), '42501');
+  await rejects('non-admins cannot review', () => user(freelancerF, () => q(`select public.admin_review_identity($1, 'verified')`, [idv])), '42501');
+  const waiting = await user(admin, () => q(`select * from public.admin_identities('pending', 10, 0)`));
+  check('admin sees the check waiting, without any file paths', waiting.length === 1 && waiting[0].user_name === 'Freelancer F' && !('id_path' in waiting[0]));
+  check('the overview counts identity checks waiting', (await user(admin, async () => (await one(`select public.admin_stats() as s`)).s)).identities_pending === 1);
+  const idFiles = await user(admin, () => one(`select * from public.admin_identity_files($1, 'view')`, [idv]));
+  check('admin gets the photo paths to make signed links', idFiles.id_path === idPath && idFiles.selfie_path === selfiePath);
+  await rejects('photos of a pending check cannot be deleted yet', () => user(admin, () => q(`select public.admin_identity_files_deleted($1)`, [idv])), '55000');
+  await rejects('a rejection needs a reason', () => user(admin, () => q(`select public.admin_review_identity($1, 'rejected', '')`, [idv])), '22023');
+  await user(admin, () => q(`select public.admin_review_identity($1, 'rejected', 'The ID photo is blurry')`, [idv]));
+  check('rejecting tells the person why', (await user(freelancerF, () => one(`select rejection_reason from public.identity_verifications where id = $1`, [idv]))).rejection_reason === 'The ID photo is blurry');
+  check('rejecting resets the profile status', (await user(clientA, () => one(`select verification_status from public.profiles where id = $1`, [freelancerF]))).verification_status === 'rejected');
+  await rejects('a check is reviewed only once', () => user(admin, () => q(`select public.admin_review_identity($1, 'verified')`, [idv])), 'P0002');
+  check('reviewed checks wait in the delete list', (await user(admin, () => q(`select * from public.admin_identities('to_delete', 10, 0)`))).length === 1);
+  check('the overview counts photos to delete', (await user(admin, async () => (await one(`select public.admin_stats() as s`)).s)).identity_photos_to_delete === 1);
+
+  await rejects('files cannot be marked deleted while they are still stored', () => user(admin, () => q(`select public.admin_identity_files_deleted($1)`, [idv])), '55000');
+  const delPaths = await user(admin, () => one(`select * from public.admin_identity_files($1, 'delete')`, [idv]));
+  check('admin gets the paths to delete after review', delPaths.id_path === idPath);
+  await user(admin, () => q(`delete from storage.objects where bucket_id = 'identity' and name in ($1, $2)`, [idPath, selfiePath]));
+  check('an admin can delete the photos', (await one(`select count(*)::int as n from storage.objects where bucket_id = 'identity'`)).n === 0);
+  await user(admin, () => q(`select public.admin_identity_files_deleted($1)`, [idv]));
+  const gone = await service(() => one(`select id_path, selfie_path, files_deleted_at from public.identity_verifications where id = $1`, [idv]));
+  check('after deletion the check keeps no file paths', gone.id_path === null && gone.selfie_path === null && gone.files_deleted_at !== null);
+  check('the delete list is empty afterwards', (await user(admin, () => q(`select * from public.admin_identities('to_delete', 10, 0)`))).length === 0);
+  await rejects('deleted photos cannot be opened', () => user(admin, () => q(`select * from public.admin_identity_files($1, 'view')`, [idv])), '55000');
+
+  const idPath2 = `${freelancerF}/200-id.jpg`;
+  const selfiePath2 = `${freelancerF}/200-selfie.jpg`;
+  await putFile(freelancerF, idPath2);
+  await putFile(freelancerF, selfiePath2);
+  const idv2 = (await submitId(freelancerF, 'pan', idPath2, selfiePath2)).id;
+  check('a rejected person can try again', !!idv2);
+  await user(admin, () => q(`select public.admin_review_identity($1, 'verified')`, [idv2]));
+  check('approving marks the profile verified for everyone to see', (await user(clientA, () => one(`select verification_status from public.profiles where id = $1`, [freelancerF]))).verification_status === 'verified');
+  await rejects('a verified person cannot submit again', () => submitId(freelancerF, 'pan', idPath2, selfiePath2), '55000');
+  await user(admin, () => q(`delete from storage.objects where bucket_id = 'identity'`));
+  await user(admin, () => q(`select public.admin_identity_files_deleted($1)`, [idv2]));
+  const idLog = await user(admin, () => q(`select action from public.admin_audit_log_list(100, 0)`));
+  for (const a of ['view_identity', 'reject_identity', 'verify_identity', 'delete_identity_files']) {
+    check(`the audit log records ${a}`, idLog.some((l) => l.action === a));
+  }
 
   // ---- signed-out access is closed everywhere ---------------------------
   for (const table of ['jobs', 'proposals', 'conversations', 'messages', 'orders', 'payments', 'reviews', 'companies', 'freelancer_profiles']) {

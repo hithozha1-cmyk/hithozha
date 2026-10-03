@@ -21,6 +21,8 @@ export type AdminStats = {
   verifications_pending: number;
   flagged_week: number;
   disputes_open: number;
+  identities_pending: number;
+  identity_photos_to_delete: number;
 };
 
 export type RevenueRow = { period: string; orders: number; volume_paise: number; fees_paise: number };
@@ -209,3 +211,44 @@ export const fetchDisputes = (status: string | null, offset: number) =>
 export const fetchDisputeMessages = (id: string) => call<DisputeMessage[]>('admin_dispute_messages', { p_dispute_id: id });
 export const resolveDispute = (id: string, resolution: Resolution, refundPaise: number, reference: string | null, note: string) =>
   call<null>('admin_resolve_dispute', { p_dispute_id: id, p_resolution: resolution, p_refund_paise: refundPaise, p_reference: reference, p_note: note });
+
+export type AdminIdentity = {
+  id: string;
+  user_id: string;
+  user_name: string | null;
+  id_type: string;
+  status: 'pending' | 'verified' | 'rejected';
+  rejection_reason: string | null;
+  submitted_at: string;
+  reviewed_at: string | null;
+  files_deleted_at: string | null;
+};
+
+export type IdentityFilter = 'pending' | 'to_delete' | 'all';
+
+export const fetchIdentities = (filter: IdentityFilter, offset: number) =>
+  call<AdminIdentity[]>('admin_identities', { p_filter: filter, p_limit: PAGE_SIZE, p_offset: offset });
+export const reviewIdentity = (id: string, status: 'verified' | 'rejected', reason: string | null) =>
+  call<null>('admin_review_identity', { p_id: id, p_status: status, p_reason: reason });
+
+type IdentityPaths = { id_path: string; selfie_path: string };
+
+/** Short-lived signed links (60 seconds) to an ID photo and selfie. Opening them is audit-logged. */
+export async function openIdentityPhotos(id: string): Promise<{ idUrl: string; selfieUrl: string } | null> {
+  const files = await call<IdentityPaths[]>('admin_identity_files', { p_id: id, p_purpose: 'view' });
+  if (!files.ok || !files.data[0]) return null;
+  const { id_path, selfie_path } = files.data[0];
+  const { data, error } = await supabase.storage.from('identity').createSignedUrls([id_path, selfie_path], 60);
+  const urls = data?.map((entry) => entry.signedUrl) ?? [];
+  return error || urls.length !== 2 || !urls[0] || !urls[1] ? null : { idUrl: urls[0], selfieUrl: urls[1] };
+}
+
+/** Removes the photos from storage, then records that they are gone. Only after the check is reviewed. */
+export async function deleteIdentityPhotos(id: string): Promise<boolean> {
+  const files = await call<IdentityPaths[]>('admin_identity_files', { p_id: id, p_purpose: 'delete' });
+  if (!files.ok || !files.data[0]) return false;
+  const { id_path, selfie_path } = files.data[0];
+  const removed = await supabase.storage.from('identity').remove([id_path, selfie_path]);
+  if (removed.error) return false;
+  return (await call<null>('admin_identity_files_deleted', { p_id: id })).ok;
+}

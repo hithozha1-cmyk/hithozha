@@ -53,6 +53,10 @@ export default function ProfileTabScreen() {
       {freelancer ? (
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>{t('account.freelancerSection')}</Text>
+          <Pressable accessibilityRole="button" onPress={() => router.push('/account/verify-identity')} style={styles.verifyRow}>
+            <Text style={styles.verifyText}>{t('identity.action')}</Text>
+            <VerificationChip status={profile?.verification_status ?? 'none'} />
+          </Pressable>
           <Button variant="outline" title={t('account.earnings')} onPress={() => router.push('/account/earnings')} />
           <Button variant="outline" title={t('account.freelancerEditAction')} onPress={() => router.push('/account/freelancer')} />
           {profile ? (

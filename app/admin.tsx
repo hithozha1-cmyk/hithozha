@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Categories } from '@/admin/Categories';
 import { Overview } from '@/admin/Overview';
+import { Identity } from '@/admin/Identity';
 import { Chats, Users } from '@/admin/People';
 import { Audit, Payouts, Verifications } from '@/admin/Review';
 import { Disputes } from '@/admin/Disputes';
@@ -14,7 +15,7 @@ import { Screen } from '@/components/Screen';
 import { useAuth } from '@/providers/AuthProvider';
 import { colors, radius, type } from '@/theme';
 
-const SECTIONS = ['overview', 'users', 'jobs', 'orders', 'disputes', 'verifications', 'chats', 'payouts', 'categories', 'audit'] as const;
+const SECTIONS = ['overview', 'users', 'jobs', 'orders', 'disputes', 'identity', 'verifications', 'chats', 'payouts', 'categories', 'audit'] as const;
 type Section = (typeof SECTIONS)[number];
 
 const WIDE = 900;
@@ -69,6 +70,7 @@ export default function AdminScreen() {
       {section === 'jobs' && <Jobs />}
       {section === 'orders' && <Orders />}
       {section === 'disputes' && <Disputes />}
+      {section === 'identity' && <Identity />}
       {section === 'verifications' && <Verifications />}
       {section === 'chats' && <Chats openUser={goToUser} />}
       {section === 'payouts' && <Payouts />}
