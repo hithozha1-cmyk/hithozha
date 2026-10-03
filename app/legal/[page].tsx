@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Screen } from '@/components/Screen';
 import { currentLanguage } from '@/i18n';
+import { useAuth } from '@/providers/AuthProvider';
 import { BUSINESS, LEGAL_PAGES, legalContent, type LegalPage } from '@/legal/content';
 import { colors, type } from '@/theme';
 
@@ -12,11 +13,13 @@ import { colors, type } from '@/theme';
 export default function LegalScreen() {
   const { t } = useTranslation(); // re-renders when the language changes
   const router = useRouter();
+  const { signedIn } = useAuth();
   const { page } = useLocalSearchParams<{ page: string }>();
   const key = (LEGAL_PAGES as string[]).includes(page) ? (page as LegalPage) : 'terms';
   const content = legalContent[currentLanguage()][key];
 
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
+  // Signed-out people have no home screen to return to, so send them to the welcome screen.
+  const goBack = () => (router.canGoBack() ? router.back() : router.replace(signedIn ? '/' : '/welcome'));
 
   return (
     <Screen>

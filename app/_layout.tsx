@@ -50,39 +50,43 @@ function Gate({ ready }: { ready: boolean }) {
     <>
       <PushSetup />
       <Stack screenOptions={{ headerShown: false }}>
-      {/* Public: Razorpay and new visitors can read these without an account. */}
-      <Stack.Screen name="legal/[page]" />
-      <Stack.Protected guard={!signedIn}>
-        <Stack.Screen name="(auth)" />
-      </Stack.Protected>
-      <Stack.Protected guard={signedIn && !onboarded}>
-        <Stack.Screen name="(onboarding)" />
-      </Stack.Protected>
-      <Stack.Protected guard={signedIn && onboarded && needsVerification}>
-        <Stack.Screen name="verification" />
-      </Stack.Protected>
-      <Stack.Protected guard={signedIn && onboarded && !needsVerification}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="company/[id]" />
-        <Stack.Screen name="company/edit" />
-        <Stack.Screen name="company/verify" />
-        <Stack.Screen name="jobs/new" />
-        <Stack.Screen name="jobs/[id]" />
-        <Stack.Screen name="jobs/apply/[id]" />
-        <Stack.Screen name="jobs/proposals/[id]" />
-        <Stack.Screen name="chat/[id]" />
-        <Stack.Screen name="orders/[id]" />
-        <Stack.Screen name="orders/review/[id]" />
-        <Stack.Screen name="freelancer/[id]" />
-        <Stack.Screen name="account/edit-profile" />
-        <Stack.Screen name="account/freelancer" />
-        <Stack.Screen name="account/earnings" />
-        <Stack.Screen name="account/verify-identity" />
-        <Stack.Screen name="jobs/mine" />
-        <Stack.Screen name="jobs/edit/[id]" />
-        <Stack.Screen name="notifications" />
-        <Stack.Screen name="admin" />
-      </Stack.Protected>
+        <Stack.Protected guard={!signedIn}>
+          <Stack.Screen name="(auth)" />
+        </Stack.Protected>
+        <Stack.Protected guard={signedIn && !onboarded}>
+          <Stack.Screen name="(onboarding)" />
+        </Stack.Protected>
+        <Stack.Protected guard={signedIn && onboarded && needsVerification}>
+          <Stack.Screen name="verification" />
+        </Stack.Protected>
+        <Stack.Protected guard={signedIn && onboarded && !needsVerification}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="company/[id]" />
+          <Stack.Screen name="company/edit" />
+          <Stack.Screen name="company/verify" />
+          <Stack.Screen name="jobs/new" />
+          <Stack.Screen name="jobs/[id]" />
+          <Stack.Screen name="jobs/apply/[id]" />
+          <Stack.Screen name="jobs/proposals/[id]" />
+          <Stack.Screen name="chat/[id]" />
+          <Stack.Screen name="orders/[id]" />
+          <Stack.Screen name="orders/review/[id]" />
+          <Stack.Screen name="freelancer/[id]" />
+          <Stack.Screen name="account/edit-profile" />
+          <Stack.Screen name="account/freelancer" />
+          <Stack.Screen name="account/earnings" />
+          <Stack.Screen name="account/verify-identity" />
+          <Stack.Screen name="jobs/mine" />
+          <Stack.Screen name="jobs/edit/[id]" />
+          <Stack.Screen name="notifications" />
+          <Stack.Screen name="admin" />
+        </Stack.Protected>
+        {/*
+          Public: Razorpay and new visitors can read these without an account. Keep this LAST: on a phone
+          (no web address to go by) the app opens the first screen that is allowed, so listing it first
+          made every signed-out visitor land on the Terms page with nowhere to go back to.
+        */}
+        <Stack.Screen name="legal/[page]" />
       </Stack>
     </>
   );
