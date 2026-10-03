@@ -1,0 +1,530 @@
+{
+  "common": {
+    "continue": "Continue",
+    "back": "Back",
+    "cancel": "Cancel",
+    "retry": "Try again",
+    "select": "Select",
+    "genericError": "Something went wrong. Please try again."
+  },
+  "language": {
+    "label": "Language",
+    "ta": "தமிழ்",
+    "en": "English"
+  },
+  "welcome": {
+    "greeting": "வணக்கம், தோழா!",
+    "tagline": "Tamil Nadu's own freelance marketplace. Hire local talent or get paid for your skills.",
+    "chooseLanguage": "Choose your language",
+    "terms": "By continuing you agree to our Terms and Privacy Policy"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "createAccount": "Create account",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "passwordLabel": "Password",
+    "passwordNewPlaceholder": "At least {{count}} characters",
+    "passwordPlaceholder": "Your password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "invalidEmail": "Enter a valid email address.",
+    "passwordTooShort": "Use at least {{count}} characters.",
+    "invalidCredentials": "The email or password is wrong.",
+    "signUpFailed": "We could not create your account. Please try again.",
+    "signInFailed": "We could not sign you in. Please try again."
+  },
+  "otp": {
+    "title": "Verify your email",
+    "subtitle": "We sent a verification code to {{email}}",
+    "codeLabel": "Verification code",
+    "verify": "Verify",
+    "resend": "Resend code",
+    "resendIn": "Resend code in {{seconds}}s",
+    "changeEmail": "Use a different email",
+    "invalidCode": "Enter the code from your email.",
+    "wrongCode": "That code is wrong or has expired.",
+    "sendFailed": "We could not send the code. Please try again."
+  },
+  "onboarding": {
+    "step": "Step {{current}} of {{total}}",
+    "role": {
+      "title": "How will you use Hithozha?",
+      "subtitle": "You can switch anytime from your profile.",
+      "client": "I want to hire",
+      "clientDescription": "Post your work and hire local freelancers",
+      "freelancer": "I want to work",
+      "freelancerDescription": "Sell your skills and get paid safely",
+      "both": "Both",
+      "bothDescription": "Hire when you need, work when you want"
+    },
+    "profile": {
+      "title": "Tell us about you",
+      "photo": "Profile photo",
+      "addPhoto": "Add photo",
+      "changePhoto": "Change photo",
+      "uploading": "Uploading...",
+      "name": "Your name",
+      "namePlaceholder": "Enter your name",
+      "city": "Your city",
+      "cityPlaceholder": "Select your city",
+      "finish": "Finish",
+      "nameRequired": "Enter your name.",
+      "cityRequired": "Select your city.",
+      "photoFailed": "We could not upload the photo. Please try again.",
+      "photoPermission": "Allow photo access in Settings to add a picture.",
+      "saveFailed": "We could not save your profile. Please try again."
+    },
+    "professional": {
+      "title": "Your professional profile",
+      "subtitle": "Buyers hire people they trust. Tell them what you do best.",
+      "headline": "Professional headline",
+      "headlinePlaceholder": "e.g. Logo and brand designer",
+      "skills": "Services you offer",
+      "skillsHint": "Choose one or more",
+      "experience": "Experience level",
+      "levels": {
+        "beginner": "Beginner",
+        "beginnerDescription": "Just starting out",
+        "intermediate": "Intermediate",
+        "intermediateDescription": "1 to 3 years of work",
+        "expert": "Expert",
+        "expertDescription": "3+ years, confident with clients"
+      },
+      "languages": "Languages you speak",
+      "languageNames": {
+        "ta": "Tamil",
+        "en": "English",
+        "hi": "Hindi",
+        "te": "Telugu",
+        "ml": "Malayalam",
+        "kn": "Kannada"
+      },
+      "availability": "Availability",
+      "availabilityOptions": {
+        "full_time": "Full-time (30+ hours a week)",
+        "part_time": "Part-time (10 to 30 hours a week)",
+        "weekends": "Weekends and evenings"
+      },
+      "startingPrice": "Starting price (₹ per project)",
+      "startingPriceHint": "Optional. You can set prices for each gig later.",
+      "bio": "About you",
+      "bioPlaceholder": "What do you do and how much experience do you have?",
+      "education": "Education or certificates (optional)",
+      "educationPlaceholder": "e.g. B.Des, NIFT Chennai",
+      "portfolio": "Portfolio (optional)",
+      "portfolioHint": "Add up to {{count}} images of your best work.",
+      "addImage": "Add image",
+      "removeImage": "Remove image",
+      "finish": "Finish",
+      "headlineRequired": "Add a professional headline.",
+      "skillsRequired": "Choose at least one service.",
+      "experienceRequired": "Choose your experience level.",
+      "languagesRequired": "Choose at least one language.",
+      "availabilityRequired": "Choose your availability.",
+      "bioRequired": "Write at least 20 characters about yourself.",
+      "priceInvalid": "Enter a price of ₹50 or more."
+    },
+    "clientType": {
+      "title": "Who's hiring?",
+      "subtitle": "Tell us who you are hiring for.",
+      "individual": "Individual / Shop owner",
+      "individualDescription": "Hiring for yourself or a small shop",
+      "company": "Startup / Company",
+      "companyDescription": "Hiring for a team or a registered business"
+    }
+  },
+  "cities": {
+    "chennai": "Chennai",
+    "coimbatore": "Coimbatore",
+    "madurai": "Madurai",
+    "tiruchirappalli": "Tiruchirappalli",
+    "salem": "Salem",
+    "tirunelveli": "Tirunelveli",
+    "erode": "Erode",
+    "vellore": "Vellore",
+    "thoothukudi": "Thoothukudi",
+    "dharmapuri": "Dharmapuri",
+    "other": "Other"
+  },
+  "tabs": {
+    "home": "Home",
+    "browse": "Browse",
+    "messages": "Messages",
+    "orders": "Orders",
+    "profile": "Profile"
+  },
+  "home": {
+    "greeting": "வணக்கம், {{name}}",
+    "headline": "What do you need done?",
+    "searchPlaceholder": "Search logo, video editing, tuition...",
+    "bannerTitle": "Only 5% fee. Freelancers keep 95%.",
+    "bannerBody": "Post your requirement free and get offers from local talent.",
+    "categories": "Categories",
+    "categoriesError": "We could not load categories.",
+    "postJob": "Post a job"
+  },
+  "browse": {
+    "title": "Browse jobs",
+    "emptyTitle": "No open jobs yet",
+    "emptyBody": "New jobs from clients will show up here.",
+    "errorTitle": "We could not load jobs"
+  },
+  "messages": {
+    "emptyTitle": "No messages yet",
+    "emptyBody": "Conversations start when a freelancer applies to a job.",
+    "errorTitle": "We could not load your messages"
+  },
+  "orders": {
+    "emptyTitle": "No orders yet",
+    "emptyBody": "Orders appear here after you hire someone or are hired.",
+    "errorTitle": "We could not load your orders",
+    "status": {
+      "awaiting_payment": "Awaiting payment",
+      "in_progress": "In progress",
+      "delivered": "Delivered",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "card": {
+      "youPay": "You pay {{amount}}",
+      "youReceive": "You receive {{amount}}"
+    },
+    "detail": {
+      "freelancer": "Freelancer",
+      "client": "Client",
+      "amount": "Order amount",
+      "fee": "Platform fee ({{percent}}%)",
+      "youPay": "You pay",
+      "youReceive": "You receive",
+      "delivery": "Delivery time",
+      "days": "{{count}} days",
+      "rated": "You rated this order {{rating}} out of 5.",
+      "notFoundTitle": "Order not found",
+      "notFoundBody": "This order is not available."
+    },
+    "hint": {
+      "awaiting_payment": {
+        "client": "Pay to start the work. Your money is held safely until you approve it.",
+        "freelancer": "Waiting for the client to pay. You can start once the payment is in."
+      },
+      "in_progress": {
+        "client": "Your payment is held. The freelancer is working on this.",
+        "freelancer": "The payment is held. Do the work, then mark it as delivered."
+      },
+      "delivered": {
+        "client": "Check the work. Approve it to release the payment.",
+        "freelancer": "Waiting for the client to approve your work."
+      },
+      "completed": {
+        "client": "This order is complete. Thank you for hiring on Hithozha.",
+        "freelancer": "This order is complete."
+      },
+      "cancelled": {
+        "client": "This order was cancelled.",
+        "freelancer": "This order was cancelled."
+      }
+    },
+    "escrow": {
+      "heldTitle": "Payment is held safely",
+      "heldBody": {
+        "client": "Hithozha holds your payment. It goes to the freelancer only after you approve the work.",
+        "freelancer": "Hithozha holds the payment. You are paid after the client approves your work."
+      },
+      "releasedTitle": "Payment released",
+      "releasedBody": {
+        "client": "You approved the work and the payment was released to the freelancer.",
+        "freelancer": "The client approved your work. Hithozha will pay out {{amount}} to you."
+      }
+    },
+    "actions": {
+      "pay": "Pay {{amount}} securely",
+      "checkingPayment": "Confirming your payment...",
+      "payFailed": "We could not start the payment. Please try again.",
+      "cancel": "Cancel order",
+      "cancelTitle": "Cancel this order?",
+      "cancelBody": "The job will open again so you can choose another freelancer.",
+      "cancelFailed": "We could not cancel the order. Please try again.",
+      "cancelPaid": "This order was just paid, so it cannot be cancelled.",
+      "markDelivered": "Mark as delivered",
+      "deliverTitle": "Mark this work as delivered?",
+      "deliverBody": "The client will be asked to approve your work.",
+      "deliverFailed": "We could not update the order. Please try again.",
+      "approve": "Approve and release payment",
+      "approveTitle": "Approve this work?",
+      "approveBody": "The payment will be released to the freelancer. This cannot be undone.",
+      "approveFailed": "We could not release the payment. Please try again.",
+      "review": "Rate the freelancer",
+      "message": "Message"
+    }
+  },
+  "profile": {
+    "role": {
+      "client": "Client",
+      "freelancer": "Freelancer",
+      "both": "Client and freelancer"
+    },
+    "signOut": "Sign out",
+    "signOutTitle": "Sign out?",
+    "signOutBody": "You will need to sign in again to use Hithozha.",
+    "loadFailedTitle": "We could not load your profile",
+    "loadFailedBody": "Check your connection and try again."
+  },
+  "company": {
+    "verifiedBadge": "Verified business",
+    "onboardingTitle": "Company profile",
+    "onboardingSubtitle": "Freelancers check who they work for. Tell them about your business.",
+    "form": {
+      "logo": "Company logo",
+      "addLogo": "Add logo",
+      "changeLogo": "Change logo",
+      "uploading": "Uploading...",
+      "name": "Company name",
+      "namePlaceholder": "e.g. Sri Annapoorna Foods",
+      "website": "Website (optional)",
+      "websitePlaceholder": "https://example.com",
+      "linkedin": "LinkedIn page (optional)",
+      "linkedinPlaceholder": "https://www.linkedin.com/company/...",
+      "teamSize": "Team size",
+      "teamSizePlaceholder": "Select team size",
+      "industry": "Industry",
+      "industryPlaceholder": "Select industry",
+      "city": "Company city",
+      "cityPlaceholder": "Select city",
+      "about": "About the company",
+      "aboutPlaceholder": "What does your company do?"
+    },
+    "teamSizes": {
+      "1-10": "1 to 10 people",
+      "11-50": "11 to 50 people",
+      "51-200": "51 to 200 people",
+      "200+": "More than 200 people"
+    },
+    "industries": {
+      "technology": "Technology / IT",
+      "ecommerce": "E-commerce",
+      "manufacturing": "Manufacturing",
+      "education": "Education",
+      "healthcare": "Healthcare",
+      "retail": "Retail",
+      "food": "Food and beverage",
+      "finance": "Finance",
+      "media": "Media and marketing",
+      "logistics": "Logistics",
+      "realEstate": "Real estate",
+      "agriculture": "Agriculture",
+      "other": "Other"
+    },
+    "errors": {
+      "nameRequired": "Enter the company name (2 to 80 characters).",
+      "teamSizeRequired": "Select your team size.",
+      "industryRequired": "Select your industry.",
+      "cityRequired": "Select your city.",
+      "websiteInvalid": "Enter a valid website, for example https://example.com.",
+      "linkedinInvalid": "Enter a valid LinkedIn link.",
+      "saveFailed": "We could not save the company. Please try again.",
+      "logoFailed": "We could not upload the logo. Please try again."
+    },
+    "card": {
+      "edit": "Edit company",
+      "switchTitle": "Hiring for a company?",
+      "switchBody": "Create a company profile so freelancers know who you are.",
+      "switchAction": "Switch to company"
+    },
+    "edit": {
+      "editTitle": "Edit company",
+      "createTitle": "Create company profile",
+      "save": "Save changes",
+      "create": "Create company"
+    },
+    "status": {
+      "none": "Not verified",
+      "pending": "Under review",
+      "verified": "Verified",
+      "rejected": "Rejected"
+    },
+    "verify": {
+      "action": "Verify your business",
+      "title": "Verify your business",
+      "statusLabel": "Status",
+      "subtitle": "Enter your GST or Udyam number. Our team will review it.",
+      "gst": "GST number",
+      "gstPlaceholder": "22AAAAA0000A1Z5",
+      "udyam": "Udyam registration number",
+      "udyamPlaceholder": "UDYAM-TN-00-0000000",
+      "hint": "Enter at least one of the two.",
+      "submit": "Submit for review",
+      "gstInvalid": "Enter a valid 15-character GST number.",
+      "udyamInvalid": "Enter a valid Udyam number like UDYAM-TN-00-0000000.",
+      "eitherRequired": "Enter a GST or Udyam number.",
+      "duplicate": "This number is already linked to another business.",
+      "submitFailed": "We could not submit your details. Please try again.",
+      "pendingInfo": "Your details are under review.",
+      "verifiedInfo": "Your business is verified.",
+      "rejectedInfo": "We could not verify the earlier details. You can submit again.",
+      "submittedGst": "GST: {{value}}",
+      "submittedUdyam": "Udyam: {{value}}",
+      "noCompanyTitle": "No company profile yet",
+      "noCompanyBody": "Create your company profile first, then verify it."
+    },
+    "page": {
+      "industry": "Industry",
+      "teamSize": "Team size",
+      "city": "City",
+      "website": "Website",
+      "linkedin": "LinkedIn",
+      "about": "About",
+      "jobs": "Open jobs",
+      "jobsEmptyTitle": "No open jobs yet",
+      "jobsEmptyBody": "Jobs posted by this company will appear here.",
+      "notFoundTitle": "Company not found",
+      "notFoundBody": "This company page is not available."
+    }
+  },
+  "jobs": {
+    "types": {
+      "one_time": "One-time project",
+      "monthly": "Monthly",
+      "part_time": "Part-time"
+    },
+    "typeDescriptions": {
+      "one_time": "A single piece of work with a fixed budget",
+      "monthly": "Ongoing work paid every month",
+      "part_time": "Regular hours every week"
+    },
+    "modes": {
+      "online": "Online",
+      "in_person": "In person"
+    },
+    "perMonth": "{{range}} per month",
+    "post": {
+      "title": "Post a job",
+      "postingAs": "Posting as {{name}}",
+      "jobType": "Job type",
+      "jobTitle": "What do you need?",
+      "jobTitlePlaceholder": "e.g. Logo for my bakery",
+      "category": "Category",
+      "categoryPlaceholder": "Select a category",
+      "description": "Describe the work",
+      "descriptionPlaceholder": "Explain what you want, any style or colours, and what you will provide",
+      "hours": "Hours per week",
+      "hoursPlaceholder": "Select hours per week",
+      "hoursOption": "{{count}} hours a week",
+      "budgetOneTime": "Budget (₹)",
+      "budgetMonthly": "Monthly budget (₹)",
+      "budgetMin": "Minimum",
+      "budgetMax": "Maximum",
+      "workMode": "Where will the work happen?",
+      "city": "City",
+      "cityPlaceholder": "Select a city",
+      "submit": "Post job",
+      "errors": {
+        "title": "Enter a title (5 to 100 characters).",
+        "category": "Select a category.",
+        "description": "Describe the work in at least 20 characters.",
+        "hours": "Select the hours per week.",
+        "budget": "Enter a budget of ₹50 or more for both fields.",
+        "budgetRange": "The maximum must be at least the minimum.",
+        "city": "Select the city.",
+        "failed": "We could not post your job. Please try again."
+      }
+    },
+    "detail": {
+      "budget": "Budget",
+      "monthlyBudget": "Monthly budget",
+      "hoursValue": "{{count}} hours a week",
+      "category": "Category",
+      "location": "Work location",
+      "postedBy": "Posted by",
+      "about": "About this job",
+      "postedOn": "Posted on {{date}}",
+      "closed": "Closed",
+      "closeAction": "Close job",
+      "closeTitle": "Close this job?",
+      "closeBody": "Freelancers will no longer see it.",
+      "closeFailed": "We could not close the job. Please try again.",
+      "notFoundTitle": "Job not found",
+      "notFoundBody": "This job is not available."
+    }
+  },
+  "proposals": {
+    "apply": "Apply for this job",
+    "applyTitle": "Send a proposal",
+    "forJob": "For this job",
+    "messageLabel": "Your message to the client",
+    "messagePlaceholder": "Introduce yourself and explain how you will do this job",
+    "price": "Your price (₹)",
+    "pricePlaceholder": "e.g. 2500",
+    "priceHint": "Hithozha keeps {{percent}}%. You will receive {{amount}}.",
+    "priceHintEmpty": "Hithozha keeps {{percent}}% of the price.",
+    "days": "Delivery time (days)",
+    "daysPlaceholder": "e.g. 4",
+    "send": "Send proposal",
+    "errors": {
+      "message": "Write at least 20 characters.",
+      "price": "Enter a price of ₹50 or more.",
+      "days": "Enter between 1 and 365 days.",
+      "alreadyApplied": "You have already applied to this job.",
+      "failed": "We could not send your proposal. Please try again."
+    },
+    "yourProposal": "Your proposal",
+    "status": {
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "rejected": "Not selected",
+      "withdrawn": "Withdrawn"
+    },
+    "priceDays": "{{price}} in {{count}} days",
+    "rating": "{{rating}} ({{count}})",
+    "noRatings": "New",
+    "withdraw": "Withdraw proposal",
+    "withdrawTitle": "Withdraw this proposal?",
+    "withdrawBody": "The client will no longer see it.",
+    "withdrawFailed": "We could not withdraw the proposal. Please try again.",
+    "message": "Message",
+    "viewProposals": "View proposals ({{count}})",
+    "listTitle": "Proposals",
+    "emptyTitle": "No proposals yet",
+    "emptyBody": "Freelancers who apply will appear here.",
+    "accept": "Accept and hire",
+    "acceptTitle": "Hire {{name}}?",
+    "acceptBody": "You will pay {{amount}} into escrow. It goes to the freelancer only when you approve the finished work.",
+    "acceptFailed": "We could not hire this freelancer. Please try again.",
+    "reject": "Decline",
+    "rejectFailed": "We could not decline the proposal. Please try again.",
+    "viewOrder": "View order"
+  },
+  "chat": {
+    "inputPlaceholder": "Type a message",
+    "send": "Send",
+    "sendFailed": "We could not send that message. Please try again.",
+    "safetyNote": "Phone numbers, emails, links and requests to pay outside Hithozha are hidden. Keep everything here so your payment stays protected.",
+    "redactedBadge": "Some details were hidden for your safety",
+    "notFoundTitle": "Conversation not found",
+    "notFoundBody": "This conversation is not available."
+  },
+  "reviews": {
+    "title": "Rate your experience",
+    "subtitle": "How was working with {{name}}?",
+    "stars": "{{count}} stars",
+    "commentLabel": "Write a review (optional)",
+    "commentPlaceholder": "Tell others about your experience",
+    "ratingRequired": "Tap the stars to choose a rating.",
+    "submit": "Submit review",
+    "failed": "We could not save your review. Please try again."
+  },
+  "freelancer": {
+    "about": "About",
+    "services": "Services",
+    "experience": "Experience",
+    "availability": "Availability",
+    "languages": "Languages",
+    "portfolio": "Portfolio",
+    "reviews": "Reviews",
+    "noReviews": "No reviews yet",
+    "ratingCount": "{{count}} reviews",
+    "completed": "Orders completed",
+    "notFoundTitle": "Freelancer not found",
+    "notFoundBody": "This profile is not available."
+  }
+}

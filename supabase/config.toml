@@ -1,0 +1,15 @@
+project_id = "hithozha"
+
+[functions.r2-presign]
+verify_jwt = true
+
+[functions.create-payment]
+verify_jwt = true
+
+[functions.cancel-order]
+verify_jwt = true
+
+# Razorpay calls this directly and cannot send a Supabase JWT. It authenticates
+# requests by checking the Razorpay signature instead.
+[functions.razorpay-webhook]
+verify_jwt = false

@@ -1,0 +1,243 @@
+# Hithozha
+
+Tamil Nadu's freelance marketplace, as a mobile app. Hire local talent or get paid for your skills.
+
+**Phases 1, 1.5 and 2** (this repo): auth (email + password with an emailed code), onboarding for freelancers and clients (individuals or companies), profiles, company pages with business verification, jobs, proposals, chat with contact-detail scanning, orders with Razorpay escrow, and reviews. Orders, chat, search and payments (Razorpay) come in later phases.
+
+## Stack
+
+- Expo SDK 57, TypeScript (strict), Expo Router
+- Supabase: Postgres, Auth, Edge Functions (Deno)
+- Cloudflare R2 for images (presigned uploads)
+- i18next for Tamil (`ta`, default) and English (`en`)
+
+## Quick start
+
+```bash
+npm install
+cp .env.example .env      # then fill in the two values below
+npx expo start            # scan the QR code with Expo Go
+```
+
+`npm run typecheck` runs the TypeScript check.
+
+## Environment
+
+The app reads only two public values from `.env`:
+
+| Variable | Where to get it |
+| --- | --- |
+| `EXPO_PUBLIC_SUPABASE_URL` | Supabase dashboard → Project Settings → API → Project URL |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Same page → `anon` `public` key |
+
+Everything else is a **secret and lives only in Supabase Edge Function secrets**. Never put the service role key, R2 keys, or Razorpay secrets in `.env`.
+
+| Secret (Edge Function) | Where to get it |
+| --- | --- |
+| `R2_ACCOUNT_ID` | Cloudflare dashboard → R2 → Overview → Account ID |
+| `R2_ACCESS_KEY_ID` | R2 → Manage R2 API Tokens → create token → Access Key ID |
+| `R2_SECRET_ACCESS_KEY` | Same token screen (shown once) |
+| `R2_BUCKET` | The bucket name you create below |
+| `R2_PUBLIC_URL` | The bucket's public URL, e.g. `https://pub-xxxx.r2.dev` or your custom domain |
+| `RAZORPAY_KEY_ID` | Razorpay dashboard → Settings → API Keys (use Test Mode while building) |
+| `RAZORPAY_KEY_SECRET` | Same page (shown once) |
+| `RAZORPAY_WEBHOOK_SECRET` | A random string you choose, then paste into the Razorpay webhook (see section 3) |
+
+`SUPABASE_URL` and `SUPABASE_ANON_KEY` are injected into Edge Functions automatically.
+
+## 1. Supabase project
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Link the CLI and run the migrations (they create the tables, RLS policies, the signup trigger, and seed the categories):
+
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref <your-project-ref>
+   npx supabase db push
+   ```
+
+   Or paste the eight files in `supabase/migrations/` into the SQL editor, in order.
+
+### Email and password sign-up with a verification code
+
+Users create an account with an email and password (minimum 8 characters), then enter a code emailed to them. Returning users sign in with email and password.
+
+1. Authentication → Sign In / Providers → Email: enable the provider and keep **Confirm email** on.
+2. Authentication → Emails → templates. The **Confirm sign up** template must contain `{{ .Token }}` so the email shows the code. A ready-made branded template is in `supabase/templates/otp-code.html`.
+3. **Email OTP Length** can be anything from 6 to 8. The app accepts 6 to 8 digits.
+4. Email delivery: Supabase's built-in sender is heavily rate limited. Use your own SMTP (for example Resend) under Authentication → SMTP Settings. Until you verify a sending domain, Resend only delivers to your own account email.
+
+### Making someone an admin
+
+`is_admin` cannot be changed from the app. Run this in the SQL editor:
+
+```sql
+update public.profiles set is_admin = true where id = '<auth user id>';
+```
+
+## 2. Cloudflare R2 and the upload function
+
+1. R2 → Create bucket (for example `hithozha-media`).
+2. Make the bucket publicly readable: bucket → Settings → Public access → enable the `r2.dev` URL (or connect a custom domain). Use that URL as `R2_PUBLIC_URL`.
+3. Create an API token: R2 → Manage R2 API Tokens → *Object Read & Write*, scoped to the bucket. Note the Access Key ID and Secret.
+4. CORS (bucket → Settings → CORS policy). The native app is not subject to CORS, but this keeps web or future uses working:
+
+   ```json
+   [
+     {
+       "AllowedOrigins": ["*"],
+       "AllowedMethods": ["GET", "PUT", "HEAD"],
+       "AllowedHeaders": ["Content-Type", "Content-Length"],
+       "MaxAgeSeconds": 3600
+     }
+   ]
+   ```
+
+5. Set the secrets and deploy:
+
+   ```bash
+   npx supabase secrets set \
+     R2_ACCOUNT_ID=... \
+     R2_ACCESS_KEY_ID=... \
+     R2_SECRET_ACCESS_KEY=... \
+     R2_BUCKET=hithozha-media \
+     R2_PUBLIC_URL=https://pub-xxxx.r2.dev
+
+   npx supabase functions deploy r2-presign
+   ```
+
+### `r2-presign` contract
+
+`POST /functions/v1/r2-presign` with the user's JWT (the app does this through `supabase.functions.invoke`).
+
+Request: `{ "kind": "avatar" | "portfolio" | "company_logo", "contentType": "image/jpeg" | "image/png" | "image/webp", "size": <bytes> }`
+
+Size limits: 5 MB for `avatar` and `portfolio`, 2 MB for `company_logo`. The app shrinks avatars and portfolio images to 800px (JPEG) and logos to 400px (PNG, so transparency survives).
+
+`size` is required in addition to `kind` and `contentType`: R2 enforces the signed `Content-Length`, which is how the size cap is actually held.
+
+After changing this function, redeploy it (`npx supabase functions deploy r2-presign`, or paste the new code into the dashboard editor).
+
+Response: `{ "uploadUrl", "publicUrl", "key", "expiresIn" }`. Keys look like `{kind}/{userId}/{uuid}.{ext}`. The URL expires after 5 minutes.
+
+## 3. Razorpay payments
+
+Three more Edge Functions handle money. The app never talks to Razorpay directly and never sends an amount: the price always comes from the database.
+
+| Function | Verify JWT | What it does |
+| --- | --- | --- |
+| `create-payment` | on | Creates a Razorpay payment link for an order the caller is the client of. Reuses an open link instead of making a second one. |
+| `razorpay-webhook` | **off** | Receives `payment_link.paid`, checks the Razorpay signature, and marks the order paid. Idempotent, so retries are harmless. |
+| `cancel-order` | on | Cancels an unpaid order. It cancels the Razorpay link first and refuses if the link was just paid. |
+
+Set up:
+
+1. In Razorpay (start in **Test Mode**), create API keys and add `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` as Edge Function secrets.
+2. Deploy the three functions. **`razorpay-webhook` must have "Verify JWT" switched off** (Razorpay cannot send a Supabase token; the signature check protects it instead). `supabase/config.toml` already says so if you deploy with the CLI. In the dashboard editor, switch it off in the function's settings.
+3. In Razorpay → Settings → Webhooks, add:
+   - URL: `https://<your-project-ref>.supabase.co/functions/v1/razorpay-webhook`
+   - Secret: any long random string. Save the same string as the `RAZORPAY_WEBHOOK_SECRET` Edge Function secret.
+   - Event: `payment_link.paid`
+4. Test with Razorpay's test UPI id `success@razorpay` or its test cards.
+
+How the money works (escrow):
+
+- The client pays the full price. Razorpay collects it into **your** Razorpay account, so it is held there.
+- When the client taps **Approve and release payment**, the payment is marked `released`. That is a ledger entry: it says the freelancer is owed their earnings (price minus the 5% fee).
+- **Paying the freelancer is not automated.** After release, send the freelancer their earnings yourself (UPI or bank transfer), or connect RazorpayX Payouts later. The order screen tells freelancers "Hithozha will pay out" the amount.
+- Refunds are also manual in the Razorpay dashboard. The webhook logs `REFUND NEEDED` if a payment arrives for an order that was cancelled.
+
+## Database
+
+| Table | Purpose |
+| --- | --- |
+| `profiles` | One row per user, created by a trigger on signup. Name, city, language, role, verification status. |
+| `freelancer_profiles` | Headline, skills, experience level, languages, availability, starting price (paise), bio, education, portfolio images, plus system-managed rating and order counters and premium flag. |
+| `proposals` | A freelancer's offer on a job: message, price, delivery days, status. |
+| `conversations`, `messages` | One chat per proposal. Messages are saved only through `send_message()`. |
+| `chat_violations` | Every redaction, with the original text, for trust and safety. No client access. |
+| `orders` | A hired proposal: amounts in paise, the 5% fee, and its status. |
+| `payments` | The escrow ledger. Written only by the Edge Functions. |
+| `reviews` | One rating and comment per completed order. |
+| `jobs` | Work posted by clients: type, budget, hours, location and status, optionally under a company. |
+| `companies` | One per client who hires as a company: name, logo, website, LinkedIn, team size, industry, city, about, and a verification status. GST and Udyam numbers are private to the owner. |
+| `categories` | Seeded service categories with Tamil and English names. |
+
+Security model: RLS is on for every table, and column-level grants back it up. Users can update only their own `profiles` row, and never `is_admin` or `verification_status`. `phone` and `is_admin` are not readable from the client (service role and Edge Functions only), so the app selects an explicit column list. Categories are public to read and admin-only to write.
+
+### Companies and business verification
+
+- `profiles.client_type` is `individual` or `company` (null for pure freelancers, enforced by a constraint).
+- Any signed-in user can read a company's public fields. `gst_number` and `udyam_number` are not selectable through the table API; the owner reads them through the `get_my_company()` function.
+- `verification_status` cannot be written by users. They call `submit_company_verification(p_gst, p_udyam)`, which stores the number and moves the status to `pending`. GST (15 characters) and Udyam (`UDYAM-XX-00-0000000`) formats are enforced by CHECK constraints, and one number can back only one business.
+- A reviewer decides the outcome with the service role, for example in the SQL editor:
+
+  ```sql
+  update public.companies set verification_status = 'verified' where id = '<company id>';
+  -- or 'rejected' (the owner can then submit again)
+  ```
+
+### Jobs
+
+Clients (individuals and companies) post jobs; everyone signed in can browse open ones.
+
+- `job_type` is `one_time`, `monthly` or `part_time`. `hours_per_week` is set only for `part_time` (and always for it), enforced by a CHECK constraint. For `monthly` and `part_time` jobs the budget is a monthly budget, and the Post a job form labels it "Monthly budget".
+- `company_id` references `companies` and is null for individuals. A company client's jobs are posted under the company automatically, and RLS only lets you attach a company you own.
+- Budgets are stored as integer paise (`budget_min_paise`, `budget_max_paise`). In-person jobs must have a city.
+- RLS: signed-in users read open jobs, and posters also read their own closed ones. Only clients can post. After posting, the only field a poster can change is `status` (the Close job button).
+- Job cards and the job detail screen show the company logo, name, a "Verified business" badge (for verified companies) and a job type chip. Individuals show their name and photo instead.
+- The Browse tab lists open jobs (newest first, pull to refresh). The company page (`app/company/[id].tsx`) lists that company's open jobs. Client users see a Post a job button on Home.
+
+Not built yet: editing a job after posting.
+
+### Proposals, chat, orders and reviews
+
+The hiring flow, and who is allowed to do what at each step. All of it is enforced in the database, so a modified app cannot skip a step.
+
+1. **Apply.** A freelancer sends a proposal (message, price, delivery days) to an open job they do not own. One per job. They can withdraw it while it is pending. A conversation is created automatically.
+2. **Chat.** Both people can message. `send_message()` scans every message on the server and replaces phone numbers (including +91 and spaced digits), emails, links, UPI ids, and phrases like "pay me directly", "outside the platform", GPay, WhatsApp and bank details with ███. The original is logged in `chat_violations`. Nobody can insert into `messages` directly. New messages arrive live through Supabase Realtime.
+3. **Hire.** The job owner taps **Accept and hire**. `accept_proposal()` closes the job and creates the order with the 5% platform fee taken out of the freelancer's side: the client pays the proposal price; the freelancer receives price minus 5% (rounded half up, to the paisa). A job has one live order at a time.
+4. **Pay.** The client pays through a Razorpay payment link (opens in the browser). The webhook moves the order to `in_progress`. An unpaid order can be cancelled, which reopens the job and the proposal.
+5. **Deliver.** The freelancer taps **Mark as delivered**.
+6. **Approve.** The client taps **Approve and release payment**. The order is `completed`, the escrow is `released`, and the freelancer's completed-orders count goes up.
+7. **Review.** The client rates 1 to 5 with an optional comment, once per order. The freelancer's average rating and review count update, and show on their public page (`app/freelancer/[id].tsx`) and on proposal cards.
+
+Not built yet: disputes and revision requests, refunds from the app, automatic freelancer payouts, push notifications, rate limiting on chat, and an admin screen for `chat_violations`.
+
+### Tests
+
+```bash
+npm test             # database + Edge Function tests
+npm run test:db      # applies every migration to a local Postgres and checks the security rules
+npm run test:functions  # runs the three payment functions against mocks
+npm run typecheck
+```
+
+`test:db` uses PGlite (Postgres compiled to WebAssembly) with Supabase's roles and `auth.uid()` emulated, so it needs no Docker and no Supabase account. It checks who can read and write what as each kind of user, the escrow state machine, the 5% fee maths, and the message redaction. Run it after changing any migration.
+
+## Project layout
+
+```
+app/                  Expo Router screens
+  (auth)/             welcome (sign in / create account), verify (code)
+  (onboarding)/       role, client-type, company-profile, profile, professional (freelancers only)
+  company/            [id] (public page), edit, verify
+  jobs/               new (post a job), [id] (job detail), apply/[id], proposals/[id]
+  chat/               [id] (a conversation)
+  orders/             [id] (pay, deliver, approve), review/[id]
+  freelancer/         [id] (public freelancer page with reviews)
+  (tabs)/             home, browse, messages, orders, profile
+src/
+  theme/              colors, typography, spacing, radius
+  components/         Button, Input, Select, RadioCard, Card, Avatar, Screen, TabIcon, ...
+  i18n/               ta.json, en.json
+  providers/          AuthProvider (session + profile)
+  lib/                supabase client, upload helper, shared types
+supabase/
+  migrations/         SQL
+  functions/          r2-presign, create-payment, razorpay-webhook, cancel-order
+  tests/              database and Edge Function tests (npm test)
+  templates/          branded email template for the sign-up code
+```
+
+The root layout (`app/_layout.tsx`) is the auth gate: no session shows the welcome screen, a session without a completed profile shows onboarding, otherwise the tabs.
