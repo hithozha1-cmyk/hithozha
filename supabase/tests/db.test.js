@@ -107,6 +107,9 @@ const bootstrap = `
   await setProfile(bothUser, 'both', 'Both User');
   await setProfile(freelancerF, 'freelancer', 'Freelancer F');
   await setProfile(freelancerG, 'freelancer', 'Freelancer G');
+  // Only verified freelancers can apply (migration 0013); an admin verifies people in real life.
+  const verify = (uid) => service(() => q(`update public.profiles set verification_status = 'verified' where id = $1`, [uid]));
+  for (const uid of [bothUser, freelancerF, freelancerG]) await verify(uid);
   await setProfile(outsider, 'client', 'Outsider');
 
   // ---- profiles ----------------------------------------------------------
@@ -457,6 +460,7 @@ const bootstrap = `
   // suspending
   const troll = await newUser('troll@test');
   await setProfile(troll, 'both', 'Troll');
+  await verify(troll);
   await user(troll, () => q(`insert into public.freelancer_profiles (user_id, bio, skills) values ($1, 'I do many things well', array['writing'])`, [troll]));
   await rejects('non-admins cannot suspend', () => user(clientA, () => q(`select public.admin_set_user_suspended($1, true, 'rude')`, [troll])), '42501');
   await rejects('an admin cannot suspend themselves', () => user(admin, () => q(`select public.admin_set_user_suspended($1, true, 'oops')`, [admin])), '22023');
@@ -581,6 +585,15 @@ const bootstrap = `
   check('resolved disputes are listed with their decision', (await user(admin, () => q(`select * from public.admin_disputes('resolved', 10, 0)`))).some((d) => d.resolution === 'split' && d.refund_paise === 40000));
   const dpLog = (await user(admin, () => q(`select action, details from public.admin_audit_log_list(100, 0)`)));
   check('the audit log records disputes decided and chats read', dpLog.some((l) => l.action === 'resolve_dispute' && l.details.resolution === 'split') && dpLog.some((l) => l.action === 'view_dispute_chat'));
+
+  // ---- migration 0013: only verified freelancers can apply -----------------
+  const newbie = await newUser('newbie@test');
+  await setProfile(newbie, 'freelancer', 'Newbie');
+  const jobV = await job(clientA);
+  await rejects('an unverified freelancer cannot apply', () => propose(newbie, jobV.id), '42501');
+  await verify(newbie);
+  check('a verified freelancer can apply', !!(await propose(newbie, jobV.id)).id);
+  await service(() => q(`update public.profiles set verification_status = 'none' where id = $1`, [freelancerF]));
 
   // ---- migration 0012: identity photos and checks -----------------------
   const putFile = (uid, name) => user(uid, () => q(`insert into storage.objects (bucket_id, name) values ('identity', $1)`, [name]));

@@ -20,6 +20,7 @@ const ENV = {
   RAZORPAY_KEY_ID: 'rzp_test_id',
   RAZORPAY_KEY_SECRET: 'rzp_test_secret',
   RAZORPAY_WEBHOOK_SECRET: 'whsec_test',
+  RESEND_API_KEY: 're_test_key',
 };
 
 // ---- mocks ---------------------------------------------------------------
@@ -30,9 +31,15 @@ let rpcError;
 let razorpayCalls;
 let razorpayHandler;
 let lastError;
+let userRpcCalls;
+let userRpcError;
+let users;
 
 function resetWorld() {
-  tables = { orders: [], payments: [] };
+  tables = { orders: [], payments: [], identity_verifications: [], profiles: [] };
+  userRpcCalls = [];
+  userRpcError = null;
+  users = {};
   rpcCalls = [];
   rpcResult = { data: 'ok', error: null };
   rpcError = null;
@@ -72,14 +79,21 @@ function createClient(url, key, options = {}) {
         getUser: async () => {
           const token = (authHeader ?? '').replace('Bearer ', '');
           if (token === 'good-token') return { data: { user: { id: 'user-1' } }, error: null };
+          if (token === 'admin-token') return { data: { user: { id: 'admin-1' } }, error: null };
           return { data: { user: null }, error: { message: 'invalid jwt' } };
         },
+      },
+      rpc: async (name, args) => {
+        userRpcCalls.push({ name, args, token: authHeader });
+        if (authHeader !== 'Bearer admin-token') return { data: null, error: { code: '42501', message: 'not allowed' } };
+        return userRpcError ? { data: null, error: userRpcError } : { data: null, error: null };
       },
     };
   }
   if (key !== ENV.SUPABASE_SERVICE_ROLE_KEY) throw new Error('unexpected key ' + key);
   return {
     from: queryBuilder,
+    auth: { admin: { getUserById: async (id) => ({ data: { user: users[id] ?? null }, error: null }) } },
     rpc: async (name, args) => {
       rpcCalls.push({ name, args });
       return rpcError ? { data: null, error: rpcError } : rpcResult;
@@ -132,7 +146,7 @@ const authed = { Authorization: 'Bearer good-token', 'Content-Type': 'applicatio
 
 (async () => {
   // ===================== CORS (needed by the web version) ====================
-  for (const name of ['r2-presign', 'create-payment', 'cancel-order']) {
+  for (const name of ['r2-presign', 'create-payment', 'cancel-order', 'review-identity']) {
     resetWorld();
     const fn = loadFunction(name);
     const preflight = await fn(new Request('https://fn.local/', { method: 'OPTIONS', headers: { Origin: 'https://app.example.com', 'Access-Control-Request-Method': 'POST' } }));
@@ -303,6 +317,75 @@ const authed = { Authorization: 'Bearer good-token', 'Content-Type': 'applicatio
   res = await call(cancelOrder, { headers: authed, body: { orderId: ORDER_ID } });
   console.error = errorLog;
   check('cancel-order: if Razorpay is down the order is NOT cancelled', res.status === 502 && rpcCalls.length === 0);
+
+
+  // ===================== review-identity =====================================
+  const reviewIdentity = loadFunction('review-identity');
+  const CHECK_ID = '22222222-2222-4222-8222-222222222222';
+  const adminHeaders = { Authorization: 'Bearer admin-token', 'Content-Type': 'application/json' };
+  const seedCheck = (language = 'en') => {
+    tables.identity_verifications.push({ id: CHECK_ID, user_id: 'freelancer-1' });
+    tables.profiles.push({ id: 'freelancer-1', full_name: 'Priya <b>R</b>', language });
+    users['freelancer-1'] = { email: 'priya@example.com' };
+  };
+  const emailsSent = () => razorpayCalls.filter((c) => c.url === 'https://api.resend.com/emails');
+  const review = (over = {}, headers = adminHeaders) => call(reviewIdentity, { headers, body: { id: CHECK_ID, status: 'verified', ...over } });
+
+  resetWorld();
+  check('review-identity: rejects GET', (await call(reviewIdentity, { method: 'GET' })).status === 405);
+  check('review-identity: needs a token', (await call(reviewIdentity, { body: { id: CHECK_ID, status: 'verified' } })).status === 401);
+  check('review-identity: rejects a non-uuid id', (await review({ id: 'x' })).status === 400);
+  check('review-identity: rejects an unknown status', (await review({ status: 'maybe' })).status === 400);
+  check('review-identity: rejects invalid json', (await call(reviewIdentity, { headers: adminHeaders, body: '{oops' })).status === 400);
+
+  resetWorld();
+  seedCheck();
+  res = await review({}, authed);
+  check('review-identity: a non-admin is refused and nothing is emailed', res.status === 403 && emailsSent().length === 0);
+
+  resetWorld();
+  seedCheck('en');
+  razorpayHandler = () => ({ status: 200, body: { id: 'email_1' } });
+  res = await review();
+  check('review-identity: an admin approval is saved and emailed', res.status === 200 && res.json.reviewed === true && res.json.emailed === true, JSON.stringify(res));
+  check('review-identity: the decision goes through the admin-checked database function as the admin', userRpcCalls.length === 1 && userRpcCalls[0].name === 'admin_review_identity' && userRpcCalls[0].args.p_status === 'verified' && userRpcCalls[0].token === 'Bearer admin-token');
+  const approvedMail = JSON.parse(emailsSent()[0].body);
+  check('review-identity: the approval email goes to the freelancer in their language', approvedMail.to[0] === 'priya@example.com' && approvedMail.subject === 'You are verified on Hithozha');
+  check('review-identity: the email is sent with the Resend key', emailsSent()[0].headers.Authorization === 'Bearer re_test_key' && approvedMail.from === 'Hithozha <onboarding@resend.dev>');
+  check('review-identity: names are escaped in the email', approvedMail.html.includes('Priya &lt;b&gt;R&lt;/b&gt;') && !approvedMail.html.includes('<b>R</b>'));
+
+  resetWorld();
+  seedCheck('ta');
+  razorpayHandler = () => ({ status: 200, body: {} });
+  res = await review({ status: 'rejected', reason: 'The ID photo is blurry <script>' });
+  const rejectedMail = JSON.parse(emailsSent()[0].body);
+  check('review-identity: a rejection is emailed in Tamil with the reason', res.json.emailed === true && rejectedMail.subject.includes('சரிபார்க்க முடியவில்லை') && rejectedMail.html.includes('The ID photo is blurry &lt;script&gt;'));
+  check('review-identity: the reason reaches the database', userRpcCalls[0].args.p_reason === 'The ID photo is blurry <script>');
+
+  resetWorld();
+  seedCheck();
+  userRpcError = { code: '22023', message: 'a reason is required' };
+  res = await review({ status: 'rejected' });
+  check('review-identity: a rejection without a reason is a 400 and sends no email', res.status === 400 && emailsSent().length === 0);
+  userRpcError = { code: 'P0002', message: 'no pending check' };
+  check('review-identity: an already-reviewed check is a 404 and sends no email', (await review()).status === 404 && emailsSent().length === 0);
+
+  resetWorld();
+  seedCheck();
+  razorpayHandler = () => ({ status: 500, body: {} });
+  console.error = () => {};
+  res = await review();
+  console.error = errorLog;
+  check('review-identity: if the email fails the decision still stands and the reply says so', res.status === 200 && res.json.reviewed === true && res.json.emailed === false);
+
+  resetWorld();
+  seedCheck();
+  delete ENV.RESEND_API_KEY;
+  console.error = () => {};
+  res = await review();
+  console.error = errorLog;
+  ENV.RESEND_API_KEY = 're_test_key';
+  check('review-identity: without an email key the decision is saved and no email is attempted', res.status === 200 && res.json.reviewed === true && res.json.emailed === false && emailsSent().length === 0);
 
   console.log(`\n${passed} passed, ${failed} failed`);
   process.exit(failed === 0 ? 0 : 1);

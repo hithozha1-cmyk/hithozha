@@ -21,7 +21,7 @@ import { colors, radius, type } from '@/theme';
 
 import { Empty, ErrorLine, Loading, LoadMore, ReasonAction, usePaged, useWhen } from './ui';
 
-function Photos({ id, onReviewed }: { id: string; onReviewed: () => Promise<unknown> }) {
+function Photos({ id, onReviewed }: { id: string; onReviewed: (emailed: boolean) => Promise<unknown> }) {
   const { t } = useTranslation();
   const [urls, setUrls] = useState<{ idUrl: string; selfieUrl: string } | null>(null);
   const [opening, setOpening] = useState(false);
@@ -65,7 +65,7 @@ function Photos({ id, onReviewed }: { id: string; onReviewed: () => Promise<unkn
         onPress={() => {
           setBusy(true);
           void reviewIdentity(id, 'verified', null).then(async (r) => {
-            if (r.ok) await onReviewed();
+            if (r.ok) await onReviewed(r.data.emailed);
             setBusy(false);
           });
         }}
@@ -76,7 +76,7 @@ function Photos({ id, onReviewed }: { id: string; onReviewed: () => Promise<unkn
         placeholder={t('admin.identity.reason')}
         onSubmit={async (reason) => {
           const r = await reviewIdentity(id, 'rejected', reason);
-          if (r.ok) await onReviewed();
+          if (r.ok) await onReviewed(r.data.emailed);
           return r.ok;
         }}
       />
@@ -92,6 +92,7 @@ export function Identity() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [bulk, setBulk] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ text: string; good: boolean } | null>(null);
   const list = usePaged<AdminIdentity>((offset) => fetchIdentities(filter, offset), [filter]);
 
   const deleteOne = (c: AdminIdentity) =>
@@ -150,6 +151,7 @@ export function Identity() {
         <Button variant="dark" title={t('admin.identity.deleteAllButton', { count: list.items.length })} onPress={deleteAll} loading={bulk} />
       ) : null}
       <ErrorLine text={error} />
+      {notice ? <Text style={notice.good ? styles.good : styles.warn}>{notice.text}</Text> : null}
       {list.failed ? <ErrorLine text={t('admin.failed')} /> : null}
       {list.items.map((c) => (
         <Card key={c.id} style={styles.card}>
@@ -166,8 +168,9 @@ export function Identity() {
             open === c.id ? (
               <Photos
                 id={c.id}
-                onReviewed={async () => {
+                onReviewed={async (emailed) => {
                   setOpen(null);
+                  setNotice({ text: emailed ? t('admin.identity.emailSent') : t('admin.identity.emailNotSent'), good: emailed });
                   await list.reload();
                 }}
               />
@@ -197,6 +200,8 @@ const styles = StyleSheet.create({
   sub: { ...type.small, color: colors.muted },
   note: { ...type.small, color: colors.muted, fontStyle: 'italic' },
   done: { ...type.small, color: colors.success },
+  good: { ...type.small, color: colors.success },
+  warn: { ...type.small, color: colors.danger },
   label: { ...type.caption, color: colors.muted },
   policy: { flexDirection: 'row', gap: 10, padding: 14, borderRadius: radius.card, backgroundColor: colors.tintBlue },
   policyText: { ...type.small, color: colors.accent, flex: 1 },

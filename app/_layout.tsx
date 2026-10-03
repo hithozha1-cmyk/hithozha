@@ -24,7 +24,7 @@ void SplashScreen.preventAutoHideAsync();
 
 function Gate({ ready }: { ready: boolean }) {
   const { t } = useTranslation();
-  const { signedIn, loading, profileError, onboarded, refreshProfile } = useAuth();
+  const { signedIn, loading, profileError, onboarded, needsVerification, refreshProfile } = useAuth();
   const settled = ready && !loading;
 
   useEffect(() => {
@@ -55,7 +55,10 @@ function Gate({ ready }: { ready: boolean }) {
       <Stack.Protected guard={signedIn && !onboarded}>
         <Stack.Screen name="(onboarding)" />
       </Stack.Protected>
-      <Stack.Protected guard={signedIn && onboarded}>
+      <Stack.Protected guard={signedIn && onboarded && needsVerification}>
+        <Stack.Screen name="verification" />
+      </Stack.Protected>
+      <Stack.Protected guard={signedIn && onboarded && !needsVerification}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="company/[id]" />
         <Stack.Screen name="company/edit" />

@@ -37,6 +37,11 @@ type AuthContextValue = {
   completeRecovery: () => void;
   /** A signed-in user has finished onboarding once role, name and city are set. */
   onboarded: boolean;
+  /**
+   * A freelancer-only account waits on the verification screen until an admin approves their ID.
+   * (People who also hire can use the app meanwhile, but cannot apply to jobs.)
+   */
+  needsVerification: boolean;
   refreshProfile: () => Promise<void>;
   updateProfile: (patch: ProfilePatch) => Promise<boolean>;
   changeLanguage: (language: Language) => Promise<void>;
@@ -167,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       beginRecovery,
       completeRecovery,
       onboarded: !!profile?.role && !!profile.city && !!profile.full_name,
+      needsVerification: profile?.role === 'freelancer' && profile.verification_status !== 'verified' && !isAdmin,
       refreshProfile,
       updateProfile,
       changeLanguage,

@@ -50,6 +50,18 @@ export default function ApplyScreen() {
 
   if (!isFreelancerRole(profile?.role ?? null)) return <Redirect href="/" />;
 
+  if (profile?.verification_status !== 'verified') {
+    return (
+      <Screen scroll={false} footer={<Button title={t('identity.action')} onPress={() => router.push('/account/verify-identity')} />}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('common.back')} onPress={goBack} style={styles.back}>
+          <ChevronLeft size={24} color={colors.text} strokeWidth={2} />
+        </Pressable>
+        <Text style={styles.title}>{t('identity.applyBlockedTitle')}</Text>
+        <Text style={styles.applyBlocked}>{t('identity.applyBlockedBody')}</Text>
+      </Screen>
+    );
+  }
+
   const priceRupees = Number(price);
   const earnings = priceRupees >= MIN_PROPOSAL_RUPEES ? earningsAfterFee(toPaise(priceRupees)) : null;
 
@@ -157,6 +169,7 @@ const styles = StyleSheet.create({
   back: { width: 44, height: 44, marginLeft: -10, alignItems: 'center', justifyContent: 'center' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: { ...type.title, color: colors.text, paddingTop: 12, paddingBottom: 14 },
+  applyBlocked: { ...type.body, color: colors.muted },
   jobBox: { gap: 2, padding: 14, marginBottom: 18, borderRadius: radius.card, backgroundColor: colors.tintBlue },
   jobLabel: { ...type.caption, color: colors.accent },
   jobTitle: { ...type.subheading, color: colors.text },

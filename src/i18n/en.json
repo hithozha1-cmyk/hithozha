@@ -841,7 +841,9 @@
       "deleteAllTitle": "Delete photos of {{count}} checks?",
       "deleteAll": "Delete all",
       "someFailed": "{{count}} could not be deleted. Try again.",
-      "deletedOn": "Photos deleted {{when}}"
+      "deletedOn": "Photos deleted {{when}}",
+      "emailSent": "Decision saved and the person was emailed.",
+      "emailNotSent": "Decision saved, but the email could not be sent. Check the email settings."
     }
   },
   "dispute": {
@@ -894,6 +896,12 @@
       "pending": "Our team is checking your photos. We will delete them once the check is done.",
       "verified": "Your identity is verified. Our team deletes the photos after verification.",
       "rejected": "We could not verify you from those photos. You can send new ones."
-    }
+    },
+    "gateTitle": "Verify your identity to get started",
+    "gateIntro": "Your account is ready. Send an ID photo and a selfie. You can start working as soon as our team approves them.",
+    "emailPromise": "You can close the app. We will email you as soon as we decide, and this screen opens the app for you once you are approved.",
+    "emailedRejected": "We also sent you an email with this reason.",
+    "applyBlockedTitle": "Verify your identity first",
+    "applyBlockedBody": "Only freelancers whose identity is verified can apply to jobs. Send your ID photo and selfie, and we will email you when you are approved."
   }
 }

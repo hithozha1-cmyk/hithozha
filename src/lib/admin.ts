@@ -228,8 +228,15 @@ export type IdentityFilter = 'pending' | 'to_delete' | 'all';
 
 export const fetchIdentities = (filter: IdentityFilter, offset: number) =>
   call<AdminIdentity[]>('admin_identities', { p_filter: filter, p_limit: PAGE_SIZE, p_offset: offset });
-export const reviewIdentity = (id: string, status: 'verified' | 'rejected', reason: string | null) =>
-  call<null>('admin_review_identity', { p_id: id, p_status: status, p_reason: reason });
+/**
+ * Decides an identity check through the review-identity Edge Function, which saves the decision
+ * (the database refuses non-admins) and emails the freelancer. `emailed` is false when the
+ * decision was saved but the email could not be sent.
+ */
+export async function reviewIdentity(id: string, status: 'verified' | 'rejected', reason: string | null): Promise<Result<{ emailed: boolean }>> {
+  const { data, error } = await supabase.functions.invoke<{ reviewed?: boolean; emailed?: boolean }>('review-identity', { body: { id, status, reason } });
+  return error || !data?.reviewed ? { ok: false } : { ok: true, data: { emailed: data.emailed === true } };
+}
 
 type IdentityPaths = { id_path: string; selfie_path: string };
 

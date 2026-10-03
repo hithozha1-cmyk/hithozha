@@ -42,6 +42,9 @@ Everything else is a **secret and lives only in Supabase Edge Function secrets**
 | `RAZORPAY_KEY_ID` | Razorpay dashboard → Settings → API Keys (use Test Mode while building) |
 | `RAZORPAY_KEY_SECRET` | Same page (shown once) |
 | `RAZORPAY_WEBHOOK_SECRET` | A random string you choose, then paste into the Razorpay webhook (see section 3) |
+| `RESEND_API_KEY` | Resend dashboard → API Keys. Used by `review-identity` to email freelancers when their ID check is approved or rejected |
+| `EMAIL_FROM` | Optional. e.g. `Hithozha <hello@yourdomain.com>`. Defaults to Resend's test sender, which can only email the Resend account owner until you verify a domain |
+| `APP_URL` | Optional. The link in those emails. Defaults to `https://hithozha.vercel.app` |
 
 `SUPABASE_URL` and `SUPABASE_ANON_KEY` are injected into Edge Functions automatically.
 
@@ -56,7 +59,7 @@ Everything else is a **secret and lives only in Supabase Edge Function secrets**
    npx supabase db push
    ```
 
-   Or paste the twelve files in `supabase/migrations/` into the SQL editor, in order.
+   Or paste the thirteen files in `supabase/migrations/` into the SQL editor, in order.
 
 ### Email and password sign-up with a verification code
 
@@ -130,6 +133,7 @@ Three more Edge Functions handle money. The app never talks to Razorpay directly
 | `create-payment` | on | Creates a Razorpay payment link for an order the caller is the client of. Reuses an open link instead of making a second one. |
 | `razorpay-webhook` | **off** | Receives `payment_link.paid`, checks the Razorpay signature, and marks the order paid. Idempotent, so retries are harmless. |
 | `cancel-order` | on | Cancels an unpaid order. It cancels the Razorpay link first and refuses if the link was just paid. |
+| `review-identity` | on | An admin approves or rejects an identity check. The decision is the `admin_review_identity` database function (which refuses non-admins); then the freelancer is emailed in their language. If the email fails the decision still stands and the admin is told. Deploy it, or admins cannot approve checks. |
 
 Set up:
 
@@ -202,7 +206,7 @@ Not built yet: editing a job after posting.
 - **Earnings** (Profile tab, for freelancers) shows three totals: *in escrow* (client paid, not yet approved), *released, awaiting payout* (approved, Hithozha still owes it) and *paid out*. An admin records a payout with **Mark as paid out**, which sets `payments.paid_out_at`.
 - **Tab badges** show unread messages and orders waiting for you to act (client: pay or approve; freelancer: deliver). They come from `my_badges()`, update live through Supabase Realtime, and unread state is stored per person in `conversation_reads`.
 - **Disputes.** Either person on a paid order can tap *Report a problem*; the order freezes (no delivery, no approval) until an admin decides: pay the freelancer, refund the client in full, or split (fee is 5% of what the freelancer keeps). The opener can withdraw before a decision. Both people see the decision and the admin's note. Opening the chat from the admin panel is audit-logged.
-- **Identity checks.** A freelancer sends an ID photo and a selfie (Profile → Verify your identity). They go to a private Supabase Storage bucket `identity`: only the person can upload (into their own folder), nobody can read them except admins, and admins only through links that expire after 60 seconds. The admin approves or rejects, then **deletes the photos by hand** from the admin panel (Identity checks → Photos to delete, with a delete-all button); the app tells users and admins that photos are deleted after verification, and the Privacy page says so. Only the result stays on record. Opening, deciding and deleting are all audit-logged.
+- **Identity checks.** A freelancer sends an ID photo and a selfie (Profile → Verify your identity). They go to a private Supabase Storage bucket `identity`: only the person can upload (into their own folder), nobody can read them except admins, and admins only through links that expire after 60 seconds. The admin approves or rejects, then **deletes the photos by hand** from the admin panel (Identity checks → Photos to delete, with a delete-all button); the app tells users and admins that photos are deleted after verification, and the Privacy page says so. Only the result stays on record. Opening, deciding and deleting are all audit-logged. **New freelancer-only accounts wait on a holding screen** (`app/verification.tsx`) after sign-up until an admin approves; the screen checks every 20 seconds and lets them in on its own, and they get an approval or rejection email (with the reason). People who also hire can use the app meanwhile but cannot apply to jobs until verified (enforced by a database policy, migration 13).
 - **Admin panel** (Profile tab, admins only; sidebar on wide screens, tabs on phones). Sections: Overview (today's numbers, money held, commission by day or month), Users (search, activity, suspend with a reason, restore), Jobs (search, close spam), Orders (payment and payout status), Disputes (read the chat, then refund, release or split), Identity checks (ID photo + selfie review, then delete the photos), Verifications (GST/Udyam shown masked in the list, in full only after opening a business, which is logged), Flagged chats (original text), Payouts (shows the freelancer's UPI id; you pay outside the app, then record the bank reference/UTR), Categories (Tamil + English names, hide or show), and the Audit log.
   - **Security:** every admin function begins with `require_admin()` in the database, so hiding the screen is only a convenience. Every approve, reject, payout, suspension, job close, category change and full-number view writes a row to `admin_audit_log`, which nobody can read or write directly. A suspended user cannot post jobs, apply, message or be hired (database triggers). Freelancers save where to be paid on the Earnings screen (`payout_details`, readable only by them and admins).
   - **Not built yet** (needs features that do not exist): withdrawal requests, Razorpay refunds (refunds are sent by bank transfer and recorded with a UTR for now), push announcements, featured listings/boosts. Make someone an admin with the SQL under "Making someone an admin".
@@ -256,7 +260,7 @@ src/
   lib/                supabase client, upload helper, shared types
 supabase/
   migrations/         SQL
-  functions/          r2-presign, create-payment, razorpay-webhook, cancel-order
+  functions/          r2-presign, create-payment, razorpay-webhook, cancel-order, review-identity
   tests/              database and Edge Function tests (npm test)
   templates/          branded email template for the sign-up code
 ```
