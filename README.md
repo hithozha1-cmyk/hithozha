@@ -59,7 +59,7 @@ Everything else is a **secret and lives only in Supabase Edge Function secrets**
    npx supabase db push
    ```
 
-   Or paste the fifteen files in `supabase/migrations/` into the SQL editor, in order.
+   Or paste the sixteen files in `supabase/migrations/` into the SQL editor, in order.
 
 ### Email and password sign-up with a verification code
 
@@ -217,17 +217,17 @@ Not built yet: editing a job after posting.
 
 The code is done; switching it on needs setup that only you can do.
 
-**How it works.** Every in-app notification is also sent to the person's phone. A phone registers an Expo push token after sign-in (`register_push_token`, removed again on sign-out). When a row is added to `notifications`, a Supabase **Database Webhook** calls the `send-push` Edge Function, which looks up the person's phones and language and sends the push through Expo. Tapping a push opens the same screen the inbox does. Phones Expo reports as gone are forgotten. It does nothing on the website or an emulator.
+**How it works.** Every in-app notification is also sent to the person's phone. A phone registers an Expo push token after sign-in (`register_push_token`, removed again on sign-out). When a row is added to `notifications`, a database trigger (`push_on_notification`, using `pg_net`) calls the `send-push` Edge Function, which looks up the person's phones and language and sends the push through Expo. Tapping a push opens the same screen the inbox does. Phones Expo reports as gone are forgotten. It does nothing on the website or an emulator.
 
 **Setup, once:**
 1. Run migration `20261003000015_push_tokens.sql`.
 2. Deploy `send-push` with **Verify JWT off** (the webhook cannot send a user JWT; it sends a shared secret instead). Add the secret `PUSH_WEBHOOK_SECRET` (a long random string you choose). `EXPO_ACCESS_TOKEN` is optional (only if you turn on "enhanced push security" in your Expo account).
-3. Supabase → **Database → Webhooks → Create**: table `public.notifications`, event **Insert**, type **Supabase Edge Functions**, function `send-push`, method POST, and add the HTTP header `x-webhook-secret` with the same value as `PUSH_WEBHOOK_SECRET`.
+3. Enable the **pg_net** extension (Database → Extensions). In the SQL editor run these two lines with your own values (they are stored encrypted in Vault, never in the repository): `select vault.create_secret('<the PUSH_WEBHOOK_SECRET value>', 'push_webhook_secret');` and `select vault.create_secret('https://<project>.supabase.co/functions/v1/send-push', 'push_function_url');`. Then run migration `20261003000016_push_trigger.sql`. (The dashboard's Database Webhooks screen can fail with "schema supabase_functions does not exist"; this does the same job without it.) A failing push never stops a notification from being saved. To see what happened: `select * from net._http_response order by created desc limit 5;`
 4. Android: create a free Firebase project, add an Android app with package name `com.hithozha.app`, download `google-services.json` into the project root (commit it; it is client configuration, not a secret), then run `npx eas-cli credentials` and upload an FCM V1 service-account key for Android.
 5. `npx eas-cli login`, `npx eas-cli init` (writes the project id into `app.json`), set the two public variables for builds (`npx eas-cli env:create --name EXPO_PUBLIC_SUPABASE_URL ...` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`, environment `preview`, visibility plain text), then `npx eas-cli build --profile preview --platform android`. Install the APK it produces on a phone.
 6. iPhone later: needs a paid Apple Developer account; `eas build --platform ios` then walks you through the push key.
 
-**Testing.** Sign in on the phone, allow notifications, then trigger one (for example apply to a job as a freelancer; the client's phone should buzz). If nothing arrives, check **Edge Functions → send-push → Logs**, and **Database → Webhooks** history.
+**Testing.** Sign in on the phone, allow notifications, then trigger one (for example apply to a job as a freelancer; the client's phone should buzz). If nothing arrives, check **Edge Functions → send-push → Logs**, and `net._http_response` (see step 3).
 
 ### Proposals, chat, orders and reviews
 
