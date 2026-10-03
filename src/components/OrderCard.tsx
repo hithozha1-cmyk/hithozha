@@ -13,6 +13,7 @@ export const ORDER_TONE: Record<OrderStatus, ChipTone> = {
   awaiting_payment: 'warning',
   in_progress: 'info',
   delivered: 'info',
+  disputed: 'danger',
   completed: 'success',
   cancelled: 'neutral',
 };

@@ -20,6 +20,7 @@ export type AdminStats = {
   payouts_due_paise: number;
   verifications_pending: number;
   flagged_week: number;
+  disputes_open: number;
 };
 
 export type RevenueRow = { period: string; orders: number; volume_paise: number; fees_paise: number };
@@ -177,3 +178,34 @@ export const fetchAuditLog = (offset: number) => call<AuditEntry[]>('admin_audit
 
 /** True for a bank reference (UTR) the database will accept. Mirrors admin_mark_paid_out. */
 export const isValidReference = (value: string): boolean => /^[A-Za-z0-9-]{6,40}$/.test(value.trim());
+
+export type AdminDispute = {
+  id: string;
+  order_id: string;
+  title: string;
+  client_name: string | null;
+  freelancer_name: string | null;
+  opened_by_name: string | null;
+  opened_by_role: 'client' | 'freelancer';
+  reason: string;
+  status: 'open' | 'resolved' | 'withdrawn';
+  resolution: 'refund' | 'release' | 'split' | null;
+  refund_paise: number | null;
+  refund_reference: string | null;
+  decision_note: string | null;
+  amount_paise: number;
+  platform_fee_paise: number;
+  previous_status: string;
+  created_at: string;
+  resolved_at: string | null;
+};
+
+export type DisputeMessage = { id: string; sender_name: string | null; sender_role: 'client' | 'freelancer'; body: string; created_at: string };
+
+export type Resolution = 'refund' | 'release' | 'split';
+
+export const fetchDisputes = (status: string | null, offset: number) =>
+  call<AdminDispute[]>('admin_disputes', { p_status: status, p_limit: PAGE_SIZE, p_offset: offset });
+export const fetchDisputeMessages = (id: string) => call<DisputeMessage[]>('admin_dispute_messages', { p_dispute_id: id });
+export const resolveDispute = (id: string, resolution: Resolution, refundPaise: number, reference: string | null, note: string) =>
+  call<null>('admin_resolve_dispute', { p_dispute_id: id, p_resolution: resolution, p_refund_paise: refundPaise, p_reference: reference, p_note: note });

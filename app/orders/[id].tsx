@@ -9,6 +9,7 @@ import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import { DisputePanel } from '@/components/DisputePanel';
 import { EmptyState } from '@/components/EmptyState';
 import { ORDER_TONE } from '@/components/OrderCard';
 import { Screen } from '@/components/Screen';
@@ -21,8 +22,10 @@ import {
   cancelUnpaidOrder,
   completeOrder,
   createPaymentLink,
+  fetchDispute,
   fetchOrder,
   markOrderDelivered,
+  type Dispute,
   type Order,
 } from '@/lib/orders';
 import { PLATFORM_FEE_PERCENT, fetchConversationId } from '@/lib/proposals';
@@ -48,13 +51,15 @@ export default function OrderDetailScreen() {
   const userId = session?.user.id;
 
   const [order, setOrder] = useState<Order | null>(null);
+  const [dispute, setDispute] = useState<Dispute | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<'pay' | 'check' | 'cancel' | 'deliver' | 'approve' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const result = await fetchOrder(id);
+    const [result, disputeResult] = await Promise.all([fetchOrder(id), fetchDispute(id)]);
     setOrder(result);
+    setDispute(disputeResult);
     setLoading(false);
     return result;
   }, [id]);
@@ -258,6 +263,7 @@ export default function OrderDetailScreen() {
             <Row label={t('orders.detail.youReceive')} value={formatINR(order.freelancer_earnings_paise)} strong />
           </>
         )}
+        {order.refunded_paise > 0 ? <Row label={isClient ? t('orders.detail.refundedYou') : t('orders.detail.refundedClient')} value={formatINR(order.refunded_paise)} /> : null}
         <Row label={t('orders.detail.delivery')} value={t('orders.detail.days', { count: order.delivery_days })} />
       </Card>
 
@@ -270,6 +276,8 @@ export default function OrderDetailScreen() {
           </View>
         </View>
       ) : null}
+      <DisputePanel order={order} dispute={dispute} userId={userId} onChanged={load} />
+
       {order.status === 'completed' ? (
         <View style={styles.escrow}>
           <Lock size={18} color={colors.success} strokeWidth={2} />

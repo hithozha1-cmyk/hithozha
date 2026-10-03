@@ -196,7 +196,8 @@
       "in_progress": "In progress",
       "delivered": "Delivered",
       "completed": "Completed",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "disputed": "In dispute"
     },
     "card": {
       "youPay": "You pay {{amount}}",
@@ -213,7 +214,9 @@
       "days": "{{count}} days",
       "rated": "You rated this order {{rating}} out of 5.",
       "notFoundTitle": "Order not found",
-      "notFoundBody": "This order is not available."
+      "notFoundBody": "This order is not available.",
+      "refundedYou": "Refunded to you",
+      "refundedClient": "Refunded to the client"
     },
     "hint": {
       "awaiting_payment": {
@@ -235,6 +238,10 @@
       "cancelled": {
         "client": "This order was cancelled.",
         "freelancer": "This order was cancelled."
+      },
+      "disputed": {
+        "client": "A problem was reported. Our team is looking at it. Nothing moves until we decide.",
+        "freelancer": "A problem was reported. Our team is looking at it. Nothing moves until we decide."
       }
     },
     "escrow": {
@@ -622,7 +629,8 @@
       "chats": "Flagged chats",
       "payouts": "Payouts",
       "categories": "Categories",
-      "audit": "Audit log"
+      "audit": "Audit log",
+      "disputes": "Disputes"
     },
     "overview": {
       "needsYou": "Needs you",
@@ -648,7 +656,8 @@
       "perDay": "By day",
       "perMonth": "By month",
       "noRevenue": "No completed orders yet.",
-      "orderCount": "{{count}} orders"
+      "orderCount": "{{count}} orders",
+      "disputes": "Open disputes"
     },
     "users": {
       "search": "Search by name or email",
@@ -707,7 +716,8 @@
       "amount": "Amount",
       "amountLine": "{{amount}} (platform fee {{fee}})",
       "payment": "Payment",
-      "paidOut": "Paid out to freelancer"
+      "paidOut": "Paid out to freelancer",
+      "disputed": "In dispute"
     },
     "payment": {
       "created": "Link created",
@@ -751,7 +761,9 @@
         "restore_user": "User restored",
         "close_job": "Job closed",
         "add_category": "Category added",
-        "edit_category": "Category edited"
+        "edit_category": "Category edited",
+        "resolve_dispute": "Dispute decided",
+        "view_dispute_chat": "Read a dispute's chat"
       }
     },
     "categories": {
@@ -767,6 +779,54 @@
       "save": "Save",
       "invalid": "Fill in both names and a short name like web-design.",
       "icon": "Icon"
+    },
+    "disputes": {
+      "hint": "A frozen order stays frozen until you decide. Read the chat first; reading it is recorded. Send any refund by bank transfer first, then enter its reference here.",
+      "status": "Dispute status",
+      "open": "Open",
+      "resolved": "Decided",
+      "withdrawn": "Withdrawn",
+      "openedBy": "Opened by {{name}} ({{role}}), {{when}}",
+      "readChat": "Read the chat",
+      "chatLogged": "Opening this chat is recorded in the audit log.",
+      "noMessages": "No messages in this chat.",
+      "decision": "Decision",
+      "resolution": {
+        "release": "Pay the freelancer",
+        "refund": "Refund the client",
+        "split": "Split"
+      },
+      "refundAmount": "Refund to the client in rupees (up to {{max}})",
+      "refundReference": "Bank reference (UTR) of the refund",
+      "note": "Explain the decision (both people will see this)",
+      "decide": "Decide",
+      "refunded": "Refunded",
+      "confirmTitle": "Decide this dispute?",
+      "confirm": {
+        "release": "The order completes and the freelancer is paid. This cannot be undone.",
+        "refund": "The client gets {{amount}} back and the order is cancelled. This cannot be undone.",
+        "split": "The client gets {{amount}} back and the freelancer is paid the rest less the fee. This cannot be undone."
+      },
+      "noteNeeded": "Explain your decision in a few words.",
+      "splitInvalid": "A split must refund part of the payment, not nothing and not everything.",
+      "referenceNeeded": "Enter the bank reference (UTR) of the refund."
     }
+  },
+  "dispute": {
+    "report": "Report a problem",
+    "reportHint": "Use this only if you cannot sort it out in chat. The order is frozen until our team decides.",
+    "send": "Send to our team",
+    "describe": "What went wrong? (at least 10 characters)",
+    "openTitle": "Dispute open",
+    "openedByYou": "You reported this problem:",
+    "openedByOther": "The other person reported this problem:",
+    "reviewing": "Our team is reading the chat and will decide. You do not need to do anything.",
+    "withdraw": "Withdraw the dispute",
+    "decidedTitle": "Dispute decided",
+    "decidedRefund": "The full payment, {{amount}}, goes back to the client.",
+    "decidedSplit": "{{refund}} goes back to the client. The freelancer receives {{earnings}} after the platform fee.",
+    "decidedRelease": "The work was accepted and the payment goes to the freelancer.",
+    "refundSentClient": "We send refunds by bank transfer to your account.",
+    "refundSentFreelancer": "The refund goes to the client by bank transfer."
   }
 }

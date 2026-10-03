@@ -23,7 +23,7 @@ export function summarizeEarnings(orders: EarningsOrder[]): EarningsSummary {
   const total: EarningsSummary = { inEscrow: 0, awaitingPayout: 0, paidOut: 0 };
   for (const order of orders) {
     const paise = order.freelancer_earnings_paise;
-    if (order.status === 'in_progress' || order.status === 'delivered') total.inEscrow += paise;
+    if (order.status === 'in_progress' || order.status === 'delivered' || order.status === 'disputed') total.inEscrow += paise;
     else if (order.status === 'completed') {
       if (paidOutAt(order)) total.paidOut += paise;
       else if (order.payments.some((p) => p.status === 'released')) total.awaitingPayout += paise;
@@ -39,7 +39,7 @@ export async function fetchEarningsOrders(userId: string): Promise<EarningsOrder
     .from('orders')
     .select('id, title, status, freelancer_earnings_paise, completed_at, payments(status, paid_out_at)')
     .eq('freelancer_id', userId)
-    .in('status', ['in_progress', 'delivered', 'completed'])
+    .in('status', ['in_progress', 'delivered', 'disputed', 'completed'])
     .order('created_at', { ascending: false })
     .limit(200);
   return error ? null : ((data ?? []) as unknown as EarningsOrder[]);

@@ -17,6 +17,7 @@ const ORDER_TONE: Record<string, ChipTone> = {
   awaiting_payment: 'warning',
   in_progress: 'info',
   delivered: 'info',
+  disputed: 'danger',
   completed: 'success',
   cancelled: 'neutral',
 };
@@ -93,7 +94,7 @@ export function Orders() {
         onChange={setStatus}
         options={[
           { value: null, label: t('admin.all') },
-          ...['awaiting_payment', 'in_progress', 'delivered', 'completed', 'cancelled'].map((value) => ({ value, label: t(`admin.orders.${value}`) })),
+          ...['awaiting_payment', 'in_progress', 'delivered', 'disputed', 'completed', 'cancelled'].map((value) => ({ value, label: t(`admin.orders.${value}`) })),
         ]}
       />
       {list.failed ? <ErrorLine text={t('admin.failed')} /> : null}

@@ -491,6 +491,83 @@ const bootstrap = `
   check('failed admin actions leave no audit entry', !acts.includes('reject_company'));
   check('audit entries name the admin and keep the reason', log.every((l) => l.admin_name === 'Admin') && log.some((l) => l.details.reason === 'Scam reports'));
 
+  // ---- migration 0011: disputes -------------------------------------------
+  let linkNo = 0;
+  const paidOrder = async (freelancer, price) => {
+    const jb = await job(clientA);
+    const pr = await propose(freelancer, jb.id, price);
+    const oid = (await user(clientA, () => one(`select public.accept_proposal($1) as id`, [pr.id]))).id;
+    linkNo += 1;
+    await service(() => q(`insert into public.payments (order_id, razorpay_payment_link_id, payment_url, amount_paise) values ($1, $2, 'https://rzp.io/i/d', $3)`, [oid, 'plink_d' + linkNo, price]));
+    await service(() => q(`select public.record_payment_captured($1, $2, $3)`, ['plink_d' + linkNo, 'pay_d' + linkNo, price]));
+    return { oid, pid: pr.id };
+  };
+  const D1 = await paidOrder(freelancerF, 100000);
+  const why = 'The logo files never arrived and the freelancer stopped replying.';
+  await rejects('an outsider cannot dispute an order', () => user(outsider, () => q(`select public.open_dispute($1, $2)`, [D1.oid, why])), 'P0002');
+  await rejects('a dispute needs a real description', () => user(clientA, () => q(`select public.open_dispute($1, 'bad')`, [D1.oid])), '22023');
+  await rejects('an unpaid order cannot be disputed', () => user(clientA, () => q(`select public.open_dispute($1, $2)`, [orderRId, why])), '55000');
+  await rejects('signed-out users cannot open disputes', () => anon(() => q(`select public.open_dispute($1, $2)`, [D1.oid, why])), '42501');
+  const dp1 = (await user(clientA, () => one(`select public.open_dispute($1, $2) as id`, [D1.oid, why]))).id;
+  check('opening a dispute freezes the order', (await one(`select status from public.orders where id = $1`, [D1.oid])).status === 'disputed');
+  await rejects('an order cannot be disputed twice at once', () => user(freelancerF, () => q(`select public.open_dispute($1, $2)`, [D1.oid, why])), '55000');
+  await rejects('a disputed order cannot be delivered', () => user(freelancerF, () => q(`select public.mark_order_delivered($1)`, [D1.oid])), 'P0002');
+  await rejects('a disputed order cannot be approved', () => user(clientA, () => q(`select public.complete_order($1)`, [D1.oid])), '55000');
+  check('both people on the order can read the dispute', (await user(freelancerF, () => q(`select id from public.disputes`))).length === 1 && (await user(clientA, () => q(`select id from public.disputes where id = $1`, [dp1]))).length === 1);
+  check('outsiders cannot read disputes', (await user(outsider, () => q(`select id from public.disputes`))).length === 0);
+  await rejects('disputes cannot be written directly', () => user(clientA, () => q(`update public.disputes set status = 'resolved' where id = $1`, [dp1])), '42501');
+  await rejects('only the opener can withdraw', () => user(freelancerF, () => q(`select public.withdraw_dispute($1)`, [dp1])), 'P0002');
+  await user(clientA, () => q(`select public.withdraw_dispute($1)`, [dp1]));
+  check('withdrawing puts the order back', (await one(`select status from public.orders where id = $1`, [D1.oid])).status === 'in_progress');
+  await rejects('a withdrawn dispute cannot be withdrawn again', () => user(clientA, () => q(`select public.withdraw_dispute($1)`, [dp1])), '55000');
+  const dp2 = (await user(freelancerF, () => one(`select public.open_dispute($1, $2) as id`, [D1.oid, 'The client keeps changing the brief after I deliver.']))).id;
+  const convD = (await one(`select id from public.conversations where proposal_id = $1`, [D1.pid])).id;
+  await user(freelancerF, () => q(`select public.send_message($1, 'I did send the files yesterday')`, [convD]));
+
+  // admin side
+  await rejects('non-admins cannot list disputes', () => user(clientA, () => q(`select * from public.admin_disputes('open', 10, 0)`)), '42501');
+  await rejects('non-admins cannot read a dispute chat', () => user(clientA, () => q(`select * from public.admin_dispute_messages($1)`, [dp2])), '42501');
+  const openList = await user(admin, () => q(`select * from public.admin_disputes('open', 10, 0)`));
+  check('admin sees open disputes and who opened them', openList.length === 1 && openList[0].opened_by_role === 'freelancer' && openList[0].amount_paise === 100000);
+  check('admin reads the chat behind a dispute', (await user(admin, () => q(`select * from public.admin_dispute_messages($1)`, [dp2]))).some((m) => m.body.includes('yesterday') && m.sender_role === 'freelancer'));
+  check('the overview counts open disputes', (await user(admin, async () => (await one(`select public.admin_stats() as s`)).s)).disputes_open === 1);
+
+  const resolve = (id, res, refund, ref, note = 'Decision after reading the chat') => user(admin, () => q(`select public.admin_resolve_dispute($1, $2, $3, $4, $5)`, [id, res, refund, ref, note]));
+  await rejects('non-admins cannot resolve disputes', () => user(clientA, () => q(`select public.admin_resolve_dispute($1, 'release', 0, null, 'because I said so')`, [dp2])), '42501');
+  await rejects('an unknown resolution is refused', () => resolve(dp2, 'burn', 0, null), '22023');
+  await rejects('a decision needs an explanation', () => resolve(dp2, 'release', 0, null, 'no'), '22023');
+  await rejects('a refund needs the bank reference', () => resolve(dp2, 'refund', 0, null), '22023');
+  await rejects('a split cannot refund nothing', () => resolve(dp2, 'split', 0, 'UTR000111'), '22023');
+  await rejects('a split cannot refund everything', () => resolve(dp2, 'split', 100000, 'UTR000111'), '22023');
+  check('refused decisions leave the dispute open', (await one(`select status from public.disputes where id = $1`, [dp2])).status === 'open');
+
+  await resolve(dp2, 'refund', 0, 'REFUND-0001');
+  const refunded = await one(`select * from public.orders where id = $1`, [D1.oid]);
+  check('a refund cancels the order and returns the whole payment', refunded.status === 'cancelled' && refunded.refunded_paise === 100000 && refunded.platform_fee_paise === 0 && refunded.freelancer_earnings_paise === 0);
+  check('a refund marks the payment refunded', (await one(`select status from public.payments where order_id = $1`, [D1.oid])).status === 'refunded');
+  check('the dispute records who decided and the reference', (await user(clientA, () => one(`select * from public.disputes where id = $1`, [dp2]))).refund_reference === 'REFUND-0001');
+  await rejects('a resolved dispute cannot be resolved again', () => resolve(dp2, 'release', 0, null), '55000');
+
+  const D2 = await paidOrder(freelancerF, 100000);
+  const doneBefore = (await one(`select completed_orders from public.freelancer_profiles where user_id = $1`, [freelancerF])).completed_orders;
+  const dp3 = (await user(clientA, () => one(`select public.open_dispute($1, $2) as id`, [D2.oid, why]))).id;
+  await resolve(dp3, 'release', 0, null);
+  const released = await one(`select * from public.orders where id = $1`, [D2.oid]);
+  check('a release completes the order with the usual fee', released.status === 'completed' && released.platform_fee_paise === 5000 && released.freelancer_earnings_paise === 95000 && released.refunded_paise === 0);
+  check('a release counts as a completed job and is due for payout', (await one(`select completed_orders from public.freelancer_profiles where user_id = $1`, [freelancerF])).completed_orders === doneBefore + 1 && (await user(admin, () => q(`select * from public.admin_payouts_due()`))).some((d) => d.order_id === D2.oid));
+
+  const D3 = await paidOrder(freelancerG, 100000);
+  const dp4 = (await user(freelancerG, () => one(`select public.open_dispute($1, $2) as id`, [D3.oid, why]))).id;
+  await resolve(dp4, 'split', 40000, 'REFUND-0002');
+  const split = await one(`select * from public.orders where id = $1`, [D3.oid]);
+  check('a split refunds part and charges the fee on the rest', split.status === 'completed' && split.refunded_paise === 40000 && split.platform_fee_paise === 3000 && split.freelancer_earnings_paise === 57000);
+  check('the amounts on a split order still add up', split.platform_fee_paise + split.freelancer_earnings_paise + split.refunded_paise === split.amount_paise);
+  check('a split releases the payment for payout', (await one(`select status from public.payments where order_id = $1`, [D3.oid])).status === 'released');
+  check('nothing is left open', (await user(admin, () => q(`select * from public.admin_disputes('open', 10, 0)`))).length === 0);
+  check('resolved disputes are listed with their decision', (await user(admin, () => q(`select * from public.admin_disputes('resolved', 10, 0)`))).some((d) => d.resolution === 'split' && d.refund_paise === 40000));
+  const dpLog = (await user(admin, () => q(`select action, details from public.admin_audit_log_list(100, 0)`)));
+  check('the audit log records disputes decided and chats read', dpLog.some((l) => l.action === 'resolve_dispute' && l.details.resolution === 'split') && dpLog.some((l) => l.action === 'view_dispute_chat'));
+
   // ---- signed-out access is closed everywhere ---------------------------
   for (const table of ['jobs', 'proposals', 'conversations', 'messages', 'orders', 'payments', 'reviews', 'companies', 'freelancer_profiles']) {
     await rejects(`signed-out users cannot read ${table}`, () => anon(() => q(`select 1 from public.${table} limit 1`)), '42501');

@@ -10,7 +10,7 @@ import { colors, type } from '@/theme';
 
 import { Empty, ErrorLine, Loading } from './ui';
 
-type Props = { goTo: (section: 'verifications' | 'payouts' | 'chats') => void };
+type Props = { goTo: (section: 'verifications' | 'payouts' | 'chats' | 'disputes') => void };
 
 function Tile({ label, value, tone }: { label: string; value: string; tone?: 'alert' }) {
   return (
@@ -48,6 +48,9 @@ export function Overview({ goTo }: Props) {
     <View style={styles.wrap}>
       <Text style={styles.heading}>{t('admin.overview.needsYou')}</Text>
       <View style={styles.grid}>
+        <TapTile onPress={() => goTo('disputes')}>
+          <Tile label={t('admin.overview.disputes')} value={n(stats.disputes_open)} tone={stats.disputes_open > 0 ? 'alert' : undefined} />
+        </TapTile>
         <TapTile onPress={() => goTo('verifications')}>
           <Tile label={t('admin.overview.verifications')} value={n(stats.verifications_pending)} tone={stats.verifications_pending > 0 ? 'alert' : undefined} />
         </TapTile>

@@ -8,12 +8,13 @@ import { Categories } from '@/admin/Categories';
 import { Overview } from '@/admin/Overview';
 import { Chats, Users } from '@/admin/People';
 import { Audit, Payouts, Verifications } from '@/admin/Review';
+import { Disputes } from '@/admin/Disputes';
 import { Jobs, Orders } from '@/admin/Work';
 import { Screen } from '@/components/Screen';
 import { useAuth } from '@/providers/AuthProvider';
 import { colors, radius, type } from '@/theme';
 
-const SECTIONS = ['overview', 'users', 'jobs', 'orders', 'verifications', 'chats', 'payouts', 'categories', 'audit'] as const;
+const SECTIONS = ['overview', 'users', 'jobs', 'orders', 'disputes', 'verifications', 'chats', 'payouts', 'categories', 'audit'] as const;
 type Section = (typeof SECTIONS)[number];
 
 const WIDE = 900;
@@ -67,6 +68,7 @@ export default function AdminScreen() {
       {section === 'users' && <Users initialSearch={userSearch} />}
       {section === 'jobs' && <Jobs />}
       {section === 'orders' && <Orders />}
+      {section === 'disputes' && <Disputes />}
       {section === 'verifications' && <Verifications />}
       {section === 'chats' && <Chats openUser={goToUser} />}
       {section === 'payouts' && <Payouts />}

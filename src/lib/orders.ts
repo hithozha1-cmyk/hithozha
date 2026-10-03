@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import type { VerificationStatus } from '@/lib/types';
 
-export const ORDER_STATUSES = ['awaiting_payment', 'in_progress', 'delivered', 'completed', 'cancelled'] as const;
+export const ORDER_STATUSES = ['awaiting_payment', 'in_progress', 'delivered', 'disputed', 'completed', 'cancelled'] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 type Person = { full_name: string | null; avatar_url: string | null };
@@ -17,6 +17,7 @@ export type Order = {
   amount_paise: number;
   platform_fee_paise: number;
   freelancer_earnings_paise: number;
+  refunded_paise: number;
   delivery_days: number;
   status: OrderStatus;
   delivered_at: string | null;
@@ -30,7 +31,7 @@ export type Order = {
 
 export const ORDER_SELECT =
   'id, proposal_id, job_id, client_id, freelancer_id, company_id, title, amount_paise, platform_fee_paise, ' +
-  'freelancer_earnings_paise, delivery_days, status, delivered_at, completed_at, created_at, ' +
+  'freelancer_earnings_paise, refunded_paise, delivery_days, status, delivered_at, completed_at, created_at, ' +
   'client:profiles!client_id(full_name, avatar_url), freelancer:profiles!freelancer_id(full_name, avatar_url), ' +
   'company:companies!company_id(id, name, logo_url, verification_status), review:reviews(id, rating)';
 
@@ -76,3 +77,33 @@ export async function cancelUnpaidOrder(orderId: string): Promise<'cancelled' | 
   const body = error && 'context' in error ? await (error.context as Response).json().catch(() => null) : null;
   return body?.error === 'already_paid' ? 'already_paid' : 'failed';
 }
+
+export type Dispute = {
+  id: string;
+  order_id: string;
+  opened_by: string;
+  reason: string;
+  status: 'open' | 'resolved' | 'withdrawn';
+  resolution: 'refund' | 'release' | 'split' | null;
+  refund_paise: number | null;
+  refund_reference: string | null;
+  decision_note: string | null;
+  created_at: string;
+  resolved_at: string | null;
+};
+
+/** The latest dispute on an order, or null when there is none (or it was withdrawn). */
+export async function fetchDispute(orderId: string): Promise<Dispute | null> {
+  const { data } = await supabase
+    .from('disputes')
+    .select('id, order_id, opened_by, reason, status, resolution, refund_paise, refund_reference, decision_note, created_at, resolved_at')
+    .eq('order_id', orderId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const dispute = data as Dispute | null;
+  return dispute && dispute.status !== 'withdrawn' ? dispute : null;
+}
+
+export const openDispute = (orderId: string, reason: string) => rpc('open_dispute', { p_order_id: orderId, p_reason: reason });
+export const withdrawDispute = (disputeId: string) => rpc('withdraw_dispute', { p_dispute_id: disputeId });
