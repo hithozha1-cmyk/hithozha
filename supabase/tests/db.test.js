@@ -47,6 +47,20 @@ const bootstrap = `
   grant usage on schema storage to anon, authenticated, service_role;
   grant all on storage.buckets, storage.objects to authenticated, service_role;
   grant execute on function storage.foldername(text) to anon, authenticated, service_role;
+  -- Just enough of Vault and pg_net for the push trigger.
+  create schema vault;
+  create table vault.decrypted_secrets (name text primary key, decrypted_secret text);
+  create schema net;
+  create table net.calls (url text, body jsonb, headers jsonb);
+  grant usage on schema net, vault to service_role;
+  grant all on net.calls, vault.decrypted_secrets to service_role;
+  create function net.http_post(url text, body jsonb default '{}', params jsonb default '{}', headers jsonb default '{}', timeout_milliseconds integer default 5000)
+    returns bigint language plpgsql as
+    $$ begin
+      if url like '%explode%' then raise exception 'network down'; end if;
+      insert into net.calls values (url, body, headers);
+      return 1;
+    end $$;
 `;
 
 (async () => {
@@ -774,6 +788,27 @@ const bootstrap = `
   for (let n = 10; n < 22; n++) await register(nFree, tok(n));
   const kept = await service(() => q(`select token from public.push_tokens where user_id = $1`, [nFree]));
   check('only the ten newest phones are kept', kept.length === 10 && kept.some((k) => k.token === tok(21)) && !kept.some((k) => k.token === tok(10)));
+
+  // ---- migration 0016: the push trigger ----------------------------------------
+  const pushCalls = () => service(() => q(`select * from net.calls`));
+  const makeNote = async () => (await service(() => one(`select public.notify_user($1, 'message', '{"conversation_id":"c","name":"Z"}') as x`, [nFree])));
+  const callsBefore = (await pushCalls()).length;
+  await makeNote();
+  check('without the Vault settings a notification is saved and nothing is sent', (await pushCalls()).length === callsBefore);
+
+  await service(() => q(`insert into vault.decrypted_secrets values ('push_webhook_secret', 'the-secret'), ('push_function_url', 'https://x.supabase.co/functions/v1/send-push')`));
+  await makeNote();
+  const sent = (await pushCalls()).slice(callsBefore);
+  check('a new notification calls send-push once', sent.length === 1 && sent[0].url === 'https://x.supabase.co/functions/v1/send-push');
+  check('the call carries the shared secret', sent[0].headers['x-webhook-secret'] === 'the-secret');
+  check('the call describes the notification for the right person', sent[0].body.type === 'INSERT' && sent[0].body.table === 'notifications' && sent[0].body.record.user_id === nFree && sent[0].body.record.kind === 'message' && sent[0].body.record.data.name === 'Z');
+
+  const countBefore = (await service(() => one(`select count(*)::int as n from public.notifications`))).n;
+  await service(() => q(`update vault.decrypted_secrets set decrypted_secret = 'https://explode.example/send' where name = 'push_function_url'`));
+  await makeNote();
+  check('a failing push never blocks the notification from being saved', (await service(() => one(`select count(*)::int as n from public.notifications`))).n === countBefore + 1);
+  await service(() => q(`delete from vault.decrypted_secrets`));
+  check('the push trigger is not callable by the app', await (async () => { try { await user(nClient, () => q(`select public.push_on_notification()`)); return false; } catch (e) { return e.code === '42501'; } })());
 
   // ---- signed-out access is closed everywhere ---------------------------
   for (const table of ['jobs', 'proposals', 'conversations', 'messages', 'orders', 'payments', 'reviews', 'companies', 'freelancer_profiles']) {
