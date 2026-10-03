@@ -12,15 +12,16 @@ import { Screen } from '@/components/Screen';
 import { VerificationChip } from '@/components/VerificationChip';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { confirmAction } from '@/lib/confirm';
-import { isClientRole } from '@/lib/types';
+import { isClientRole, isFreelancerRole } from '@/lib/types';
 import { useAuth } from '@/providers/AuthProvider';
 import { colors, radius, type } from '@/theme';
 
 export default function ProfileTabScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { profile, company, signOut } = useAuth();
+  const { profile, company, isAdmin, signOut } = useAuth();
   const client = isClientRole(profile?.role ?? null);
+  const freelancer = isFreelancerRole(profile?.role ?? null);
 
   const confirmSignOut = () =>
     confirmAction({
@@ -43,6 +44,26 @@ export default function ProfileTabScreen() {
           </View>
         ) : null}
       </View>
+
+      <Button variant="outline" title={t('account.editProfile')} onPress={() => router.push('/account/edit-profile')} style={styles.editProfile} />
+
+      {client ? <Button variant="outline" title={t('account.myJobs')} onPress={() => router.push('/jobs/mine')} style={styles.editProfile} /> : null}
+      {isAdmin ? <Button variant="dark" title={t('account.adminTools')} onPress={() => router.push('/admin')} style={styles.editProfile} /> : null}
+
+      {freelancer ? (
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('account.freelancerSection')}</Text>
+          <Button variant="outline" title={t('account.earnings')} onPress={() => router.push('/account/earnings')} />
+          <Button variant="outline" title={t('account.freelancerEditAction')} onPress={() => router.push('/account/freelancer')} />
+          {profile ? (
+            <Button
+              variant="outline"
+              title={t('account.viewPublic')}
+              onPress={() => router.push({ pathname: '/freelancer/[id]', params: { id: profile.id } })}
+            />
+          ) : null}
+        </Card>
+      ) : null}
 
       {client && company ? (
         <Card style={styles.section}>
@@ -114,6 +135,7 @@ const styles = StyleSheet.create({
   city: { ...type.body, color: colors.muted },
   roleBadge: { marginTop: 6, paddingHorizontal: 12, paddingVertical: 4, borderRadius: radius.pill, backgroundColor: colors.tintBlue },
   roleText: { ...type.caption, color: colors.accent },
+  editProfile: { marginTop: 8 },
   section: { gap: 12, marginTop: 20 },
   sectionTitle: { ...type.subheading, color: colors.text },
   companyHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56 },

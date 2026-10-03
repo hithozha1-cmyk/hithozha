@@ -24,7 +24,7 @@ void SplashScreen.preventAutoHideAsync();
 
 function Gate({ ready }: { ready: boolean }) {
   const { t } = useTranslation();
-  const { session, loading, profileError, onboarded, refreshProfile } = useAuth();
+  const { signedIn, loading, profileError, onboarded, refreshProfile } = useAuth();
   const settled = ready && !loading;
 
   useEffect(() => {
@@ -35,7 +35,7 @@ function Gate({ ready }: { ready: boolean }) {
 
   if (!ready) return null;
 
-  if (session && profileError) {
+  if (signedIn && profileError) {
     return (
       <Screen scroll={false} footer={<Button title={t('common.retry')} onPress={() => void refreshProfile()} />}>
         <EmptyState icon={WifiOff} title={t('profile.loadFailedTitle')} message={t('profile.loadFailedBody')} />
@@ -47,13 +47,15 @@ function Gate({ ready }: { ready: boolean }) {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={!session}>
+      {/* Public: Razorpay and new visitors can read these without an account. */}
+      <Stack.Screen name="legal/[page]" />
+      <Stack.Protected guard={!signedIn}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
-      <Stack.Protected guard={!!session && !onboarded}>
+      <Stack.Protected guard={signedIn && !onboarded}>
         <Stack.Screen name="(onboarding)" />
       </Stack.Protected>
-      <Stack.Protected guard={!!session && onboarded}>
+      <Stack.Protected guard={signedIn && onboarded}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="company/[id]" />
         <Stack.Screen name="company/edit" />
@@ -66,6 +68,12 @@ function Gate({ ready }: { ready: boolean }) {
         <Stack.Screen name="orders/[id]" />
         <Stack.Screen name="orders/review/[id]" />
         <Stack.Screen name="freelancer/[id]" />
+        <Stack.Screen name="account/edit-profile" />
+        <Stack.Screen name="account/freelancer" />
+        <Stack.Screen name="account/earnings" />
+        <Stack.Screen name="jobs/mine" />
+        <Stack.Screen name="jobs/edit/[id]" />
+        <Stack.Screen name="admin" />
       </Stack.Protected>
     </Stack>
   );

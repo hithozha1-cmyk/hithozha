@@ -48,3 +48,6 @@ yarn-error.*
 
 # Cloudflare Wrangler local state
 .wrangler/
+
+# Generated: all migrations in one file for pasting into a new project
+supabase/all-migrations.sql

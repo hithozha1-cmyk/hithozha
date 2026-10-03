@@ -63,14 +63,52 @@ export const posterName = (job: Job): string => job.company?.name ?? job.client?
 
 const asJobs = (data: unknown): Job[] => (data ?? []) as Job[];
 
-export async function fetchOpenJobs(): Promise<Job[] | null> {
+export type JobFilters = {
+  query: string;
+  category: string | null;
+  jobType: JobType | null;
+  /** In-person jobs in this city. */
+  city: string | null;
+};
+
+export const EMPTY_FILTERS: JobFilters = { query: '', category: null, jobType: null, city: null };
+
+/** Keeps letters (any language), digits and spaces, so the text is safe inside a search filter. */
+export const sanitizeSearch = (input: string): string =>
+  input.replace(/[^\p{L}\p{M}\p{N} ]/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+
+/** How many filters (not counting the search words) are switched on. */
+export const activeFilterCount = (filters: JobFilters): number =>
+  [filters.category, filters.jobType, filters.city].filter(Boolean).length;
+
+export const hasActiveFilters = (filters: JobFilters): boolean =>
+  activeFilterCount(filters) > 0 || sanitizeSearch(filters.query) !== '';
+
+export async function fetchOpenJobs(filters: JobFilters = EMPTY_FILTERS): Promise<Job[] | null> {
+  let query = supabase.from('jobs').select(JOB_SELECT).eq('status', 'open');
+
+  const term = sanitizeSearch(filters.query);
+  if (term) query = query.or(`title.ilike.*${term}*,description.ilike.*${term}*`);
+  if (filters.category) query = query.eq('category_slug', filters.category);
+  if (filters.jobType) query = query.eq('job_type', filters.jobType);
+  if (filters.city) query = query.eq('work_mode', 'in_person').eq('city', filters.city);
+
+  const { data, error } = await query.order('created_at', { ascending: false }).limit(50);
+  return error ? null : asJobs(data);
+}
+
+export type MyJob = Job & { proposals: { count: number }[] };
+
+/** Every job this person posted, open or closed, with how many proposals are waiting. */
+export async function fetchMyJobs(userId: string): Promise<MyJob[] | null> {
   const { data, error } = await supabase
     .from('jobs')
-    .select(JOB_SELECT)
-    .eq('status', 'open')
+    .select(`${JOB_SELECT}, proposals(count)`)
+    .eq('client_id', userId)
+    .eq('proposals.status', 'pending')
     .order('created_at', { ascending: false })
-    .limit(50);
-  return error ? null : asJobs(data);
+    .limit(100);
+  return error ? null : ((data ?? []) as unknown as MyJob[]);
 }
 
 export async function fetchCompanyJobs(companyId: string): Promise<Job[] | null> {

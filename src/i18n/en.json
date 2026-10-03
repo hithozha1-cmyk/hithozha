@@ -32,7 +32,8 @@
     "passwordTooShort": "Use at least {{count}} characters.",
     "invalidCredentials": "The email or password is wrong.",
     "signUpFailed": "We could not create your account. Please try again.",
-    "signInFailed": "We could not sign you in. Please try again."
+    "signInFailed": "We could not sign you in. Please try again.",
+    "forgotPassword": "Forgot password?"
   },
   "otp": {
     "title": "Verify your email",
@@ -168,7 +169,18 @@
     "title": "Browse jobs",
     "emptyTitle": "No open jobs yet",
     "emptyBody": "New jobs from clients will show up here.",
-    "errorTitle": "We could not load jobs"
+    "errorTitle": "We could not load jobs",
+    "searchPlaceholder": "Search jobs",
+    "clearSearch": "Clear search",
+    "categoryLabel": "Category",
+    "typeLabel": "Job type",
+    "cityLabel": "City",
+    "anyCity": "Any city",
+    "allCategories": "All categories",
+    "allTypes": "All job types",
+    "clear": "Clear filters",
+    "noResultsTitle": "No jobs match your search",
+    "noResultsBody": "Try different words or remove a filter."
   },
   "messages": {
     "emptyTitle": "No messages yet",
@@ -444,7 +456,8 @@
       "closeBody": "Freelancers will no longer see it.",
       "closeFailed": "We could not close the job. Please try again.",
       "notFoundTitle": "Job not found",
-      "notFoundBody": "This job is not available."
+      "notFoundBody": "This job is not available.",
+      "edit": "Edit job"
     }
   },
   "proposals": {
@@ -526,5 +539,74 @@
     "completed": "Orders completed",
     "notFoundTitle": "Freelancer not found",
     "notFoundBody": "This profile is not available."
+  },
+  "account": {
+    "editProfile": "Edit profile",
+    "editTitle": "Edit profile",
+    "save": "Save changes",
+    "saveFailed": "We could not save your changes. Please try again.",
+    "freelancerSection": "Freelancer profile",
+    "freelancerEditAction": "Edit freelancer details",
+    "freelancerTitle": "Freelancer details",
+    "viewPublic": "View my public page",
+    "myJobs": "My jobs",
+    "earnings": "Earnings",
+    "adminTools": "Admin tools"
+  },
+  "forgot": {
+    "title": "Reset your password",
+    "subtitle": "Enter your email and we will send you a code.",
+    "sendCode": "Send code",
+    "sentTitle": "Check your email",
+    "sentSubtitle": "If an account exists for {{email}}, we sent it a verification code.",
+    "newPassword": "New password",
+    "newPasswordPlaceholder": "At least {{count}} characters",
+    "reset": "Reset password",
+    "resetFailed": "We could not save your new password. Please try again."
+  },
+  "myJobs": {
+    "title": "My jobs",
+    "emptyTitle": "No jobs posted yet",
+    "emptyBody": "Jobs you post will be listed here, with the proposals waiting on each.",
+    "errorTitle": "We could not load your jobs",
+    "status": {
+      "open": "Open",
+      "closed": "Closed"
+    },
+    "waiting": "{{count}} new proposals"
+  },
+  "editJob": {
+    "title": "Edit job",
+    "note": "You can fix the title, description and budget. The category, type and place cannot be changed.",
+    "failed": "We could not save your changes. Please try again.",
+    "locked": "This job already has an order, so it can no longer be edited."
+  },
+  "earnings": {
+    "title": "Earnings",
+    "inEscrow": "In escrow",
+    "inEscrowHint": "Paid by clients and held until they approve the work",
+    "awaitingPayout": "Released, awaiting payout",
+    "awaitingPayoutHint": "Approved by clients. Hithozha will pay this out to you.",
+    "paidOut": "Paid out",
+    "paidOutHint": "Already sent to you",
+    "history": "Orders",
+    "paidOn": "Paid on {{date}}",
+    "emptyTitle": "No earnings yet",
+    "emptyBody": "Once a client pays for your work, it shows up here."
+  },
+  "admin": {
+    "title": "Admin",
+    "tabs": {
+      "companies": "Companies",
+      "chats": "Chats",
+      "payouts": "Payouts"
+    },
+    "owner": "Owner: {{name}}",
+    "verify": "Verify",
+    "reject": "Reject",
+    "markPaid": "Mark as paid out",
+    "payoutLine": "{{amount}} to {{name}}",
+    "nothing": "Nothing waiting.",
+    "failed": "That did not work. Please try again."
   }
 }

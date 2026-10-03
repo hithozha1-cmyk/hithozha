@@ -83,6 +83,9 @@ export function JobProposalPanel({ job }: { job: Job }) {
   if (isOwner) {
     return (
       <View style={styles.section}>
+        {job.status === 'open' ? (
+          <Button variant="outline" title={t('jobs.detail.edit')} onPress={() => router.push({ pathname: '/jobs/edit/[id]', params: { id: job.id } })} />
+        ) : null}
         <Button
           variant="outline"
           title={t('proposals.viewProposals', { count: pendingCount })}

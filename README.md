@@ -56,7 +56,7 @@ Everything else is a **secret and lives only in Supabase Edge Function secrets**
    npx supabase db push
    ```
 
-   Or paste the eight files in `supabase/migrations/` into the SQL editor, in order.
+   Or paste the nine files in `supabase/migrations/` into the SQL editor, in order.
 
 ### Email and password sign-up with a verification code
 
@@ -65,7 +65,8 @@ Users create an account with an email and password (minimum 8 characters), then 
 1. Authentication → Sign In / Providers → Email: enable the provider and keep **Confirm email** on.
 2. Authentication → Emails → templates. The **Confirm sign up** template must contain `{{ .Token }}` so the email shows the code. A ready-made branded template is in `supabase/templates/otp-code.html`.
 3. **Email OTP Length** can be anything from 6 to 8. The app accepts 6 to 8 digits.
-4. Email delivery: Supabase's built-in sender is heavily rate limited. Use your own SMTP (for example Resend) under Authentication → SMTP Settings. Until you verify a sending domain, Resend only delivers to your own account email.
+4. **Forgot password** also uses a code. Edit the **Reset password** template the same way (it must contain `{{ .Token }}`). A ready-made one is in `supabase/templates/reset-password.html`. While the code is being verified the app stays on the reset screen, because verifying signs the person in before they have chosen a new password.
+5. Email delivery: Supabase's built-in sender is heavily rate limited. Use your own SMTP (for example Resend) under Authentication → SMTP Settings. Until you verify a sending domain, Resend only delivers to your own account email.
 
 ### Making someone an admin
 
@@ -190,6 +191,19 @@ Clients (individuals and companies) post jobs; everyone signed in can browse ope
 
 Not built yet: editing a job after posting.
 
+### Finding work and keeping a profile
+
+- **Browse** has a search box and filters for category, job type and city. Search looks in titles and descriptions and ignores punctuation (so it cannot be used to inject filter syntax). Tapping a category tile or searching from Home opens Browse with that choice already applied.
+- **Edit profile** (Profile tab) changes name, city and photo. Freelancers also get **Edit freelancer details**, which uses the same form as onboarding (headline, services, experience, languages, availability, starting price, bio, education, portfolio), and **View my public page**.
+
+### My jobs, earnings, badges, admin and legal pages
+
+- **My jobs** (Profile tab, for clients) lists every job posted with how many proposals are waiting. A poster can fix the **title, description and budget** of an open job; category, type and place are locked, and a job that already has an order cannot be edited at all (enforced by a row level security policy).
+- **Earnings** (Profile tab, for freelancers) shows three totals: *in escrow* (client paid, not yet approved), *released, awaiting payout* (approved, Hithozha still owes it) and *paid out*. An admin records a payout with **Mark as paid out**, which sets `payments.paid_out_at`.
+- **Tab badges** show unread messages and orders waiting for you to act (client: pay or approve; freelancer: deliver). They come from `my_badges()`, update live through Supabase Realtime, and unread state is stored per person in `conversation_reads`.
+- **Admin tools** (Profile tab, admins only): verify or reject companies (with their GST or Udyam number), read the original text of flagged chat messages, and see which freelancers are due a payout. Every admin function checks `is_admin()` itself. Make someone an admin with the SQL under "Making someone an admin".
+- **Legal pages** (Terms, Privacy, Refund and Cancellation, Contact) are public screens, linked from the welcome screen, in Tamil and English. Their text is in `src/legal/content.ts`. These are plain-language drafts that match how the app works: **have a lawyer review them before launch**, and fill in `BUSINESS.phone` and `BUSINESS.address` in that file (empty values are hidden).
+
 ### Proposals, chat, orders and reviews
 
 The hiring flow, and who is allowed to do what at each step. All of it is enforced in the database, so a modified app cannot skip a step.
@@ -207,7 +221,7 @@ Not built yet: disputes and revision requests, refunds from the app, automatic f
 ### Tests
 
 ```bash
-npm test             # database + Edge Function tests
+npm test             # app logic + database + Edge Function tests
 npm run test:db      # applies every migration to a local Postgres and checks the security rules
 npm run test:functions  # runs the three payment functions against mocks
 npm run typecheck
@@ -219,10 +233,13 @@ npm run typecheck
 
 ```
 app/                  Expo Router screens
-  (auth)/             welcome (sign in / create account), verify (code)
+  (auth)/             welcome (sign in / create account), verify (code), forgot-password
   (onboarding)/       role, client-type, company-profile, profile, professional (freelancers only)
   company/            [id] (public page), edit, verify
-  jobs/               new (post a job), [id] (job detail), apply/[id], proposals/[id]
+  jobs/               new, mine (my jobs), edit/[id], [id] (job detail), apply/[id], proposals/[id]
+  account/            edit-profile, freelancer (edit freelancer details), earnings
+  admin.tsx           admin tools (admins only)
+  legal/              [page] terms, privacy, refunds, contact (public)
   chat/               [id] (a conversation)
   orders/             [id] (pay, deliver, approve), review/[id]
   freelancer/         [id] (public freelancer page with reviews)

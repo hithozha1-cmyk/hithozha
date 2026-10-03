@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { Search } from 'lucide-react-native';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -17,6 +18,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { profile, company } = useAuth();
   const { categories, loading, error, reload } = useCategories();
+  const [searchText, setSearchText] = useState('');
   const firstName = profile?.full_name?.trim().split(/\s+/)[0] ?? '';
   // Company clients are greeted by their company name.
   const greetingName = profile?.client_type === 'company' && company ? company.name : firstName;
@@ -35,6 +37,9 @@ export default function HomeScreen() {
             accessibilityLabel={t('home.searchPlaceholder')}
             placeholder={t('home.searchPlaceholder')}
             placeholderTextColor={colors.muted}
+            value={searchText}
+            onChangeText={setSearchText}
+            onSubmitEditing={() => router.push({ pathname: '/browse', params: { q: searchText.trim() } })}
             returnKeyType="search"
             style={styles.searchInput}
           />
@@ -62,14 +67,19 @@ export default function HomeScreen() {
                 const red = index % 2 === 0;
                 return (
                   <View key={category.id} style={styles.tileCell}>
-                    <View style={styles.tile} accessible accessibilityLabel={i18n.language === 'ta' ? category.name_ta : category.name_en}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={i18n.language === 'ta' ? category.name_ta : category.name_en}
+                      onPress={() => router.push({ pathname: '/browse', params: { category: category.slug } })}
+                      style={styles.tile}
+                    >
                       <View style={[styles.tileIcon, { backgroundColor: red ? colors.tintRed : colors.tintBlue }]}>
                         <Icon size={24} color={red ? colors.primaryPressed : colors.accent} strokeWidth={1.8} />
                       </View>
                       <Text style={styles.tileLabel} numberOfLines={2}>
                         {i18n.language === 'ta' ? category.name_ta : category.name_en}
                       </Text>
-                    </View>
+                    </Pressable>
                   </View>
                 );
               })}

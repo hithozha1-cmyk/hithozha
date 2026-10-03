@@ -178,7 +178,7 @@ const bootstrap = `
   await rejects('cannot attach a company you do not own', () => job(clientA, { company_id: company.id }), '42501');
   const embedded = await user(freelancerF, () => one(`select j.title, c.name, c.verification_status from public.jobs j join public.companies c on c.id = j.company_id where j.id = $1`, [companyJob.id]));
   check('freelancer sees a job with its company details', embedded.name === 'Acme Foods' && embedded.verification_status === 'verified');
-  await rejects('job fields cannot be edited after posting', () => user(clientA, () => q(`update public.jobs set title = 'changed' where id = $1`, [jobA.id])), '42501');
+  await rejects('locked job fields (category, type, budget currency) cannot be edited', () => user(clientA, () => q(`update public.jobs set category_slug = 'writing' where id = $1`, [jobA.id])), '42501');
   const strangerClose = await user(outsider, () => db.query(`update public.jobs set status = 'closed' where id = $1`, [jobA.id]));
   check('others cannot close my job', strangerClose.affectedRows === 0);
 
@@ -345,6 +345,57 @@ const bootstrap = `
   // ---- realtime ---------------------------------------------------------
   const published = (await q(`select tablename from pg_publication_tables where pubname = 'supabase_realtime'`)).map((r) => r.tablename).sort();
   check('messages and orders are published to Realtime', published.includes('messages') && published.includes('orders'), published.join(','));
+
+  // ---- migration 0009: edit jobs, badges, payouts, admin ------------------
+  const jobE = await job(clientA);
+  await user(clientA, () => q(`update public.jobs set title = 'Logo for my bakery shop', budget_max_paise = 600000 where id = $1`, [jobE.id]));
+  check('a poster can fix a job title and budget', (await one(`select title from public.jobs where id = $1`, [jobE.id])).title === 'Logo for my bakery shop');
+  const strangerEdit2 = await user(outsider, () => db.query(`update public.jobs set title = 'hacked job title' where id = $1`, [jobE.id]));
+  check('others cannot edit my job', strangerEdit2.affectedRows === 0);
+  await rejects('job type cannot be changed after posting', () => user(clientA, () => q(`update public.jobs set job_type = 'monthly' where id = $1`, [jobE.id])), '42501');
+  const liveEdit = await user(clientA, () => db.query(`update public.jobs set title = 'changed while ordered' where id = $1`, [jobA.id]));
+  check('a job with a live order cannot be edited', liveEdit.affectedRows === 0);
+
+  // unread badges
+  const badges = (uid) => user(uid, async () => (await one(`select public.my_badges() as b`)).b);
+  const before = await badges(clientA);
+  const jobM = await job(clientA);
+  const propM = await propose(freelancerF, jobM.id, 100000);
+  const convM = (await user(freelancerF, () => one(`select id from public.conversations where proposal_id = $1`, [propM.id]))).id;
+  await user(freelancerF, () => q(`select public.send_message($1, 'Hello, I can start today')`, [convM]));
+  check('a new message shows as unread for the other person', (await badges(clientA)).messages === before.messages + 1);
+  check('your own message is not unread for you', (await badges(freelancerF)).messages === (await badges(freelancerF)).messages);
+  await user(clientA, () => q(`select public.mark_conversation_read($1)`, [convM]));
+  check('opening the chat clears it', (await badges(clientA)).messages === before.messages);
+  await rejects('only participants can mark a chat read', () => user(outsider, () => q(`select public.mark_conversation_read($1)`, [convM])), 'P0002');
+  await rejects('read marks cannot be written directly', () => user(clientA, () => q(`insert into public.conversation_reads (conversation_id, user_id) values ($1, $2)`, [convM, clientA])), '42501');
+  check('orders needing action are counted (freelancer, order in progress)', (await badges(freelancerF)).orders >= 0);
+
+  // admin
+  const admin = await newUser('admin@test');
+  await setProfile(admin, 'client', 'Admin');
+  await service(() => q(`update public.profiles set is_admin = true where id = $1`, [admin]));
+  for (const call of ['admin_pending_companies()', 'admin_flagged_messages()', 'admin_payouts_due()']) {
+    await rejects(`non-admins cannot call ${call}`, () => user(clientA, () => q(`select * from public.${call}`)), '42501');
+  }
+  await rejects('non-admins cannot verify companies', () => user(clientA, () => q(`select public.admin_set_company_verification($1, 'verified')`, [company2.id])), '42501');
+  await user(outsider, () => q(`select public.submit_company_verification('29BBBBB1111B1Z6', null)`));
+  const pending = await user(admin, () => q(`select * from public.admin_pending_companies()`));
+  check('an admin sees companies waiting for review, with the private numbers', pending.length === 1 && pending[0].gst_number === '29BBBBB1111B1Z6');
+  await rejects('an admin can only set verified or rejected', () => user(admin, () => q(`select public.admin_set_company_verification($1, 'none')`, [company2.id])), '22023');
+  await user(admin, () => q(`select public.admin_set_company_verification($1, 'verified')`, [company2.id]));
+  check('an admin verifies a company', (await service(() => one(`select verification_status from public.companies where id = $1`, [company2.id]))).verification_status === 'verified');
+  await rejects('a company is reviewed only once', () => user(admin, () => q(`select public.admin_set_company_verification($1, 'rejected')`, [company2.id])), 'P0002');
+  const flagged = await user(admin, () => q(`select * from public.admin_flagged_messages()`));
+  check('an admin sees flagged chat messages with the original text', flagged.length > 0 && flagged.some((f) => f.original_body.includes('98765 43210')));
+  const due = await user(admin, () => q(`select * from public.admin_payouts_due()`));
+  check('completed, released orders are due for payout', due.length === 2 && due.every((d) => d.earnings_paise > 0));
+  await rejects('non-admins cannot mark a payout', () => user(freelancerF, () => q(`select public.admin_mark_paid_out($1)`, [orderId])), '42501');
+  await user(admin, () => q(`select public.admin_mark_paid_out($1)`, [orderId]));
+  check('a payout can be marked as paid', (await user(admin, () => q(`select * from public.admin_payouts_due()`))).length === 1);
+  await rejects('a payout cannot be paid twice', () => user(admin, () => q(`select public.admin_mark_paid_out($1)`, [orderId])), 'P0002');
+  check('the freelancer sees when they were paid', !!(await user(freelancerF, () => one(`select paid_out_at from public.payments where order_id = $1`, [orderId]))).paid_out_at);
+  await rejects('is_admin stays hidden from users', () => user(admin, () => q(`select is_admin from public.profiles`)), '42501');
 
   // ---- signed-out access is closed everywhere ---------------------------
   for (const table of ['jobs', 'proposals', 'conversations', 'messages', 'orders', 'payments', 'reviews', 'companies', 'freelancer_profiles']) {

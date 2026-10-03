@@ -10,6 +10,8 @@ import { Input } from '@/components/Input';
 import { LanguagePicker } from '@/components/LanguagePicker';
 import { Logo } from '@/components/Logo';
 import { Screen } from '@/components/Screen';
+import { currentLanguage } from '@/i18n';
+import { LEGAL_PAGES, legalContent } from '@/legal/content';
 import { supabase } from '@/lib/supabase';
 import { colors, layout, radius, type } from '@/theme';
 
@@ -93,6 +95,13 @@ export default function WelcomeScreen() {
             loading={busy}
           />
           <Text style={styles.terms}>{t('welcome.terms')}</Text>
+          <View style={styles.legalRow}>
+            {LEGAL_PAGES.map((page) => (
+              <Pressable key={page} accessibilityRole="link" onPress={() => router.push({ pathname: '/legal/[page]', params: { page } })} style={styles.legalLink}>
+                <Text style={styles.legalText}>{legalContent[currentLanguage()][page].title}</Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
       }
     >
@@ -167,6 +176,16 @@ export default function WelcomeScreen() {
           }
         />
 
+        {mode === 'signIn' ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push({ pathname: '/forgot-password', params: { email: email.trim() } })}
+            style={styles.forgot}
+          >
+            <Text style={styles.forgotText}>{t('auth.forgotPassword')}</Text>
+          </Pressable>
+        ) : null}
+
         {formError ? (
           <Text accessibilityRole="alert" style={styles.error}>
             {formError}
@@ -202,6 +221,8 @@ const styles = StyleSheet.create({
   tabText: { ...type.label, color: colors.muted },
   tabTextActive: { color: colors.text, fontFamily: type.bodyStrong.fontFamily },
   eye: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  forgot: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
+  forgotText: { ...type.bodyStrong, color: colors.primary },
   error: {
     ...type.small,
     color: colors.danger,
@@ -213,4 +234,7 @@ const styles = StyleSheet.create({
   languageTitle: { ...type.subheading, color: colors.text },
   footer: { gap: 10, paddingHorizontal: layout.screenPadding },
   terms: { ...type.small, color: colors.muted, textAlign: 'center' },
+  legalRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', columnGap: 14 },
+  legalLink: { minHeight: 44, justifyContent: 'center' },
+  legalText: { ...type.caption, color: colors.primary, textDecorationLine: 'underline' },
 });

@@ -15,6 +15,7 @@ import {
   type Conversation,
   type Message,
 } from '@/lib/chat';
+import { markConversationRead } from '@/lib/badges';
 import { useAuth } from '@/providers/AuthProvider';
 import { colors, layout, radius, type } from '@/theme';
 
@@ -62,12 +63,16 @@ export default function ChatScreen() {
       setMessages(list ?? []);
       setLoading(false);
     });
-    const stop = subscribeToMessages(id, addMessage);
+    void markConversationRead(id);
+    const stop = subscribeToMessages(id, (message) => {
+      addMessage(message);
+      if (message.sender_id !== userId) void markConversationRead(id);
+    });
     return () => {
       active = false;
       stop();
     };
-  }, [id, addMessage]);
+  }, [id, addMessage, userId]);
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
 

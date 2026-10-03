@@ -23,6 +23,18 @@ type AuthContextValue = {
   company: MyCompany | null;
   loading: boolean;
   profileError: boolean;
+  isAdmin: boolean;
+  /**
+   * True when someone is signed in and not in the middle of resetting a password.
+   * Use this, not `session`, to decide which part of the app to show.
+   */
+  signedIn: boolean;
+  /**
+   * Verifying a reset code signs the person in before they have chosen a new
+   * password. While this is on, the app keeps showing the reset screen.
+   */
+  beginRecovery: () => void;
+  completeRecovery: () => void;
   /** A signed-in user has finished onboarding once role, name and city are set. */
   onboarded: boolean;
   refreshProfile: () => Promise<void>;
@@ -39,6 +51,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [company, setCompany] = useState<MyCompany | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
   const [profileError, setProfileError] = useState(false);
+  const [recovering, setRecovering] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const beginRecovery = useCallback(() => setRecovering(true), []);
+  const completeRecovery = useCallback(() => setRecovering(false), []);
 
   const userId = session?.user.id ?? null;
 
@@ -47,19 +63,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session);
       setSessionReady(true);
     });
-    const { data } = supabase.auth.onAuthStateChange((_event, next) => {
+    const { data } = supabase.auth.onAuthStateChange((event, next) => {
       setSession(next);
       setSessionReady(true);
+      if (event === 'SIGNED_OUT') setRecovering(false);
     });
     return () => data.subscription.unsubscribe();
   }, []);
 
   const loadProfile = useCallback(async (id: string) => {
     setProfileError(false);
-    const [profileResult, companyResult] = await Promise.all([
+    const [profileResult, companyResult, adminResult] = await Promise.all([
       supabase.from('profiles').select(PROFILE_COLUMNS).eq('id', id).maybeSingle(),
       supabase.rpc('get_my_company'),
+      supabase.rpc('is_admin'),
     ]);
+    setIsAdmin(!adminResult.error && adminResult.data === true);
     if (profileResult.error || !profileResult.data) {
       setProfile(null);
       setCompany(null);
@@ -140,8 +159,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       profile,
       company,
-      loading: !sessionReady || (!!userId && !profile && !profileError),
+      // Not "loading" while resetting a password: the reset screen must stay mounted.
+      loading: !sessionReady || (!recovering && !!userId && !profile && !profileError),
       profileError,
+      isAdmin,
+      signedIn: !!session && !recovering,
+      beginRecovery,
+      completeRecovery,
       onboarded: !!profile?.role && !!profile.city && !!profile.full_name,
       refreshProfile,
       updateProfile,
@@ -155,6 +179,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionReady,
       userId,
       profileError,
+      isAdmin,
+      recovering,
+      beginRecovery,
+      completeRecovery,
       refreshProfile,
       updateProfile,
       changeLanguage,
