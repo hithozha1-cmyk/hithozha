@@ -17,7 +17,7 @@ import {
   MAX_PORTFOLIO_IMAGES,
   type Availability,
 } from '@/lib/professional';
-import { pickAndUploadImage } from '@/lib/upload';
+import { failedWith, pickAndUploadImage } from '@/lib/upload';
 import { colors, radius, type } from '@/theme';
 
 type Props = {
@@ -65,7 +65,7 @@ export function FreelancerForm({ values, onChange, errors }: Props) {
     setUploading(false);
     if (result.status === 'ok') onChange({ ...values, portfolio: [...values.portfolio, result.url] });
     if (result.status === 'denied') setUploadError(t('onboarding.profile.photoPermission'));
-    if (result.status === 'error') setUploadError(t('onboarding.profile.photoFailed'));
+    if (result.status === 'error') setUploadError(failedWith(t('onboarding.profile.photoFailed'), result));
   };
 
   return (

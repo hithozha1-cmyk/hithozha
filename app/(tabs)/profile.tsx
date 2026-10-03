@@ -9,6 +9,7 @@ import { Card } from '@/components/Card';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { LanguagePicker } from '@/components/LanguagePicker';
 import { Screen } from '@/components/Screen';
+import { PushStatus } from '@/components/PushStatus';
 import { VerificationChip } from '@/components/VerificationChip';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { confirmAction } from '@/lib/confirm';
@@ -116,6 +117,8 @@ export default function ProfileTabScreen() {
           <Button variant="outline" title={t('company.card.switchAction')} onPress={() => router.push('/company/edit')} />
         </Card>
       ) : null}
+
+      <PushStatus />
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>{t('language.label')}</Text>

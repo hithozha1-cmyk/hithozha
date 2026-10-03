@@ -20,12 +20,17 @@ export function showPushesWhileOpen(): void {
   });
 }
 
+export type PushOutcome = { result: PushResult; detail?: string };
+
+const shorten = (error: unknown): string => (error instanceof Error ? error.message : String(error)).replace(/\s+/g, ' ').slice(0, 60);
+
 /**
- * Asks permission (once), gets this phone's Expo push token and gives it to the database.
- * Does nothing on the website or on an emulator, and never throws: push is a bonus, not a requirement.
+ * Asks permission (once), gets this phone's push token and gives it to the database.
+ * Does nothing on the website or an emulator, and never throws: push is a bonus, not a requirement.
+ * The outcome says what happened, so the Profile screen can tell the person what to fix.
  */
-export async function registerForPush(): Promise<PushResult> {
-  if (Platform.OS === 'web' || !Device.isDevice) return 'unsupported';
+export async function registerForPushDetailed(): Promise<PushOutcome> {
+  if (Platform.OS === 'web' || !Device.isDevice) return { result: 'unsupported' };
   try {
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
@@ -36,28 +41,30 @@ export async function registerForPush(): Promise<PushResult> {
 
     let { status } = await Notifications.getPermissionsAsync();
     if (status !== 'granted') status = (await Notifications.requestPermissionsAsync()).status;
-    if (status !== 'granted') return 'denied';
+    if (status !== 'granted') return { result: 'denied' };
 
     let token: string;
     if (Platform.OS === 'android') {
       // Android: the phone's own Firebase (FCM) token; send-push talks to Firebase directly.
       const device = await Notifications.getDevicePushTokenAsync();
-      if (typeof device.data !== 'string') return 'error';
+      if (typeof device.data !== 'string') return { result: 'error', detail: 'token type' };
       token = device.data;
     } else {
       // iPhone (later): an Expo push token, which needs the Expo project id.
       const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
-      if (!projectId) return 'no_project';
+      if (!projectId) return { result: 'no_project' };
       token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
     }
     const { error } = await supabase.rpc('register_push_token', { p_token: token, p_platform: Platform.OS === 'ios' ? 'ios' : 'android' });
-    if (error) return 'error';
+    if (error) return { result: 'error', detail: `database ${error.code ?? error.message.slice(0, 40)}` };
     registeredToken = token;
-    return 'registered';
-  } catch {
-    return 'error';
+    return { result: 'registered' };
+  } catch (error) {
+    return { result: 'error', detail: shorten(error) };
   }
 }
+
+export const registerForPush = async (): Promise<PushResult> => (await registerForPushDetailed()).result;
 
 /** Stops pushes to this phone for the person who is signing out. */
 export async function unregisterPush(): Promise<void> {

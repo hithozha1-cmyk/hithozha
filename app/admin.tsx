@@ -97,7 +97,7 @@ export default function AdminScreen() {
         </View>
       ) : (
         <>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs} accessibilityRole="tablist">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll} contentContainerStyle={styles.tabs} accessibilityRole="tablist">
             {nav}
           </ScrollView>
           {body}
@@ -116,7 +116,9 @@ const styles = StyleSheet.create({
   wideRow: { flexDirection: 'row', gap: 24, alignItems: 'flex-start' },
   side: { width: 220, gap: 4 },
   sideItem: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, borderRadius: radius.input },
-  tabs: { gap: 8, paddingBottom: 14 },
+  // A horizontal ScrollView grows to fill spare height by default, which stretched every tab into a tall oval.
+  tabScroll: { flexGrow: 0, flexShrink: 0 },
+  tabs: { gap: 8, paddingBottom: 14, alignItems: 'center' },
   tab: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 16, borderRadius: radius.pill, backgroundColor: '#E8E8EF' },
   active: { backgroundColor: colors.night },
   navText: { ...type.label, color: colors.text },

@@ -58,7 +58,7 @@ export function IdentityPanel() {
     setUploading(null);
     if (result.status === 'ok') setPaths((previous) => ({ ...previous, [kind]: result.path }));
     else if (result.status === 'denied') setError(t('identity.denied'));
-    else if (result.status === 'error') setError(t('identity.uploadFailed'));
+    else if (result.status === 'error') setError(`${t('identity.uploadFailed')} (${result.reason})`);
   };
 
   const submit = async () => {

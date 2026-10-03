@@ -2,6 +2,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 
 import { supabase } from '@/lib/supabase';
+import { shrinkToBytes } from '@/lib/upload';
 
 export const ID_TYPES = ['aadhaar', 'pan', 'voter', 'driving_licence', 'passport'] as const;
 export type IdType = (typeof ID_TYPES)[number];
@@ -17,9 +18,15 @@ export type IdentityCheck = {
 };
 
 export type PhotoKind = 'id' | 'selfie';
-export type PhotoResult = { status: 'ok'; path: string } | { status: 'cancelled' } | { status: 'denied' } | { status: 'error' };
+export type PhotoResult =
+  | { status: 'ok'; path: string }
+  | { status: 'cancelled' }
+  | { status: 'denied' }
+  | { status: 'error'; reason: string };
 
 const MAX_SIDE = 1600;
+
+const shorten = (error: unknown): string => (error instanceof Error ? error.message : String(error)).replace(/\s+/g, ' ').slice(0, 56);
 
 /**
  * Pick (or take) a photo, shrink it, and upload it to the PRIVATE identity bucket in the
@@ -35,21 +42,19 @@ export async function pickIdentityPhoto(kind: PhotoKind, userId: string): Promis
     : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1 });
   if (picked.canceled || picked.assets.length === 0) return { status: 'cancelled' };
 
+  let bytes: Uint8Array;
   try {
-    const asset = picked.assets[0];
-    const context = ImageManipulator.ImageManipulator.manipulate(asset.uri);
-    if (asset.width > MAX_SIDE || asset.height > MAX_SIDE) {
-      context.resize(asset.width >= asset.height ? { width: MAX_SIDE } : { height: MAX_SIDE });
-    }
-    const rendered = await context.renderAsync();
-    const compressed = await rendered.saveAsync({ format: ImageManipulator.SaveFormat.JPEG, compress: 0.8 });
-    const blob = await (await fetch(compressed.uri)).blob();
+    bytes = await shrinkToBytes(picked.assets[0], MAX_SIDE, ImageManipulator.SaveFormat.JPEG);
+  } catch (error) {
+    return { status: 'error', reason: `prepare: ${shorten(error)}` };
+  }
 
-    const path = `${userId}/${Date.now()}-${kind}.jpg`;
-    const { error } = await supabase.storage.from('identity').upload(path, blob, { contentType: 'image/jpeg', upsert: false });
-    return error ? { status: 'error' } : { status: 'ok', path };
-  } catch {
-    return { status: 'error' };
+  const path = `${userId}/${Date.now()}-${kind}.jpg`;
+  try {
+    const { error } = await supabase.storage.from('identity').upload(path, bytes, { contentType: 'image/jpeg', upsert: false });
+    return error ? { status: 'error', reason: `storage: ${shorten(error)}` } : { status: 'ok', path };
+  } catch (error) {
+    return { status: 'error', reason: `storage: ${shorten(error)}` };
   }
 }
 

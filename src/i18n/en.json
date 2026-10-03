@@ -991,5 +991,15 @@
     "noneLeft": "You have used all your free applications this month.",
     "resetsOn": "Next batch: {{date}}.",
     "limitReached": "You have used all your free applications this month. They come back on the 1st of next month."
+  },
+  "pushStatus": {
+    "title": "Phone notifications",
+    "hint": "Tap to turn on alerts for new messages, proposals and orders.",
+    "check": "Turn on and test",
+    "registered": "Notifications are on for this phone.",
+    "denied": "Notifications are blocked. Open your phone Settings, then Apps, Hithozha, Notifications, and allow them. Then tap again.",
+    "unsupported": "This device cannot receive phone notifications (emulators cannot).",
+    "no_project": "This build is missing its notification setup.",
+    "error": "Something went wrong while setting up notifications."
   }
 }

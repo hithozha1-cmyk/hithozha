@@ -10,7 +10,7 @@ import { Input } from '@/components/Input';
 import { Screen } from '@/components/Screen';
 import { Select } from '@/components/Select';
 import { CITY_KEYS } from '@/lib/cities';
-import { pickAndUploadImage } from '@/lib/upload';
+import { failedWith, pickAndUploadImage } from '@/lib/upload';
 import { useAuth } from '@/providers/AuthProvider';
 import { colors, type } from '@/theme';
 
@@ -45,7 +45,7 @@ export default function EditProfileScreen() {
     setUploading(false);
     if (result.status === 'ok') setAvatarUrl(result.url);
     if (result.status === 'denied') setFormError(t('onboarding.profile.photoPermission'));
-    if (result.status === 'error') setFormError(t('onboarding.profile.photoFailed'));
+    if (result.status === 'error') setFormError(failedWith(t('onboarding.profile.photoFailed'), result));
   };
 
   const save = async () => {

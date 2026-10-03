@@ -13,7 +13,7 @@ import { Select } from '@/components/Select';
 import { CITY_KEYS } from '@/lib/cities';
 import { isFreelancerRole } from '@/lib/types';
 import { completeOnboarding } from '@/lib/onboarding';
-import { pickAndUploadImage } from '@/lib/upload';
+import { failedWith, pickAndUploadImage } from '@/lib/upload';
 import { useAuth } from '@/providers/AuthProvider';
 import { useOnboardingDraft, useOnboardingProgress } from '@/providers/OnboardingDraft';
 import { colors, type } from '@/theme';
@@ -46,7 +46,7 @@ export default function ProfileScreen() {
     setUploading(false);
     if (result.status === 'ok') setAvatarUrl(result.url);
     if (result.status === 'denied') setFormError(t('onboarding.profile.photoPermission'));
-    if (result.status === 'error') setFormError(t('onboarding.profile.photoFailed'));
+    if (result.status === 'error') setFormError(failedWith(t('onboarding.profile.photoFailed'), result));
   };
 
   const submit = async () => {

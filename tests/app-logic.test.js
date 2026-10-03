@@ -201,5 +201,20 @@ check('push: a missing payload opens nothing', push.hrefFromPushData(undefined),
 check('push: a push without the needed id opens nothing', push.hrefFromPushData({ kind: 'hired' }), null);
 check('push: every notification kind is a known push kind', notes.NOTIFICATION_KINDS.length, 17);
 
+// ---- base64 decoding for photo uploads (no Blob on phones) ---------------------------
+const b64 = load('src/lib/base64.ts');
+const text = (bytes) => Buffer.from(bytes).toString('utf8');
+check('base64: decodes plain text', text(b64.base64ToBytes('SGVsbG8gV29ybGQ=')), 'Hello World');
+check('base64: handles missing padding', text(b64.base64ToBytes('SGVsbG8')), 'Hello');
+check('base64: strips a data: prefix', text(b64.base64ToBytes('data:image/jpeg;base64,SGk=')), 'Hi');
+check('base64: ignores line breaks', text(b64.base64ToBytes('SGVs\nbG8g\nV29y\nbGQ=')), 'Hello World');
+check('base64: empty input is empty', b64.base64ToBytes('').length, 0);
+const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 255, 128]);
+check('base64: binary bytes survive exactly', Array.from(b64.base64ToBytes(png.toString('base64'))), Array.from(png));
+check('base64: the result owns exactly its bytes (safe to send as a buffer)', b64.base64ToBytes(png.toString('base64')).buffer.byteLength, png.length);
+let rejected = false;
+try { b64.base64ToBytes('not*valid'); } catch { rejected = true; }
+check('base64: rejects characters that are not base64', rejected, true);
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);

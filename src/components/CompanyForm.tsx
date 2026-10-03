@@ -8,7 +8,7 @@ import { Input } from '@/components/Input';
 import { Select } from '@/components/Select';
 import { CITY_KEYS } from '@/lib/cities';
 import { INDUSTRIES, TEAM_SIZES, type CompanyField, type CompanyFormValues, type TeamSize } from '@/lib/company';
-import { pickAndUploadImage } from '@/lib/upload';
+import { failedWith, pickAndUploadImage } from '@/lib/upload';
 import { colors, type } from '@/theme';
 
 type Props = {
@@ -51,7 +51,7 @@ export function CompanyForm({ values, onChange, errors }: Props) {
     setUploading(false);
     if (result.status === 'ok') set('logoUrl', result.url);
     if (result.status === 'denied') setLogoError(t('onboarding.profile.photoPermission'));
-    if (result.status === 'error') setLogoError(t('company.errors.logoFailed'));
+    if (result.status === 'error') setLogoError(failedWith(t('company.errors.logoFailed'), result));
   };
 
   return (
