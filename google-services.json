@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "404322269543",
+    "project_id": "hithozha-app",
+    "storage_bucket": "hithozha-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:404322269543:android:3322609cf6a260213397c2",
+        "android_client_info": {
+          "package_name": "com.hithozha.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBI0zx-1UeuYmNr6ItvxA07grpwZWTc3uI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

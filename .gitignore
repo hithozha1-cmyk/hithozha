@@ -51,3 +51,7 @@ yarn-error.*
 
 # Generated: all migrations in one file for pasting into a new project
 supabase/all-migrations.sql
+
+# Firebase service-account keys are secrets. Never commit them.
+*firebase-adminsdk*.json
+service-account*.json
