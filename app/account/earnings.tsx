@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Card } from '@/components/Card';
 import { EmptyState } from '@/components/EmptyState';
+import { PayoutDetails } from '@/components/PayoutDetails';
 import { Screen } from '@/components/Screen';
 import { StatusChip } from '@/components/StatusChip';
 import { fetchEarningsOrders, orderPaidOutAt, summarizeEarnings, type EarningsOrder } from '@/lib/earnings';
@@ -62,6 +63,8 @@ export default function EarningsScreen() {
             <Total label={t('earnings.awaitingPayout')} hint={t('earnings.awaitingPayoutHint')} paise={summary.awaitingPayout} />
             <Total label={t('earnings.paidOut')} hint={t('earnings.paidOutHint')} paise={summary.paidOut} strong />
           </View>
+
+          {session ? <PayoutDetails userId={session.user.id} /> : null}
 
           <Text style={styles.section}>{t('earnings.history')}</Text>
           {orders && orders.length > 0 ? (

@@ -378,24 +378,118 @@ const bootstrap = `
   for (const call of ['admin_pending_companies()', 'admin_flagged_messages()', 'admin_payouts_due()']) {
     await rejects(`non-admins cannot call ${call}`, () => user(clientA, () => q(`select * from public.${call}`)), '42501');
   }
-  await rejects('non-admins cannot verify companies', () => user(clientA, () => q(`select public.admin_set_company_verification($1, 'verified')`, [company2.id])), '42501');
+  await rejects('non-admins cannot verify companies', () => user(clientA, () => q(`select public.admin_set_company_verification($1, 'verified', null)`, [company2.id])), '42501');
   await user(outsider, () => q(`select public.submit_company_verification('29BBBBB1111B1Z6', null)`));
   const pending = await user(admin, () => q(`select * from public.admin_pending_companies()`));
-  check('an admin sees companies waiting for review, with the private numbers', pending.length === 1 && pending[0].gst_number === '29BBBBB1111B1Z6');
-  await rejects('an admin can only set verified or rejected', () => user(admin, () => q(`select public.admin_set_company_verification($1, 'none')`, [company2.id])), '22023');
-  await user(admin, () => q(`select public.admin_set_company_verification($1, 'verified')`, [company2.id]));
+  check('the review queue shows only masked numbers', pending.length === 1 && pending[0].gst_masked === '29***********Z6' && !('gst_number' in pending[0]));
+  const detail = await user(admin, () => one(`select * from public.admin_company_detail($1)`, [pending[0].id]));
+  check('the detail screen shows the full number', detail.gst_number === '29BBBBB1111B1Z6');
+  await rejects('non-admins cannot open company details', () => user(clientA, () => q(`select * from public.admin_company_detail($1)`, [pending[0].id])), '42501');
+  await rejects('an admin can only set verified or rejected', () => user(admin, () => q(`select public.admin_set_company_verification($1, 'none', null)`, [company2.id])), '22023');
+  await rejects('a rejection needs a reason', () => user(admin, () => q(`select public.admin_set_company_verification($1, 'rejected', '')`, [company2.id])), '22023');
+  await user(admin, () => q(`select public.admin_set_company_verification($1, 'verified', null)`, [company2.id]));
   check('an admin verifies a company', (await service(() => one(`select verification_status from public.companies where id = $1`, [company2.id]))).verification_status === 'verified');
-  await rejects('a company is reviewed only once', () => user(admin, () => q(`select public.admin_set_company_verification($1, 'rejected')`, [company2.id])), 'P0002');
+  await rejects('a company is reviewed only once', () => user(admin, () => q(`select public.admin_set_company_verification($1, 'rejected', 'again please')`, [company2.id])), 'P0002');
   const flagged = await user(admin, () => q(`select * from public.admin_flagged_messages()`));
   check('an admin sees flagged chat messages with the original text', flagged.length > 0 && flagged.some((f) => f.original_body.includes('98765 43210')));
   const due = await user(admin, () => q(`select * from public.admin_payouts_due()`));
   check('completed, released orders are due for payout', due.length === 2 && due.every((d) => d.earnings_paise > 0));
-  await rejects('non-admins cannot mark a payout', () => user(freelancerF, () => q(`select public.admin_mark_paid_out($1)`, [orderId])), '42501');
-  await user(admin, () => q(`select public.admin_mark_paid_out($1)`, [orderId]));
+  await rejects('non-admins cannot mark a payout', () => user(freelancerF, () => q(`select public.admin_mark_paid_out($1, 'UTR123456')`, [orderId])), '42501');
+  await rejects('a payout needs a bank reference', () => user(admin, () => q(`select public.admin_mark_paid_out($1, 'x')`, [orderId])), '22023');
+  await user(admin, () => q(`select public.admin_mark_paid_out($1, 'UTR123456')`, [orderId]));
   check('a payout can be marked as paid', (await user(admin, () => q(`select * from public.admin_payouts_due()`))).length === 1);
-  await rejects('a payout cannot be paid twice', () => user(admin, () => q(`select public.admin_mark_paid_out($1)`, [orderId])), 'P0002');
+  await rejects('a payout cannot be paid twice', () => user(admin, () => q(`select public.admin_mark_paid_out($1, 'UTR999999')`, [orderId])), 'P0002');
   check('the freelancer sees when they were paid', !!(await user(freelancerF, () => one(`select paid_out_at from public.payments where order_id = $1`, [orderId]))).paid_out_at);
   await rejects('is_admin stays hidden from users', () => user(admin, () => q(`select is_admin from public.profiles`)), '42501');
+
+  // ---- migration 0010: admin panel --------------------------------------
+  for (const call of ["admin_stats()", "admin_revenue('day', 7)", "admin_users('', 10, 0)", "admin_jobs('', null, 10, 0)", "admin_orders(null, 10, 0)", "admin_audit_log_list(10, 0)"]) {
+    await rejects(`non-admins cannot call ${call}`, () => user(clientA, () => q(`select * from public.${call}`)), '42501');
+  }
+  await rejects('signed-out users cannot call admin functions', () => anon(() => q(`select public.admin_stats()`)), '42501');
+  await rejects('the audit log table is closed to everyone', () => user(admin, () => q(`select * from public.admin_audit_log`)), '42501');
+  await rejects('nobody can write the audit log directly', () => user(admin, () => q(`insert into public.admin_audit_log (admin_id, action, target_type) values ($1, 'x', 'y')`, [admin])), '42501');
+  await rejects('log_admin_action is not callable by the app', () => user(admin, () => q(`select public.log_admin_action('x', 'y', null)`)), '42501');
+
+  const stats = await user(admin, async () => (await one(`select public.admin_stats() as s`)).s);
+  check('overview counts users, jobs and orders', stats.users >= 7 && stats.jobs_open > 0 && stats.orders_completed >= 1);
+  check('overview money adds up from orders', stats.platform_fees_paise > 0 && stats.paid_volume_paise >= stats.platform_fees_paise);
+  check('overview shows payouts still due', stats.payouts_due_paise > 0 && stats.payouts_due_count >= 1);
+  const revenue = await user(admin, () => q(`select * from public.admin_revenue('day', 7)`));
+  check('revenue groups completed orders by day', revenue.length >= 1 && Number(revenue[0].fees_paise) > 0);
+  await rejects('revenue only groups by day or month', () => user(admin, () => q(`select * from public.admin_revenue('year', 7)`)), '22023');
+
+  const found = await user(admin, () => q(`select * from public.admin_users('freelancer f', 10, 0)`));
+  check('admin searches users by name', found.length === 1 && found[0].email === 'f@test');
+  check('admin searches users by email', (await user(admin, () => q(`select id from public.admin_users('client@test', 10, 0)`))).length === 1);
+  check('a search with wildcards is treated as plain text', (await user(admin, () => q(`select id from public.admin_users('%', 10, 0)`))).length === 0);
+  check('admin pages through users', (await user(admin, () => q(`select id from public.admin_users('', 2, 0)`))).length === 2);
+  const ud = await user(admin, async () => (await one(`select public.admin_user_detail($1) as d`, [freelancerF])).d);
+  check('user detail shows activity counts', ud.proposals >= 1 && ud.orders_as_freelancer >= 1);
+  await rejects('non-admins cannot open user details', () => user(clientA, () => q(`select public.admin_user_detail($1)`, [freelancerF])), '42501');
+
+  check('admin lists jobs with poster and proposal count', (await user(admin, () => q(`select * from public.admin_jobs('bakery', null, 50, 0)`))).some((j) => j.has_live_order && Number(j.proposals) >= 1));
+  check('admin lists orders with payment status', (await user(admin, () => q(`select * from public.admin_orders('completed', 10, 0)`))).every((o) => o.payment_status === 'released'));
+  check('a paid-out order shows its bank reference', (await user(admin, () => q(`select * from public.admin_orders('completed', 10, 0)`))).some((o) => o.payout_reference === 'UTR123456'));
+
+  // closing a job
+  const spam = await job(clientA);
+  await rejects('non-admins cannot close jobs this way', () => user(clientA, () => q(`select public.admin_close_job($1, 'spam listing')`, [spam.id])), '42501');
+  await rejects('closing a job needs a reason', () => user(admin, () => q(`select public.admin_close_job($1, '')`, [spam.id])), '22023');
+  await user(admin, () => q(`select public.admin_close_job($1, 'spam listing')`, [spam.id]));
+  check('admin takes a job off the board', (await one(`select status from public.jobs where id = $1`, [spam.id])).status === 'closed');
+  await rejects('a job with a live order cannot be closed by admin', () => user(admin, () => q(`select public.admin_close_job($1, 'because')`, [jobA.id])), '55000');
+
+  // suspending
+  const troll = await newUser('troll@test');
+  await setProfile(troll, 'both', 'Troll');
+  await user(troll, () => q(`insert into public.freelancer_profiles (user_id, bio, skills) values ($1, 'I do many things well', array['writing'])`, [troll]));
+  await rejects('non-admins cannot suspend', () => user(clientA, () => q(`select public.admin_set_user_suspended($1, true, 'rude')`, [troll])), '42501');
+  await rejects('an admin cannot suspend themselves', () => user(admin, () => q(`select public.admin_set_user_suspended($1, true, 'oops')`, [admin])), '22023');
+  await rejects('suspending needs a reason', () => user(admin, () => q(`select public.admin_set_user_suspended($1, true, '')`, [troll])), '22023');
+  await user(admin, () => q(`select public.admin_set_user_suspended($1, true, 'Scam reports')`, [troll]));
+  check('a suspended user knows it', (await user(troll, async () => (await one(`select public.am_suspended() as s`)).s)) === true);
+  check('other users are not suspended', (await user(clientA, async () => (await one(`select public.am_suspended() as s`)).s)) === false);
+  await rejects('a suspended user cannot post a job', () => job(troll), '42501');
+  await rejects('a suspended user cannot apply to a job', () => propose(troll, jobS.id, 100000), '42501');
+  await user(admin, () => q(`select public.admin_set_user_suspended($1, true, 'Spam in chat')`, [freelancerF]));
+  await rejects('a suspended user cannot send a message', () => user(freelancerF, () => q(`select public.send_message($1, 'hello again')`, [convM])), '42501');
+  await user(admin, () => q(`select public.admin_set_user_suspended($1, false)`, [freelancerF]));
+  check('a restored user can send messages again', !!(await user(freelancerF, () => one(`select public.send_message($1, 'hello again') as m`, [convM]))));
+  await user(admin, () => q(`select public.admin_set_user_suspended($1, false)`, [troll]));
+  check('a restored user can work again', !!(await job(troll)).id);
+  const jobH = await job(clientA);
+  const propH = await propose(freelancerG, jobH.id, 50000);
+  await user(admin, () => q(`select public.admin_set_user_suspended($1, true, 'Fake portfolio')`, [freelancerG]));
+  await rejects('a client cannot hire a suspended freelancer', () => user(clientA, () => q(`select public.accept_proposal($1)`, [propH.id])), '42501');
+  await user(admin, () => q(`select public.admin_set_user_suspended($1, false)`, [freelancerG]));
+  await rejects('suspended status stays hidden from the app', () => user(clientA, () => q(`select suspended_at from public.profiles`)), '42501');
+
+  // payout details
+  await rejects('a client-only user cannot save payout details', () => user(outsider, () => q(`insert into public.payout_details (upi_id, account_name) values ('x@okaxis', 'Out Sider')`)), '42501');
+  await rejects('a bad UPI id is refused', () => user(freelancerF, () => q(`insert into public.payout_details (upi_id, account_name) values ('not a upi', 'Freelancer F')`)), '23514');
+  await user(freelancerF, () => q(`insert into public.payout_details (upi_id, account_name) values ('freelancerf@okaxis', 'Freelancer F')`));
+  check('a freelancer sees their own payout details', (await user(freelancerF, () => q(`select * from public.payout_details`))).length === 1);
+  check('others cannot see payout details', (await user(freelancerG, () => q(`select * from public.payout_details`))).length === 0);
+  check('admin sees where to pay in the payout list', (await user(admin, () => q(`select * from public.admin_payouts_due()`))).every((d) => d.upi_id === null || d.upi_id === 'freelancerf@okaxis'));
+
+  // categories
+  await rejects('non-admins cannot add categories', () => user(clientA, () => q(`select public.admin_upsert_category(null, 'cooking', 'Cooking', 'சமையல்', 'book-open', 9, true)`)), '42501');
+  await rejects('categories cannot be written directly any more', () => user(admin, () => q(`insert into public.categories (slug, name_en, name_ta, icon) values ('x1', 'X', 'X', 'mic')`)), '42501');
+  const cat = (await user(admin, () => one(`select public.admin_upsert_category(null, 'cooking', 'Cooking', 'சமையல்', 'book-open', 9, true) as id`))).id;
+  check('admin adds a category', (await user(clientA, () => q(`select * from public.categories where slug = 'cooking'`))).length === 1);
+  await user(admin, () => q(`select public.admin_upsert_category($1, 'cooking', 'Home cooking', 'வீட்டு சமையல்', 'book-open', 9, false)`, [cat]));
+  check('admin edits a category', (await one(`select name_en, is_active from public.categories where id = $1`, [cat])).is_active === false);
+  await rejects('a category needs a Tamil name', () => user(admin, () => q(`select public.admin_upsert_category(null, 'baking', 'Baking', '', 'mic', 10, true)`)), '22023');
+
+  // the audit log
+  const log = await user(admin, () => q(`select * from public.admin_audit_log_list(100, 0)`));
+  const acts = log.map((l) => l.action);
+  for (const a of ['verify_company', 'mark_paid_out', 'close_job', 'suspend_user', 'restore_user', 'add_category', 'edit_category', 'view_company_ids']) {
+    check(`the audit log records ${a}`, acts.includes(a));
+  }
+  check('failed admin actions leave no audit entry', !acts.includes('reject_company'));
+  check('audit entries name the admin and keep the reason', log.every((l) => l.admin_name === 'Admin') && log.some((l) => l.details.reason === 'Scam reports'));
 
   // ---- signed-out access is closed everywhere ---------------------------
   for (const table of ['jobs', 'proposals', 'conversations', 'messages', 'orders', 'payments', 'reviews', 'companies', 'freelancer_profiles']) {

@@ -56,7 +56,7 @@ Everything else is a **secret and lives only in Supabase Edge Function secrets**
    npx supabase db push
    ```
 
-   Or paste the nine files in `supabase/migrations/` into the SQL editor, in order.
+   Or paste the ten files in `supabase/migrations/` into the SQL editor, in order.
 
 ### Email and password sign-up with a verification code
 
@@ -201,7 +201,9 @@ Not built yet: editing a job after posting.
 - **My jobs** (Profile tab, for clients) lists every job posted with how many proposals are waiting. A poster can fix the **title, description and budget** of an open job; category, type and place are locked, and a job that already has an order cannot be edited at all (enforced by a row level security policy).
 - **Earnings** (Profile tab, for freelancers) shows three totals: *in escrow* (client paid, not yet approved), *released, awaiting payout* (approved, Hithozha still owes it) and *paid out*. An admin records a payout with **Mark as paid out**, which sets `payments.paid_out_at`.
 - **Tab badges** show unread messages and orders waiting for you to act (client: pay or approve; freelancer: deliver). They come from `my_badges()`, update live through Supabase Realtime, and unread state is stored per person in `conversation_reads`.
-- **Admin tools** (Profile tab, admins only): verify or reject companies (with their GST or Udyam number), read the original text of flagged chat messages, and see which freelancers are due a payout. Every admin function checks `is_admin()` itself. Make someone an admin with the SQL under "Making someone an admin".
+- **Admin panel** (Profile tab, admins only; sidebar on wide screens, tabs on phones). Sections: Overview (today's numbers, money held, commission by day or month), Users (search, activity, suspend with a reason, restore), Jobs (search, close spam), Orders (payment and payout status), Verifications (GST/Udyam shown masked in the list, in full only after opening a business, which is logged), Flagged chats (original text), Payouts (shows the freelancer's UPI id; you pay outside the app, then record the bank reference/UTR), Categories (Tamil + English names, hide or show), and the Audit log.
+  - **Security:** every admin function begins with `require_admin()` in the database, so hiding the screen is only a convenience. Every approve, reject, payout, suspension, job close, category change and full-number view writes a row to `admin_audit_log`, which nobody can read or write directly. A suspended user cannot post jobs, apply, message or be hired (database triggers). Freelancers save where to be paid on the Earnings screen (`payout_details`, readable only by them and admins).
+  - **Not built yet** (needs features that do not exist): ID/PAN photo review with a private bucket, withdrawal requests, disputes and Razorpay refunds, push announcements, featured listings/boosts. Make someone an admin with the SQL under "Making someone an admin".
 - **Legal pages** (Terms, Privacy, Refund and Cancellation, Contact) are public screens, linked from the welcome screen, in Tamil and English. Their text is in `src/legal/content.ts`. These are plain-language drafts that match how the app works: **have a lawyer review them before launch**, and fill in `BUSINESS.phone` and `BUSINESS.address` in that file (empty values are hidden).
 
 ### Proposals, chat, orders and reviews

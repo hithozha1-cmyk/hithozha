@@ -27,6 +27,7 @@ export type Category = {
   name_ta: string;
   icon: string;
   sort_order: number;
+  is_active?: boolean;
 };
 
 export const isFreelancerRole = (role: Role | null): boolean => role === 'freelancer' || role === 'both';

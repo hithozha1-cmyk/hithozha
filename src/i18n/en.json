@@ -592,21 +592,181 @@
     "history": "Orders",
     "paidOn": "Paid on {{date}}",
     "emptyTitle": "No earnings yet",
-    "emptyBody": "Once a client pays for your work, it shows up here."
+    "emptyBody": "Once a client pays for your work, it shows up here.",
+    "payout": {
+      "title": "Where to send your money",
+      "hint": "We pay out by UPI after a client approves your work. Only you and the Hithozha team can see this.",
+      "upi": "UPI ID",
+      "name": "Name on your bank account",
+      "save": "Save",
+      "saved": "Saved.",
+      "upiInvalid": "Enter a valid UPI ID like name@bank.",
+      "nameInvalid": "Enter the name on your bank account."
+    }
   },
   "admin": {
     "title": "Admin",
-    "tabs": {
-      "companies": "Companies",
-      "chats": "Chats",
-      "payouts": "Payouts"
-    },
-    "owner": "Owner: {{name}}",
-    "verify": "Verify",
-    "reject": "Reject",
+    "all": "All",
+    "loadMore": "Show more",
+    "needText": "Please type at least a few characters.",
+    "failed": "That did not work. Please try again.",
+    "nothing": "Nothing here.",
     "markPaid": "Mark as paid out",
     "payoutLine": "{{amount}} to {{name}}",
-    "nothing": "Nothing waiting.",
-    "failed": "That did not work. Please try again."
+    "sections": {
+      "overview": "Overview",
+      "users": "Users",
+      "jobs": "Jobs",
+      "orders": "Orders",
+      "verifications": "Verifications",
+      "chats": "Flagged chats",
+      "payouts": "Payouts",
+      "categories": "Categories",
+      "audit": "Audit log"
+    },
+    "overview": {
+      "needsYou": "Needs you",
+      "verifications": "Businesses waiting for review",
+      "payoutsDue": "Payouts due ({{amount}})",
+      "flagged": "Flagged messages this week",
+      "today": "Today",
+      "signups": "New sign-ups",
+      "proposals": "Proposals sent",
+      "jobsOpen": "Open jobs",
+      "ordersActive": "Orders in progress",
+      "people": "People",
+      "users": "All users",
+      "freelancers": "Freelancers",
+      "clients": "Clients",
+      "suspended": "Suspended",
+      "money": "Money",
+      "held": "Held in escrow",
+      "volume": "Total paid by clients",
+      "fees": "Platform fees earned",
+      "completed": "Orders completed",
+      "revenue": "Commission earned",
+      "perDay": "By day",
+      "perMonth": "By month",
+      "noRevenue": "No completed orders yet.",
+      "orderCount": "{{count}} orders"
+    },
+    "users": {
+      "search": "Search by name or email",
+      "noName": "No name",
+      "you": "you",
+      "suspendedChip": "Suspended",
+      "adminChip": "Admin",
+      "email": "Email",
+      "joined": "Joined",
+      "activity": "Activity",
+      "counts": "{{jobs}} jobs posted, {{proposals}} proposals, {{asClient}} orders as client, {{asFreelancer}} as freelancer",
+      "freelancer": "Freelancer",
+      "rating": "Rating {{avg}} from {{count}} reviews, {{done}} orders done",
+      "company": "Business",
+      "flagged": "Flagged messages",
+      "suspendedWhy": "Suspended",
+      "suspend": "Suspend this user",
+      "suspendConfirm": "Suspend now",
+      "reason": "Reason (the user does not see it)",
+      "restore": "Restore this user"
+    },
+    "role": {
+      "client": "Client",
+      "freelancer": "Freelancer",
+      "both": "Both"
+    },
+    "verification": {
+      "none": "Not submitted",
+      "pending": "Pending",
+      "verified": "Verified",
+      "rejected": "Rejected"
+    },
+    "chats": {
+      "hint": "Messages where the app hid contact details or payment talk. This is the original text.",
+      "openUser": "Find this user"
+    },
+    "jobs": {
+      "search": "Search title, poster or business",
+      "status": "Job status",
+      "open": "Open",
+      "closed": "Closed",
+      "proposals": "Proposals: {{count}}",
+      "liveOrder": "has an order",
+      "close": "Take off the board",
+      "closeConfirm": "Close the job",
+      "reason": "Reason (for the audit log)"
+    },
+    "orders": {
+      "status": "Order status",
+      "awaiting_payment": "Awaiting payment",
+      "in_progress": "In progress",
+      "delivered": "Delivered",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "parties": "Client {{client}}, freelancer {{freelancer}}",
+      "amount": "Amount",
+      "amountLine": "{{amount}} (platform fee {{fee}})",
+      "payment": "Payment",
+      "paidOut": "Paid out to freelancer"
+    },
+    "payment": {
+      "created": "Link created",
+      "captured": "Held in escrow",
+      "released": "Released",
+      "refunded": "Refunded",
+      "cancelled": "Cancelled"
+    },
+    "verifications": {
+      "hint": "Numbers are hidden in this list. Opening a business shows the full numbers and is recorded in the audit log.",
+      "submitted": "From {{owner}}, {{when}}",
+      "review": "Review",
+      "loggedView": "Viewing the full numbers is recorded.",
+      "gst": "GST number",
+      "udyam": "Udyam number",
+      "owner": "Owner",
+      "business": "Business",
+      "website": "Website",
+      "about": "About",
+      "approve": "Verify this business",
+      "reject": "Reject",
+      "rejectConfirm": "Reject now",
+      "reason": "Reason (the business sees this)"
+    },
+    "payouts": {
+      "hint": "Pay the freelancer by UPI outside the app, then enter the bank reference (UTR) here.",
+      "upi": "UPI ID",
+      "accountName": "Name on account",
+      "noDetails": "The freelancer has not added payout details yet",
+      "confirm": "Record payout",
+      "reference": "Bank reference number (UTR)"
+    },
+    "audit": {
+      "hint": "Every approval, rejection, payout, suspension and category change is recorded here.",
+      "actions": {
+        "verify_company": "Business verified",
+        "reject_company": "Business rejected",
+        "view_company_ids": "Opened a business's full numbers",
+        "mark_paid_out": "Payout recorded",
+        "suspend_user": "User suspended",
+        "restore_user": "User restored",
+        "close_job": "Job closed",
+        "add_category": "Category added",
+        "edit_category": "Category edited"
+      }
+    },
+    "categories": {
+      "hint": "Hidden categories stay on existing jobs but cannot be picked for new ones.",
+      "add": "Add a category",
+      "edit": "Edit",
+      "hidden": "Hidden",
+      "slug": "Short name (letters, digits, dashes)",
+      "nameEn": "Name in English",
+      "nameTa": "Name in Tamil",
+      "sort": "Order in lists",
+      "active": "Visible in the app",
+      "save": "Save",
+      "invalid": "Fill in both names and a short name like web-design.",
+      "icon": "Icon"
+    }
   }
 }

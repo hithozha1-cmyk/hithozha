@@ -166,5 +166,17 @@ for (const lang of ['en', 'ta']) {
 check('legal: the terms state the 5% fee', legal.legalContent.en.terms.sections.some(([, b]) => b.includes('5%')), true);
 check('legal: the contact page has an email', /@/.test(legal.BUSINESS.email), true);
 
+// ---- admin: payout references and UPI ids (mirror the database checks) ----------------
+const admin = load('src/lib/admin.ts');
+check('admin: a UTR is accepted', admin.isValidReference('UTR123456'), true);
+check('admin: a UTR with spaces around it is trimmed', admin.isValidReference('  SBIN0123456789  '), true);
+check('admin: a short reference is refused', admin.isValidReference('12345'), false);
+check('admin: a reference with symbols is refused', admin.isValidReference('abc 123; drop'), false);
+const payoutSource = fs.readFileSync(path.join(ROOT, 'src/components/PayoutDetails.tsx'), 'utf8');
+const upi = new Function('return ' + /UPI_PATTERN = (\/.*\/);/.exec(payoutSource)[1])();
+check('upi: a normal id is accepted', upi.test('kaushik@okaxis'), true);
+check('upi: no bank part is refused', upi.test('kaushik'), false);
+check('upi: spaces are refused', upi.test('kau shik@okaxis'), false);
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);
