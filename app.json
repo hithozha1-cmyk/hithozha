@@ -38,7 +38,14 @@
           "photosPermission": "Hithozha needs access to your photos so you can choose a profile picture."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "color": "#D4420A",
+          "defaultChannel": "default"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

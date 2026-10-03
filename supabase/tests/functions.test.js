@@ -21,6 +21,7 @@ const ENV = {
   RAZORPAY_KEY_SECRET: 'rzp_test_secret',
   RAZORPAY_WEBHOOK_SECRET: 'whsec_test',
   RESEND_API_KEY: 're_test_key',
+  PUSH_WEBHOOK_SECRET: 'push-secret',
 };
 
 // ---- mocks ---------------------------------------------------------------
@@ -36,7 +37,7 @@ let userRpcError;
 let users;
 
 function resetWorld() {
-  tables = { orders: [], payments: [], identity_verifications: [], profiles: [] };
+  tables = { orders: [], payments: [], identity_verifications: [], profiles: [], push_tokens: [] };
   userRpcCalls = [];
   userRpcError = null;
   users = {};
@@ -48,18 +49,26 @@ function resetWorld() {
 }
 
 function queryBuilder(table) {
-  const state = { filters: [], order: null, limit: null };
+  const state = { filters: [], ins: [], deleting: false, order: null, limit: null };
+  const matches = (r) => state.filters.every(([c, v]) => r[c] === v) && state.ins.every(([c, vals]) => vals.includes(r[c]));
   const builder = {
     select: () => builder,
     eq: (column, value) => (state.filters.push([column, value]), builder),
+    in: (column, values) => (state.ins.push([column, values]), builder),
+    delete: () => ((state.deleting = true), builder),
     order: () => builder,
     limit: () => builder,
     maybeSingle: async () => {
-      const row = tables[table].find((r) => state.filters.every(([c, v]) => r[c] === v));
+      const row = tables[table].find(matches);
       return { data: row ?? null, error: null };
     },
     then: (resolve) => {
-      const rows = tables[table].filter((r) => state.filters.every(([c, v]) => r[c] === v));
+      if (state.deleting) {
+        tables[table] = tables[table].filter((r) => !matches(r));
+        resolve({ error: null });
+        return;
+      }
+      const rows = tables[table].filter(matches);
       resolve({ data: rows, error: null });
     },
     insert: async (row) => {
@@ -386,6 +395,66 @@ const authed = { Authorization: 'Bearer good-token', 'Content-Type': 'applicatio
   console.error = errorLog;
   ENV.RESEND_API_KEY = 're_test_key';
   check('review-identity: without an email key the decision is saved and no email is attempted', res.status === 200 && res.json.reviewed === true && res.json.emailed === false && emailsSent().length === 0);
+
+
+  // ===================== send-push ===========================================
+  const sendPush = loadFunction('send-push');
+  const U1 = '33333333-3333-4333-8333-333333333333';
+  const U2 = '44444444-4444-4444-8444-444444444444';
+  const hook = { 'x-webhook-secret': 'push-secret', 'Content-Type': 'application/json' };
+  const insertEvent = (over = {}, record = {}) => ({ type: 'INSERT', table: 'notifications', record: { id: 'n1', user_id: U1, kind: 'order_paid', data: { order_id: 'o1', title: 'Logo for my bakery' }, ...record }, ...over });
+  const expoCalls = () => razorpayCalls.filter((c) => c.url === 'https://exp.host/--/api/v2/push/send');
+  const seedPush = (language = 'en') => {
+    tables.profiles.push({ id: U1, language }, { id: U2, language: 'en' });
+    tables.push_tokens.push({ token: 'ExponentPushToken[aaaaaaaaaaaa]', user_id: U1 }, { token: 'ExponentPushToken[bbbbbbbbbbbb]', user_id: U1 }, { token: 'ExponentPushToken[cccccccccccc]', user_id: U2 });
+  };
+
+  resetWorld();
+  check('send-push: rejects GET', (await call(sendPush, { method: 'GET' })).status === 405);
+  check('send-push: needs the webhook secret', (await call(sendPush, { headers: { 'Content-Type': 'application/json' }, body: insertEvent() })).status === 401);
+  check('send-push: rejects a wrong secret', (await call(sendPush, { headers: { ...hook, 'x-webhook-secret': 'nope' }, body: insertEvent() })).status === 401);
+  check('send-push: rejects a secret that is only a prefix', (await call(sendPush, { headers: { ...hook, 'x-webhook-secret': 'push-secre' }, body: insertEvent() })).status === 401);
+  check('send-push: a user token (JWT) is not a webhook secret', (await call(sendPush, { headers: { Authorization: 'Bearer good-token' }, body: insertEvent() })).status === 401);
+  check('send-push: rejects invalid json', (await call(sendPush, { headers: hook, body: '{oops' })).status === 400);
+  check('send-push: ignores other events and tables', (await call(sendPush, { headers: hook, body: insertEvent({ type: 'UPDATE' }) })).json.ignored === true && (await call(sendPush, { headers: hook, body: insertEvent({ table: 'orders' }) })).json.ignored === true);
+  check('send-push: rejects an unknown notification kind', (await call(sendPush, { headers: hook, body: insertEvent({}, { kind: 'free_money' }) })).status === 400);
+  check('send-push: rejects a bad user id', (await call(sendPush, { headers: hook, body: insertEvent({}, { user_id: "1' or '1'='1" }) })).status === 400);
+  check('send-push: nothing was sent for any refused request', expoCalls().length === 0);
+
+  resetWorld();
+  tables.profiles.push({ id: U1, language: 'en' });
+  res = await call(sendPush, { headers: hook, body: insertEvent() });
+  check('send-push: a person with no phones gets no push and Expo is not called', res.status === 200 && res.json.sent === 0 && expoCalls().length === 0);
+
+  resetWorld();
+  seedPush('en');
+  razorpayHandler = () => ({ status: 200, body: { data: [{ status: 'ok' }, { status: 'ok' }] } });
+  res = await call(sendPush, { headers: hook, body: insertEvent() });
+  const batch = JSON.parse(expoCalls()[0].body);
+  check('send-push: sends one message per phone of that person only', res.status === 200 && res.json.sent === 2 && batch.length === 2 && batch.every((m) => m.to.startsWith('ExponentPushToken[') && m.to !== 'ExponentPushToken[cccccccccccc]'));
+  check('send-push: the text is in the person\'s language and filled in', batch[0].title === 'Payment received' && batch[0].body === 'Logo for my bakery is paid and held safely. You can start the work.', JSON.stringify(batch[0]));
+  check('send-push: the push carries what the app needs to open the order', batch[0].data.kind === 'order_paid' && batch[0].data.order_id === 'o1' && batch[0].channelId === 'default' && batch[0].sound === 'default');
+
+  resetWorld();
+  seedPush('ta');
+  razorpayHandler = () => ({ status: 200, body: { data: [{ status: 'ok' }, { status: 'ok' }] } });
+  await call(sendPush, { headers: hook, body: insertEvent({}, { kind: 'order_completed', data: { title: 'Logo', amount_paise: 95000 } }) });
+  const taBatch = JSON.parse(expoCalls()[0].body);
+  check('send-push: Tamil text and rupee amounts', taBatch[0].title === 'ஆர்டர் ஏற்கப்பட்டது' && taBatch[0].body.includes('₹950'), taBatch[0].body);
+
+  resetWorld();
+  seedPush('en');
+  razorpayHandler = () => ({ status: 200, body: { data: [{ status: 'ok' }, { status: 'error', message: 'gone', details: { error: 'DeviceNotRegistered' } }] } });
+  res = await call(sendPush, { headers: hook, body: insertEvent() });
+  check('send-push: a phone Expo says is gone is forgotten', res.json.sent === 1 && !tables.push_tokens.some((t) => t.token === 'ExponentPushToken[bbbbbbbbbbbb]') && tables.push_tokens.some((t) => t.token === 'ExponentPushToken[aaaaaaaaaaaa]') && tables.push_tokens.some((t) => t.user_id === U2));
+
+  resetWorld();
+  seedPush('en');
+  razorpayHandler = () => ({ status: 500, body: {} });
+  console.error = () => {};
+  res = await call(sendPush, { headers: hook, body: insertEvent() });
+  console.error = errorLog;
+  check('send-push: if Expo is down it says so and keeps the phones', res.status === 502 && tables.push_tokens.length === 3);
 
   console.log(`\n${passed} passed, ${failed} failed`);
   process.exit(failed === 0 ? 0 : 1);

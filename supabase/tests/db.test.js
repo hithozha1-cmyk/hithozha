@@ -748,6 +748,33 @@ const bootstrap = `
   await user(nFree, () => q(`select public.mark_notifications_read($1)`, [[firstFree]]));
   check('one notification can be marked read on its own', (await inbox(nFree)).filter((n) => n.read_at === null).length === freeUnread - 1);
 
+  // ---- migration 0015: push tokens ---------------------------------------------
+  const tok = (n) => `ExponentPushToken[device${String(n).padStart(10, '0')}]`;
+  const register = (uid, token, platform = 'android') => user(uid, () => q(`select public.register_push_token($1, $2)`, [token, platform]));
+  const tokenOwner = async (token) => (await service(() => q(`select user_id from public.push_tokens where token = $1`, [token])))[0]?.user_id ?? null;
+
+  await register(nFree, tok(1));
+  check('a phone can register its token', (await tokenOwner(tok(1))) === nFree);
+  await register(nFree, tok(1), 'ios');
+  check('registering the same token twice keeps one row', (await service(() => q(`select * from public.push_tokens where token = $1`, [tok(1)]))).length === 1);
+  await register(nClient, tok(1));
+  check('a shared phone moves to whoever signed in last', (await tokenOwner(tok(1))) === nClient);
+  await user(nFree, () => q(`select public.unregister_push_token($1)`, [tok(1)]));
+  check('someone else cannot remove the token', (await tokenOwner(tok(1))) === nClient);
+  await user(nClient, () => q(`select public.unregister_push_token($1)`, [tok(1)]));
+  check('signing out removes the token', (await tokenOwner(tok(1))) === null);
+
+  await rejects('a made-up token is refused', () => register(nFree, 'not-a-token'), '22023');
+  await rejects('a token with SQL in it is refused', () => register(nFree, "ExponentPushToken[x'); drop table profiles;--]"), '22023');
+  await rejects('an unknown platform is refused', () => register(nFree, tok(2), 'windows'), '22023');
+  await rejects('signed-out users cannot register a token', () => anon(() => q(`select public.register_push_token($1, 'android')`, [tok(3)])), '42501');
+  await rejects('tokens cannot be read from the app', () => user(nFree, () => q(`select * from public.push_tokens`)), '42501');
+  await rejects('tokens cannot be written directly', () => user(nFree, () => q(`insert into public.push_tokens (token, user_id, platform) values ($1, $2, 'android')`, [tok(4), nFree])), '42501');
+
+  for (let n = 10; n < 22; n++) await register(nFree, tok(n));
+  const kept = await service(() => q(`select token from public.push_tokens where user_id = $1`, [nFree]));
+  check('only the ten newest phones are kept', kept.length === 10 && kept.some((k) => k.token === tok(21)) && !kept.some((k) => k.token === tok(10)));
+
   // ---- signed-out access is closed everywhere ---------------------------
   for (const table of ['jobs', 'proposals', 'conversations', 'messages', 'orders', 'payments', 'reviews', 'companies', 'freelancer_profiles']) {
     await rejects(`signed-out users cannot read ${table}`, () => anon(() => q(`select 1 from public.${table} limit 1`)), '42501');

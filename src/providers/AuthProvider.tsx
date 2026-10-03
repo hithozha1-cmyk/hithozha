@@ -11,6 +11,7 @@ import {
 
 import { currentLanguage, hasExplicitLanguage, setAppLanguage } from '@/i18n';
 import type { MyCompany } from '@/lib/company';
+import { unregisterPush } from '@/lib/push';
 import { supabase } from '@/lib/supabase';
 import { PROFILE_COLUMNS, type Language, type Profile } from '@/lib/types';
 
@@ -156,6 +157,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signOut = useCallback(async () => {
+    // Stop pushes to this phone while we can still tell the database who is signing out.
+    await unregisterPush();
     await supabase.auth.signOut();
   }, []);
 

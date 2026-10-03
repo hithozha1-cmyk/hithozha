@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
+import { PushSetup } from '@/components/PushSetup';
 import { Screen } from '@/components/Screen';
 import '@/i18n';
 import { loadStoredLanguage } from '@/i18n';
@@ -46,7 +47,9 @@ function Gate({ ready }: { ready: boolean }) {
   if (loading) return null;
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <>
+      <PushSetup />
+      <Stack screenOptions={{ headerShown: false }}>
       {/* Public: Razorpay and new visitors can read these without an account. */}
       <Stack.Screen name="legal/[page]" />
       <Stack.Protected guard={!signedIn}>
@@ -80,7 +83,8 @@ function Gate({ ready }: { ready: boolean }) {
         <Stack.Screen name="notifications" />
         <Stack.Screen name="admin" />
       </Stack.Protected>
-    </Stack>
+      </Stack>
+    </>
   );
 }
 

@@ -16,3 +16,7 @@ verify_jwt = true
 # requests by checking the Razorpay signature instead.
 [functions.razorpay-webhook]
 verify_jwt = false
+
+# The Supabase Database Webhook calls this with a shared secret header, not a user JWT.
+[functions.send-push]
+verify_jwt = false

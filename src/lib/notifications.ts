@@ -2,24 +2,26 @@ import type { Href } from 'expo-router';
 
 import { supabase } from '@/lib/supabase';
 
-export type NotificationKind =
-  | 'proposal_received'
-  | 'proposal_rejected'
-  | 'hired'
-  | 'order_paid'
-  | 'order_delivered'
-  | 'order_completed'
-  | 'order_cancelled'
-  | 'message'
-  | 'review_received'
-  | 'payout_sent'
-  | 'dispute_opened'
-  | 'dispute_withdrawn'
-  | 'dispute_resolved'
-  | 'identity_verified'
-  | 'identity_rejected'
-  | 'company_verified'
-  | 'company_rejected';
+export const NOTIFICATION_KINDS = [
+  'proposal_received',
+  'proposal_rejected',
+  'hired',
+  'order_paid',
+  'order_delivered',
+  'order_completed',
+  'order_cancelled',
+  'message',
+  'review_received',
+  'payout_sent',
+  'dispute_opened',
+  'dispute_withdrawn',
+  'dispute_resolved',
+  'identity_verified',
+  'identity_rejected',
+  'company_verified',
+  'company_rejected',
+] as const;
+export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
 export type AppNotification = {
   id: string;

@@ -59,7 +59,7 @@ Everything else is a **secret and lives only in Supabase Edge Function secrets**
    npx supabase db push
    ```
 
-   Or paste the fourteen files in `supabase/migrations/` into the SQL editor, in order.
+   Or paste the fifteen files in `supabase/migrations/` into the SQL editor, in order.
 
 ### Email and password sign-up with a verification code
 
@@ -213,6 +213,22 @@ Not built yet: editing a job after posting.
   - **Not built yet** (needs features that do not exist): withdrawal requests, Razorpay refunds (refunds are sent by bank transfer and recorded with a UTR for now), push announcements, featured listings/boosts. Make someone an admin with the SQL under "Making someone an admin".
 - **Legal pages** (Terms, Privacy, Refund and Cancellation, Contact) are public screens, linked from the welcome screen, in Tamil and English. Their text is in `src/legal/content.ts`. These are plain-language drafts that match how the app works: **have a lawyer review them before launch**, and fill in `BUSINESS.phone` and `BUSINESS.address` in that file (empty values are hidden).
 
+### Phone push notifications
+
+The code is done; switching it on needs setup that only you can do.
+
+**How it works.** Every in-app notification is also sent to the person's phone. A phone registers an Expo push token after sign-in (`register_push_token`, removed again on sign-out). When a row is added to `notifications`, a Supabase **Database Webhook** calls the `send-push` Edge Function, which looks up the person's phones and language and sends the push through Expo. Tapping a push opens the same screen the inbox does. Phones Expo reports as gone are forgotten. It does nothing on the website or an emulator.
+
+**Setup, once:**
+1. Run migration `20261003000015_push_tokens.sql`.
+2. Deploy `send-push` with **Verify JWT off** (the webhook cannot send a user JWT; it sends a shared secret instead). Add the secret `PUSH_WEBHOOK_SECRET` (a long random string you choose). `EXPO_ACCESS_TOKEN` is optional (only if you turn on "enhanced push security" in your Expo account).
+3. Supabase → **Database → Webhooks → Create**: table `public.notifications`, event **Insert**, type **Supabase Edge Functions**, function `send-push`, method POST, and add the HTTP header `x-webhook-secret` with the same value as `PUSH_WEBHOOK_SECRET`.
+4. Android: create a free Firebase project, add an Android app with package name `com.hithozha.app`, download `google-services.json` into the project root (commit it; it is client configuration, not a secret), then run `npx eas-cli credentials` and upload an FCM V1 service-account key for Android.
+5. `npx eas-cli login`, `npx eas-cli init` (writes the project id into `app.json`), set the two public variables for builds (`npx eas-cli env:create --name EXPO_PUBLIC_SUPABASE_URL ...` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`, environment `preview`, visibility plain text), then `npx eas-cli build --profile preview --platform android`. Install the APK it produces on a phone.
+6. iPhone later: needs a paid Apple Developer account; `eas build --platform ios` then walks you through the push key.
+
+**Testing.** Sign in on the phone, allow notifications, then trigger one (for example apply to a job as a freelancer; the client's phone should buzz). If nothing arrives, check **Edge Functions → send-push → Logs**, and **Database → Webhooks** history.
+
 ### Proposals, chat, orders and reviews
 
 The hiring flow, and who is allowed to do what at each step. All of it is enforced in the database, so a modified app cannot skip a step.
@@ -261,7 +277,7 @@ src/
   lib/                supabase client, upload helper, shared types
 supabase/
   migrations/         SQL
-  functions/          r2-presign, create-payment, razorpay-webhook, cancel-order, review-identity
+  functions/          r2-presign, create-payment, razorpay-webhook, cancel-order, review-identity, send-push
   tests/              database and Edge Function tests (npm test)
   templates/          branded email template for the sign-up code
 ```

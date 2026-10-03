@@ -17,6 +17,8 @@ function load(file) {
   cache.set(file, mod.exports);
   new Function('module', 'exports', 'require', output)(mod, mod.exports, (id) => {
     if (id === '@/lib/supabase') return { supabase: {} };
+    // Native modules the push helpers import; only the pure functions are tested here.
+    if (['expo-constants', 'expo-device', 'expo-notifications', 'react-native'].includes(id)) return { Platform: { OS: 'android' } };
     if (id.startsWith('@/')) return load(`src/${id.slice(2)}.ts`);
     throw new Error(`unexpected import ${id} in ${file}`);
   });
@@ -187,6 +189,17 @@ check('notify: payouts open the order', notes.notificationHref({ kind: 'payout_s
 check('notify: identity opens the verify screen', notes.notificationHref({ kind: 'identity_rejected', data: {} }), '/account/verify-identity');
 check('notify: a company decision opens the company', notes.notificationHref({ kind: 'company_verified', data: { company_id: 'x1' } }), { pathname: '/company/[id]', params: { id: 'x1' } });
 check('notify: missing ids lead nowhere instead of crashing', notes.notificationHref({ kind: 'hired', data: {} }), null);
+
+// ---- push: what a tapped push opens ---------------------------------------------------
+const push = load('src/lib/push.ts');
+check('push: an order push opens the order', push.hrefFromPushData({ kind: 'order_paid', order_id: 'o1', title: 'x' }), { pathname: '/orders/[id]', params: { id: 'o1' } });
+check('push: a message push opens the chat', push.hrefFromPushData({ kind: 'message', conversation_id: 'c1' }), { pathname: '/chat/[id]', params: { id: 'c1' } });
+check('push: an unknown kind opens nothing', push.hrefFromPushData({ kind: 'free_money', order_id: 'o1' }), null);
+check('push: a missing kind opens nothing', push.hrefFromPushData({ order_id: 'o1' }), null);
+check('push: a non-object payload opens nothing', push.hrefFromPushData('hello'), null);
+check('push: a missing payload opens nothing', push.hrefFromPushData(undefined), null);
+check('push: a push without the needed id opens nothing', push.hrefFromPushData({ kind: 'hired' }), null);
+check('push: every notification kind is a known push kind', notes.NOTIFICATION_KINDS.length, 17);
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);
