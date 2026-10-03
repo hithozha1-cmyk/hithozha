@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Screen } from '@/components/Screen';
+import { LIMIT_REACHED_CODE, fetchApplicationCredits, type ApplicationCredits } from '@/lib/credits';
 import { fetchJob, type Job } from '@/lib/jobs';
 import { formatINR, toPaise } from '@/lib/money';
 import { MIN_PROPOSAL_MESSAGE, MIN_PROPOSAL_RUPEES, PLATFORM_FEE_PERCENT, earningsAfterFee } from '@/lib/proposals';
@@ -20,7 +21,7 @@ type Errors = Partial<Record<'message' | 'price' | 'days', string>>;
 const digits = (value: string, max: number) => value.replace(/[^0-9]/g, '').slice(0, max);
 
 export default function ApplyScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, profile } = useAuth();
@@ -33,6 +34,7 @@ export default function ApplyScreen() {
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [credits, setCredits] = useState<ApplicationCredits | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -45,6 +47,10 @@ export default function ApplyScreen() {
       active = false;
     };
   }, [id]);
+
+  useEffect(() => {
+    void fetchApplicationCredits().then(setCredits);
+  }, []);
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
@@ -74,6 +80,7 @@ export default function ApplyScreen() {
     if (!(dayCount >= 1 && dayCount <= 365)) next.days = t(`${e}.days`);
     setErrors(next);
     setFormError(null);
+    if (credits && credits.remaining === 0) return setFormError(t('credits.limitReached'));
     if (Object.keys(next).length > 0 || !session) return;
 
     setSaving(true);
@@ -86,7 +93,12 @@ export default function ApplyScreen() {
     setSaving(false);
 
     if (error) {
-      setFormError(error.code === '23505' ? t(`${e}.alreadyApplied`) : t(`${e}.failed`));
+      if (error.code === LIMIT_REACHED_CODE) {
+        setFormError(t('credits.limitReached'));
+        void fetchApplicationCredits().then(setCredits);
+      } else {
+        setFormError(error.code === '23505' ? t(`${e}.alreadyApplied`) : t(`${e}.failed`));
+      }
       return;
     }
     goBack();
@@ -113,6 +125,15 @@ export default function ApplyScreen() {
     <Screen footer={<Button title={t('proposals.send')} onPress={() => void submit()} loading={saving} />}>
       {back}
       <Text style={styles.title}>{t('proposals.applyTitle')}</Text>
+      {credits ? (
+        <View style={[styles.creditBox, credits.remaining === 0 && styles.creditBoxEmpty]} accessibilityRole="summary">
+          <Text style={styles.creditTitle}>{t('credits.left', { remaining: credits.remaining, allowed: credits.allowed })}</Text>
+          <Text style={styles.creditHint}>
+            {credits.remaining === 0 ? t('credits.noneLeft') : t('credits.resets')}{' '}
+            {t('credits.resetsOn', { date: credits.resetsAt.toLocaleDateString(i18n.language === 'ta' ? 'ta-IN' : 'en-IN', { day: 'numeric', month: 'long' }) })}
+          </Text>
+        </View>
+      ) : null}
       {job ? (
         <View style={styles.jobBox}>
           <Text style={styles.jobLabel}>{t('proposals.forJob')}</Text>
@@ -169,6 +190,10 @@ const styles = StyleSheet.create({
   back: { width: 44, height: 44, marginLeft: -10, alignItems: 'center', justifyContent: 'center' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: { ...type.title, color: colors.text, paddingTop: 12, paddingBottom: 14 },
+  creditBox: { marginBottom: 12, padding: 12, borderRadius: radius.card, backgroundColor: colors.tintBlue, gap: 2 },
+  creditBoxEmpty: { backgroundColor: colors.tintRedSoft },
+  creditTitle: { ...type.label, color: colors.text },
+  creditHint: { ...type.small, color: colors.muted },
   applyBlocked: { ...type.body, color: colors.muted },
   jobBox: { gap: 2, padding: 14, marginBottom: 18, borderRadius: radius.card, backgroundColor: colors.tintBlue },
   jobLabel: { ...type.caption, color: colors.accent },

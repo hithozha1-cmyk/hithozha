@@ -982,5 +982,12 @@
         "body": "We could not verify {{name}}. You can submit again."
       }
     }
+  },
+  "credits": {
+    "left": "{{remaining}} of {{allowed}} free applications left this month",
+    "resets": "Your free applications come back on the 1st.",
+    "noneLeft": "You have used all your free applications this month.",
+    "resetsOn": "Next batch: {{date}}.",
+    "limitReached": "You have used all your free applications this month. They come back on the 1st of next month."
   }
 }

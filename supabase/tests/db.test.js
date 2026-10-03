@@ -810,6 +810,48 @@ const bootstrap = `
   await service(() => q(`delete from vault.decrypted_secrets`));
   check('the push trigger is not callable by the app', await (async () => { try { await user(nClient, () => q(`select public.push_on_notification()`)); return false; } catch (e) { return e.code === '42501'; } })());
 
+  // ---- migration 0018: free application credits ---------------------------
+  const busy = await newUser('busy@test');
+  const other = await newUser('other-free@test');
+  await setProfile(busy, 'freelancer', 'Busy Bee');
+  await setProfile(other, 'freelancer', 'Other Free');
+  await verify(busy);
+  await verify(other);
+  const credits = (uid) => user(uid, () => one(`select * from public.my_application_credits()`));
+
+  const fresh = await credits(busy);
+  check('a new freelancer has 10 free applications this month', fresh.used === 0 && fresh.allowed === 10 && fresh.remaining === 10);
+  const resetsAt = new Date(fresh.resets_at);
+  check('the allowance resets on the 1st of next month, India time', resetsAt > new Date() && resetsAt.getTime() - Date.now() < 32 * 86400000);
+
+  const sentIds = [];
+  for (let n = 0; n < 10; n++) {
+    const jb = await job(clientA);
+    sentIds.push((await propose(busy, jb.id, 60000)).id);
+  }
+  check('ten proposals in a month are accepted', sentIds.length === 10);
+  const spent = await credits(busy);
+  check('the counter shows all ten used and none left', spent.used === 10 && spent.remaining === 0);
+
+  const jobEleven = await job(clientA);
+  await rejects('the eleventh proposal of the month is refused', () => propose(busy, jobEleven.id, 60000), '54000');
+  check('a refused proposal is not saved', (await credits(busy)).used === 10);
+
+  await user(busy, () => q(`update public.proposals set status = 'withdrawn' where id = $1`, [sentIds[0]]));
+  await rejects('withdrawing a proposal does not give the credit back', () => propose(busy, jobEleven.id, 60000), '54000');
+
+  check('another freelancer is not affected by someone else\'s limit', !!(await propose(other, jobEleven.id, 60000)).id && (await credits(other)).used === 1);
+  check('a client cannot read or spend anyone\'s credits', (await user(clientA, () => one(`select * from public.my_application_credits()`))).used === 0);
+
+  await service(() => q(`update public.proposals set created_at = created_at - interval '40 days' where freelancer_id = $1`, [busy]));
+  check('last month\'s proposals no longer count', (await credits(busy)).used === 0);
+  check('the freelancer can apply again in a new month', !!(await propose(busy, jobEleven.id, 60000)).id);
+  check('this month\'s proposal counts again from one', (await credits(busy)).used === 1);
+
+  await rejects('signed-out users cannot read credits', () => anon(() => q(`select * from public.my_application_credits()`)), '42501');
+  await rejects('the counting helper is not callable by the app', () => user(busy, () => q(`select public.applications_this_month($1)`, [busy])), '42501');
+  await rejects('the allowance helper is not callable by the app', () => user(busy, () => q(`select public.application_allowance($1)`, [busy])), '42501');
+
   // ---- signed-out access is closed everywhere ---------------------------
   for (const table of ['jobs', 'proposals', 'conversations', 'messages', 'orders', 'payments', 'reviews', 'companies', 'freelancer_profiles']) {
     await rejects(`signed-out users cannot read ${table}`, () => anon(() => q(`select 1 from public.${table} limit 1`)), '42501');
