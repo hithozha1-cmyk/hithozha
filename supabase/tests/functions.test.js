@@ -13,6 +13,9 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${ok ? '' : '  ' + detail}`);
 };
 
+const rsa = crypto.generateKeyPairSync('rsa', { modulusLength: 2048, publicKeyEncoding: { type: 'spki', format: 'pem' }, privateKeyEncoding: { type: 'pkcs8', format: 'pem' } });
+const SERVICE_ACCOUNT = { client_email: 'firebase-adminsdk@hithozha-app.iam.gserviceaccount.com', private_key: rsa.privateKey, project_id: 'hithozha-app' };
+
 const ENV = {
   SUPABASE_URL: 'https://proj.supabase.co',
   SUPABASE_ANON_KEY: 'anon-key',
@@ -22,6 +25,7 @@ const ENV = {
   RAZORPAY_WEBHOOK_SECRET: 'whsec_test',
   RESEND_API_KEY: 're_test_key',
   PUSH_WEBHOOK_SECRET: 'push-secret',
+  FIREBASE_SERVICE_ACCOUNT: JSON.stringify(SERVICE_ACCOUNT),
 };
 
 // ---- mocks ---------------------------------------------------------------
@@ -455,6 +459,85 @@ const authed = { Authorization: 'Bearer good-token', 'Content-Type': 'applicatio
   res = await call(sendPush, { headers: hook, body: insertEvent() });
   console.error = errorLog;
   check('send-push: if Expo is down it says so and keeps the phones', res.status === 502 && tables.push_tokens.length === 3);
+
+
+  // ---- send-push: Android phones go straight to Firebase ---------------------------------
+  const FCM1 = 'fcmTokenAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:APA91bExampleOne';
+  const FCM2 = 'fcmTokenBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB:APA91bExampleTwo';
+  const googleCalls = () => razorpayCalls.filter((c) => c.url === 'https://oauth2.googleapis.com/token');
+  const fcmCalls = () => razorpayCalls.filter((c) => c.url.startsWith('https://fcm.googleapis.com/v1/projects/hithozha-app/messages:send'));
+  const fcmWorld = (handler) => (url, init) => {
+    if (url === 'https://oauth2.googleapis.com/token') return { status: 200, body: { access_token: 'goog-access-token' } };
+    return handler(url, init);
+  };
+  const seedFcm = (language = 'en', tokens = [FCM1, FCM2]) => {
+    tables.profiles.push({ id: U1, language });
+    for (const token of tokens) tables.push_tokens.push({ token, user_id: U1 });
+  };
+
+  const pushFcm = loadFunction('send-push');
+  resetWorld();
+  seedFcm('en');
+  razorpayHandler = fcmWorld(() => ({ status: 200, body: { name: 'projects/hithozha-app/messages/1' } }));
+  res = await call(pushFcm, { headers: hook, body: insertEvent({}, { kind: 'order_completed', data: { order_id: 'o9', title: 'Logo', amount_paise: 95000 } }) });
+  check('send-push: Android phones are reached through Firebase, not Expo', res.status === 200 && res.json.sent === 2 && fcmCalls().length === 2 && expoCalls().length === 0, JSON.stringify(res));
+  const fcmBody = JSON.parse(fcmCalls()[0].body).message;
+  check('send-push: the Firebase message has the text and the phone token', fcmBody.token === FCM1 && fcmBody.notification.title === 'Order approved' && fcmBody.notification.body === 'Logo was approved. ₹950 is on its way to you.', JSON.stringify(fcmBody));
+  check('send-push: Firebase data values are all strings and carry the order id', fcmBody.data.kind === 'order_completed' && fcmBody.data.order_id === 'o9' && Object.values(fcmBody.data).every((v) => typeof v === 'string'));
+  check('send-push: the Android channel is set', fcmBody.android.notification.channel_id === 'default' && fcmBody.android.priority === 'HIGH');
+  check('send-push: the call to Firebase carries the Google access token', fcmCalls()[0].headers.Authorization === 'Bearer goog-access-token');
+
+  const assertion = new URLSearchParams(googleCalls()[0].body.toString()).get('assertion');
+  const [h64, c64, sig64] = assertion.split('.');
+  const claims = JSON.parse(Buffer.from(c64, 'base64url').toString());
+  const verified = crypto.createVerify('RSA-SHA256').update(`${h64}.${c64}`).verify(rsa.publicKey, Buffer.from(sig64, 'base64url'));
+  check('send-push: the Google sign-in request is signed with the service account key', verified === true);
+  check('send-push: it asks only for messaging permission, as the service account', claims.iss === SERVICE_ACCOUNT.client_email && claims.scope === 'https://www.googleapis.com/auth/firebase.messaging' && claims.aud === 'https://oauth2.googleapis.com/token');
+
+  const tokenCallsBefore = googleCalls().length;
+  await call(pushFcm, { headers: hook, body: insertEvent({}, { kind: 'order_paid', data: { order_id: 'o1', title: 'Logo' } }) });
+  check('send-push: the Google access token is reused for the next push', googleCalls().length === tokenCallsBefore);
+
+  resetWorld();
+  seedFcm('en');
+  razorpayHandler = fcmWorld((url, init) => (JSON.parse(init.body).message.token === FCM2 ? { status: 404, body: { error: { status: 'NOT_FOUND' } } } : { status: 200, body: {} }));
+  res = await call(pushFcm, { headers: hook, body: insertEvent() });
+  check('send-push: a phone Firebase says is gone is forgotten', res.json.sent === 1 && !tables.push_tokens.some((t) => t.token === FCM2) && tables.push_tokens.some((t) => t.token === FCM1));
+
+  resetWorld();
+  seedFcm('ta', [FCM1, 'ExponentPushToken[iphoneAAAAAAAAAA]']);
+  razorpayHandler = fcmWorld((url) => (url.includes('exp.host') ? { status: 200, body: { data: [{ status: 'ok' }] } } : { status: 200, body: {} }));
+  res = await call(pushFcm, { headers: hook, body: insertEvent() });
+  check('send-push: Android goes to Firebase and iPhone goes to Expo in the same push', res.json.sent === 2 && fcmCalls().length === 1 && expoCalls().length === 1);
+
+  resetWorld();
+  seedFcm('en');
+  razorpayHandler = fcmWorld(() => ({ status: 500, body: { error: { status: 'INTERNAL' } } }));
+  console.error = () => {};
+  res = await call(pushFcm, { headers: hook, body: insertEvent() });
+  console.error = errorLog;
+  check('send-push: if Firebase is down it says so and keeps the phones', res.status === 502 && tables.push_tokens.length === 2);
+
+  const b64 = Buffer.from(JSON.stringify(SERVICE_ACCOUNT)).toString('base64');
+  const saved = ENV.FIREBASE_SERVICE_ACCOUNT;
+  ENV.FIREBASE_SERVICE_ACCOUNT = b64;
+  const pushB64 = loadFunction('send-push');
+  resetWorld();
+  seedFcm('en');
+  razorpayHandler = fcmWorld(() => ({ status: 200, body: {} }));
+  res = await call(pushB64, { headers: hook, body: insertEvent() });
+  check('send-push: the Firebase key also works pasted as base64', res.status === 200 && res.json.sent === 2);
+
+  delete ENV.FIREBASE_SERVICE_ACCOUNT;
+  const pushNoKey = loadFunction('send-push');
+  resetWorld();
+  seedFcm('en');
+  razorpayHandler = fcmWorld(() => ({ status: 200, body: {} }));
+  console.error = () => {};
+  res = await call(pushNoKey, { headers: hook, body: insertEvent() });
+  console.error = errorLog;
+  check('send-push: without the Firebase key nothing is sent and the phones are kept', res.status === 502 && fcmCalls().length === 0 && tables.push_tokens.length === 2);
+  ENV.FIREBASE_SERVICE_ACCOUNT = saved;
 
   console.log(`\n${passed} passed, ${failed} failed`);
   process.exit(failed === 0 ? 0 : 1);

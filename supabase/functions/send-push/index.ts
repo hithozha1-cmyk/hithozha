@@ -1,6 +1,8 @@
 // Sends a phone push notification when a row is added to the notifications table.
-// A Supabase Database Webhook (INSERT on public.notifications) calls this function with a shared
-// secret in the x-webhook-secret header. Phones that Expo says no longer exist are forgotten.
+// A database trigger calls this function with a shared secret in the x-webhook-secret header.
+// Android phones are reached directly through Firebase Cloud Messaging (FCM, using the
+// FIREBASE_SERVICE_ACCOUNT secret); Expo push tokens (iPhone, later) go through Expo's service.
+// Phones that Firebase or Expo say no longer exist are forgotten.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -71,6 +73,95 @@ function routeData(kind: string, data: Record<string, unknown>): Record<string, 
   return out;
 }
 
+
+// ---- Firebase Cloud Messaging (Android) ---------------------------------------------------------
+
+type ServiceAccount = { client_email: string; private_key: string; project_id: string };
+
+/** The FIREBASE_SERVICE_ACCOUNT secret: the key file's JSON, pasted as is or as base64. */
+function readServiceAccount(): ServiceAccount | null {
+  const raw = Deno.env.get('FIREBASE_SERVICE_ACCOUNT');
+  if (!raw) return null;
+  try {
+    const text = raw.trim().startsWith('{') ? raw : atob(raw.trim());
+    const parsed = JSON.parse(text);
+    if (typeof parsed.client_email !== 'string' || typeof parsed.private_key !== 'string' || typeof parsed.project_id !== 'string') return null;
+    return parsed as ServiceAccount;
+  } catch {
+    return null;
+  }
+}
+
+const base64Url = (input: ArrayBuffer | string): string => {
+  const bytes = typeof input === 'string' ? new TextEncoder().encode(input) : new Uint8Array(input);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
+
+let cachedAccessToken: { value: string; expiresAt: number } | null = null;
+
+/** Trades the service-account key for a short-lived Google access token (kept for about 50 minutes). */
+async function googleAccessToken(account: ServiceAccount): Promise<string | null> {
+  if (cachedAccessToken && cachedAccessToken.expiresAt > Date.now()) return cachedAccessToken.value;
+
+  const now = Math.floor(Date.now() / 1000);
+  const claims = base64Url(JSON.stringify({
+    iss: account.client_email,
+    scope: 'https://www.googleapis.com/auth/firebase.messaging',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  }));
+  const unsigned = `${base64Url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))}.${claims}`;
+
+  const pem = account.private_key.replace(/-----(BEGIN|END) PRIVATE KEY-----/g, '').replace(/\s+/g, '');
+  const der = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+  const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(unsigned));
+
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: `${unsigned}.${base64Url(signature)}` }),
+  });
+  if (!response.ok) {
+    console.error('Google refused the service account key', response.status);
+    return null;
+  }
+  const { access_token: value } = (await response.json()) as { access_token?: string };
+  if (!value) return null;
+  cachedAccessToken = { value, expiresAt: Date.now() + 50 * 60 * 1000 };
+  return value;
+}
+
+const isExpoToken = (token: string) => /^(Expo|Exponent)PushToken\[/.test(token);
+
+type PushMessage = { title: string; body: string; data: Record<string, string | number> };
+
+/** Sends to one Android phone. Returns 'ok', 'gone' (the phone no longer exists) or 'error'. */
+async function sendFcm(account: ServiceAccount, accessToken: string, token: string, message: PushMessage): Promise<'ok' | 'gone' | 'error'> {
+  const data: Record<string, string> = {};
+  for (const [key, value] of Object.entries(message.data)) data[key] = String(value); // FCM data values must be strings
+  const response = await fetch(`https://fcm.googleapis.com/v1/projects/${account.project_id}/messages:send`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: {
+        token,
+        notification: { title: message.title, body: message.body },
+        data,
+        android: { priority: 'HIGH', notification: { channel_id: 'default', sound: 'default' } },
+      },
+    }),
+  });
+  if (response.ok) return 'ok';
+  const detail = (await response.json().catch(() => null)) as { error?: { status?: string } } | null;
+  if (response.status === 404 || detail?.error?.status === 'NOT_FOUND' || detail?.error?.status === 'UNREGISTERED') return 'gone';
+  console.error('Firebase refused a message', response.status, detail?.error?.status ?? '');
+  return 'error';
+}
+
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
 
@@ -99,32 +190,54 @@ Deno.serve(async (req) => {
 
   const language: Language = profile?.language === 'en' ? 'en' : 'ta';
   const copy = TEXT[record.kind][language];
-  const messages = tokens.map((row: { token: string }) => ({
-    to: row.token,
-    title: copy.title,
-    body: fill(copy.body, data),
-    data: routeData(record.kind as string, data),
-    sound: 'default',
-    channelId: 'default',
-    priority: 'high',
-  }));
+  const message: PushMessage = { title: copy.title, body: fill(copy.body, data), data: routeData(record.kind as string, data) };
 
-  const headers: Record<string, string> = { 'Content-Type': 'application/json', Accept: 'application/json' };
-  const accessToken = Deno.env.get('EXPO_ACCESS_TOKEN');
-  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+  const all = tokens.map((row: { token: string }) => row.token);
+  const expoTokens = all.filter(isExpoToken);
+  const fcmTokens = all.filter((token) => !isExpoToken(token));
+  const dead: string[] = [];
+  let failed = false;
 
-  const response = await fetch('https://exp.host/--/api/v2/push/send', { method: 'POST', headers, body: JSON.stringify(messages) });
-  if (!response.ok) {
-    console.error('Expo push service refused the request', response.status);
-    return json({ error: 'push_provider_error' }, 502);
+  // Android phones: straight to Firebase.
+  if (fcmTokens.length > 0) {
+    const account = readServiceAccount();
+    const accessToken = account ? await googleAccessToken(account).catch(() => null) : null;
+    if (!account || !accessToken) {
+      console.error('FIREBASE_SERVICE_ACCOUNT is missing or not accepted, so Android pushes were not sent');
+      failed = true;
+    } else {
+      for (const token of fcmTokens) {
+        const result = await sendFcm(account, accessToken, token, message);
+        if (result === 'gone') dead.push(token);
+        else if (result === 'error') failed = true;
+      }
+    }
+  }
+
+  // Expo tokens (iPhone, later): through Expo's push service.
+  if (expoTokens.length > 0) {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json', Accept: 'application/json' };
+    const accessToken = Deno.env.get('EXPO_ACCESS_TOKEN');
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+    const response = await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(expoTokens.map((to) => ({ to, ...message, sound: 'default', channelId: 'default', priority: 'high' }))),
+    });
+    if (!response.ok) {
+      console.error('Expo push service refused the request', response.status);
+      failed = true;
+    } else {
+      const result = (await response.json().catch(() => null)) as { data?: { status?: string; details?: { error?: string } }[] } | null;
+      (result?.data ?? []).forEach((ticket, index) => {
+        if (ticket.status === 'error' && ticket.details?.error === 'DeviceNotRegistered') dead.push(expoTokens[index]);
+      });
+    }
   }
 
   // Forget phones that no longer exist (app uninstalled, token expired).
-  const result = (await response.json().catch(() => null)) as { data?: { status?: string; details?: { error?: string } }[] } | null;
-  const dead = (result?.data ?? [])
-    .map((ticket, index) => (ticket.status === 'error' && ticket.details?.error === 'DeviceNotRegistered' ? messages[index].to : null))
-    .filter((token): token is string => token !== null);
   if (dead.length > 0) await admin.from('push_tokens').delete().in('token', dead);
 
-  return json({ sent: messages.length - dead.length });
+  if (failed && dead.length === 0 && all.length > 0) return json({ error: 'push_provider_error' }, 502);
+  return json({ sent: all.length - dead.length });
 });

@@ -38,11 +38,18 @@ export async function registerForPush(): Promise<PushResult> {
     if (status !== 'granted') status = (await Notifications.requestPermissionsAsync()).status;
     if (status !== 'granted') return 'denied';
 
-    // Set by `eas init`; without it Expo cannot issue a token.
-    const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
-    if (!projectId) return 'no_project';
-
-    const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
+    let token: string;
+    if (Platform.OS === 'android') {
+      // Android: the phone's own Firebase (FCM) token; send-push talks to Firebase directly.
+      const device = await Notifications.getDevicePushTokenAsync();
+      if (typeof device.data !== 'string') return 'error';
+      token = device.data;
+    } else {
+      // iPhone (later): an Expo push token, which needs the Expo project id.
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+      if (!projectId) return 'no_project';
+      token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+    }
     const { error } = await supabase.rpc('register_push_token', { p_token: token, p_platform: Platform.OS === 'ios' ? 'ios' : 'android' });
     if (error) return 'error';
     registeredToken = token;

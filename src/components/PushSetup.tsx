@@ -28,7 +28,10 @@ function NativePushSetup() {
     const id = lastResponse.notification.request.identifier;
     if (handled.current === id) return;
     handled.current = id;
-    const href = hrefFromPushData(lastResponse.notification.request.content.data);
+    // Pushes sent straight through Firebase carry our fields in remoteMessage.data.
+    const { content, trigger } = lastResponse.notification.request;
+    const remote = (trigger as { remoteMessage?: { data?: unknown } } | null)?.remoteMessage?.data;
+    const href = hrefFromPushData(content.data && Object.keys(content.data).length > 0 ? content.data : remote);
     if (href) router.push(href);
   }, [ready, needsVerification, lastResponse, router]);
 
