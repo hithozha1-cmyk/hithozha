@@ -33,7 +33,9 @@
     "invalidCredentials": "The email or password is wrong.",
     "signUpFailed": "We could not create your account. Please try again.",
     "signInFailed": "We could not sign you in. Please try again.",
-    "forgotPassword": "Forgot password?"
+    "forgotPassword": "Forgot password?",
+    "networkError": "We could not reach the server. Check your internet connection and try again.",
+    "configError": "This version of the app is not set up correctly. Please install the latest version."
   },
   "otp": {
     "title": "Verify your email",

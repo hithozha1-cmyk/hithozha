@@ -70,7 +70,17 @@ export default function WelcomeScreen() {
         else goToVerify(address);
         return;
       }
-      setFormError(error.code === 'invalid_credentials' ? t('auth.invalidCredentials') : t('auth.signInFailed'));
+      if (error.code === 'invalid_credentials') {
+        setFormError(t('auth.invalidCredentials'));
+      } else if (error.name === 'AuthRetryableFetchError' || /network request failed|failed to fetch/i.test(error.message)) {
+        // The request never got an answer: no internet, or the app points at the wrong server.
+        setFormError(t('auth.networkError'));
+      } else if (error.status === 401 || error.code === 'invalid_api_key' || error.code === 'bad_jwt') {
+        setFormError(t('auth.configError'));
+      } else {
+        // Anything else: say so, with the short code, so it can be traced.
+        setFormError(`${t('auth.signInFailed')} (${error.code ?? error.status ?? error.name})`);
+      }
     } finally {
       setBusy(false);
     }

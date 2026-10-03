@@ -55,3 +55,6 @@ supabase/all-migrations.sql
 # Firebase service-account keys are secrets. Never commit them.
 *firebase-adminsdk*.json
 service-account*.json
+
+# Promo video project (large, not part of the app)
+/videos
