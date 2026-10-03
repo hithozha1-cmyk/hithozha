@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
+import { NotificationBell } from '@/components/NotificationBell';
 import { Screen } from '@/components/Screen';
 import { useCategories } from '@/hooks/useCategories';
 import { categoryIcon } from '@/lib/categoryIcons';
@@ -27,7 +28,10 @@ export default function HomeScreen() {
     <Screen padded={false} edges={['top']}>
       <View style={styles.body}>
         <View style={styles.header}>
-          <Text style={styles.greeting}>{t('home.greeting', { name: greetingName })}</Text>
+          <View style={styles.greetingRow}>
+            <Text style={styles.greeting}>{t('home.greeting', { name: greetingName })}</Text>
+            <NotificationBell />
+          </View>
           <Text style={styles.headline}>{t('home.headline')}</Text>
         </View>
 
@@ -93,6 +97,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   body: { paddingHorizontal: layout.screenPadding, gap: 22 },
+  greetingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   header: { gap: 2 },
   greeting: { ...type.body, color: colors.muted },
   headline: { ...type.title, fontSize: 26, color: colors.text },

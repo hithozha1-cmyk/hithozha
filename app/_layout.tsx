@@ -77,6 +77,7 @@ function Gate({ ready }: { ready: boolean }) {
         <Stack.Screen name="account/verify-identity" />
         <Stack.Screen name="jobs/mine" />
         <Stack.Screen name="jobs/edit/[id]" />
+        <Stack.Screen name="notifications" />
         <Stack.Screen name="admin" />
       </Stack.Protected>
     </Stack>

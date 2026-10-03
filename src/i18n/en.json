@@ -903,5 +903,84 @@
     "emailedRejected": "We also sent you an email with this reason.",
     "applyBlockedTitle": "Verify your identity first",
     "applyBlockedBody": "Only freelancers whose identity is verified can apply to jobs. Send your ID photo and selfie, and we will email you when you are approved."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "bellUnread": "Notifications, {{count}} unread",
+    "emptyTitle": "Nothing yet",
+    "emptyBody": "Updates about your jobs, orders and messages show up here.",
+    "errorTitle": "We could not load your notifications",
+    "errorBody": "Check your connection and try again.",
+    "markAll": "Mark all as read",
+    "kinds": {
+      "proposal_received": {
+        "title": "New proposal",
+        "body": "{{name}} sent a proposal for {{title}}."
+      },
+      "proposal_rejected": {
+        "title": "Proposal not accepted",
+        "body": "Your proposal for {{title}} was not accepted."
+      },
+      "hired": {
+        "title": "You were hired",
+        "body": "{{name}} hired you for {{title}}. The client pays next."
+      },
+      "order_paid": {
+        "title": "Payment received",
+        "body": "{{title}} is paid and held safely. You can start the work."
+      },
+      "order_delivered": {
+        "title": "Work delivered",
+        "body": "{{title}} was delivered. Check it and approve to release the payment."
+      },
+      "order_completed": {
+        "title": "Order approved",
+        "body": "{{title}} was approved. {{amount}} is on its way to you."
+      },
+      "order_cancelled": {
+        "title": "Order cancelled",
+        "body": "{{title}} was cancelled before payment."
+      },
+      "message": {
+        "title": "New message",
+        "body": "{{name}} sent you a message."
+      },
+      "review_received": {
+        "title": "New review",
+        "body": "You got {{rating}} out of 5."
+      },
+      "payout_sent": {
+        "title": "Payout sent",
+        "body": "{{amount}} for {{title}} was sent to you. Reference {{reference}}."
+      },
+      "dispute_opened": {
+        "title": "Problem reported",
+        "body": "A problem was reported on {{title}}. Our team will decide."
+      },
+      "dispute_withdrawn": {
+        "title": "Problem withdrawn",
+        "body": "The problem reported on {{title}} was withdrawn."
+      },
+      "dispute_resolved": {
+        "title": "Dispute decided",
+        "body": "Our team decided the dispute on {{title}}. Open the order to read it."
+      },
+      "identity_verified": {
+        "title": "Identity verified",
+        "body": "You can now apply to jobs."
+      },
+      "identity_rejected": {
+        "title": "Identity not verified",
+        "body": "We could not verify you. Open to read why and send new photos."
+      },
+      "company_verified": {
+        "title": "Business verified",
+        "body": "{{name}} now has the verified badge."
+      },
+      "company_rejected": {
+        "title": "Business not verified",
+        "body": "We could not verify {{name}}. You can submit again."
+      }
+    }
   }
 }

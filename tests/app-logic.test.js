@@ -178,5 +178,15 @@ check('upi: a normal id is accepted', upi.test('kaushik@okaxis'), true);
 check('upi: no bank part is refused', upi.test('kaushik'), false);
 check('upi: spaces are refused', upi.test('kau shik@okaxis'), false);
 
+// ---- notifications: where a tap goes --------------------------------------------------
+const notes = load('src/lib/notifications.ts');
+check('notify: a proposal opens the proposals of that job', notes.notificationHref({ kind: 'proposal_received', data: { job_id: 'j1' } }), { pathname: '/jobs/proposals/[id]', params: { id: 'j1' } });
+check('notify: a message opens the chat', notes.notificationHref({ kind: 'message', data: { conversation_id: 'c1' } }), { pathname: '/chat/[id]', params: { id: 'c1' } });
+check('notify: order events open the order', notes.notificationHref({ kind: 'order_paid', data: { order_id: 'o1' } }), { pathname: '/orders/[id]', params: { id: 'o1' } });
+check('notify: payouts open the order', notes.notificationHref({ kind: 'payout_sent', data: { order_id: 'o2' } }), { pathname: '/orders/[id]', params: { id: 'o2' } });
+check('notify: identity opens the verify screen', notes.notificationHref({ kind: 'identity_rejected', data: {} }), '/account/verify-identity');
+check('notify: a company decision opens the company', notes.notificationHref({ kind: 'company_verified', data: { company_id: 'x1' } }), { pathname: '/company/[id]', params: { id: 'x1' } });
+check('notify: missing ids lead nowhere instead of crashing', notes.notificationHref({ kind: 'hired', data: {} }), null);
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);

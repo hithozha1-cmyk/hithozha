@@ -670,6 +670,84 @@ const bootstrap = `
     check(`the audit log records ${a}`, idLog.some((l) => l.action === a));
   }
 
+  // ---- migration 0014: notifications ---------------------------------------
+  const nClient = await newUser('n-client@test');
+  const nFree = await newUser('n-free@test');
+  await setProfile(nClient, 'client', 'Nina Client');
+  await setProfile(nFree, 'freelancer', 'Farid Free');
+  await verify(nFree);
+  const inbox = (uid) => user(uid, () => q(`select kind, data, read_at from public.notifications order by created_at, id`));
+  const kinds = async (uid) => (await inbox(uid)).map((n) => n.kind);
+
+  const nJob = await job(nClient);
+  const nProp = await propose(nFree, nJob.id, 100000);
+  check('a client hears about a new proposal, with the freelancer name', (await inbox(nClient)).some((n) => n.kind === 'proposal_received' && n.data.name === 'Farid Free' && n.data.proposal_id === nProp.id));
+  check('the freelancer is not told about their own proposal', !(await kinds(nFree)).includes('proposal_received'));
+
+  const nConv = (await one(`select id from public.conversations where proposal_id = $1`, [nProp.id])).id;
+  await user(nFree, () => q(`select public.send_message($1, 'Hello, I can start today')`, [nConv]));
+  await user(nFree, () => q(`select public.send_message($1, 'And I can share samples too')`, [nConv]));
+  check('many messages in one chat make one notification', (await kinds(nClient)).filter((k) => k === 'message').length === 1);
+  check('the sender is not notified of their own message', !(await kinds(nFree)).includes('message'));
+  await user(nClient, () => q(`select public.mark_notifications_read()`));
+  check('marking read clears the unread notifications', (await inbox(nClient)).every((n) => n.read_at !== null));
+  await user(nFree, () => q(`select public.send_message($1, 'Any questions?')`, [nConv]));
+  check('after reading, the next message notifies again', (await kinds(nClient)).filter((k) => k === 'message').length === 2);
+
+  const nOrder = (await user(nClient, () => one(`select public.accept_proposal($1) as id`, [nProp.id]))).id;
+  check('hiring notifies the freelancer', (await inbox(nFree)).some((n) => n.kind === 'hired' && n.data.order_id === nOrder && n.data.name === 'Nina Client'));
+  await service(() => q(`insert into public.payments (order_id, razorpay_payment_link_id, payment_url, amount_paise) values ($1, 'plink_n1', 'https://rzp.io/i/n', 100000)`, [nOrder]));
+  await service(() => q(`select public.record_payment_captured('plink_n1', 'pay_n1', 100000)`));
+  check('a paid order notifies the freelancer', (await kinds(nFree)).includes('order_paid'));
+  await user(nFree, () => q(`select public.mark_order_delivered($1)`, [nOrder]));
+  check('a delivery notifies the client', (await kinds(nClient)).includes('order_delivered'));
+  await user(nClient, () => q(`select public.complete_order($1)`, [nOrder]));
+  check('an approval notifies the freelancer with the amount', (await inbox(nFree)).some((n) => n.kind === 'order_completed' && n.data.amount_paise === 95000));
+  await user(nClient, () => q(`select public.submit_review($1, 5, 'Great work')`, [nOrder]));
+  check('a review notifies the freelancer', (await inbox(nFree)).some((n) => n.kind === 'review_received' && n.data.rating === 5));
+  await user(admin, () => q(`select public.admin_mark_paid_out($1, 'UTR777888')`, [nOrder]));
+  check('a payout notifies the freelancer with the reference', (await inbox(nFree)).some((n) => n.kind === 'payout_sent' && n.data.reference === 'UTR777888' && n.data.amount_paise === 95000));
+
+  const nJob2 = await job(nClient);
+  const nProp2 = await propose(nFree, nJob2.id, 80000);
+  await user(nClient, () => q(`select public.reject_proposal($1)`, [nProp2.id]));
+  check('a rejected proposal notifies the freelancer', (await kinds(nFree)).includes('proposal_rejected'));
+
+  const nJob3 = await job(nClient);
+  const nProp3 = await propose(nFree, nJob3.id, 60000);
+  const nOrder3 = (await user(nClient, () => one(`select public.accept_proposal($1) as id`, [nProp3.id]))).id;
+  await service(() => q(`select public.cancel_order($1, $2)`, [nOrder3, nClient]));
+  check('cancelling an unpaid order notifies the freelancer', (await kinds(nFree)).includes('order_cancelled'));
+
+  const nJob4 = await job(nClient);
+  const nProp4 = await propose(nFree, nJob4.id, 60000);
+  const nOrder4 = (await user(nClient, () => one(`select public.accept_proposal($1) as id`, [nProp4.id]))).id;
+  await service(() => q(`insert into public.payments (order_id, razorpay_payment_link_id, payment_url, amount_paise) values ($1, 'plink_n4', 'https://rzp.io/i/n', 60000)`, [nOrder4]));
+  await service(() => q(`select public.record_payment_captured('plink_n4', 'pay_n4', 60000)`));
+  const nDispute = (await user(nClient, () => one(`select public.open_dispute($1, 'The work is not what we agreed on at all') as id`, [nOrder4]))).id;
+  check('opening a dispute notifies the other person only', (await kinds(nFree)).includes('dispute_opened') && !(await kinds(nClient)).includes('dispute_opened'));
+  await user(nClient, () => q(`select public.withdraw_dispute($1)`, [nDispute]));
+  check('withdrawing a dispute notifies the other person', (await kinds(nFree)).includes('dispute_withdrawn'));
+  const nDispute2 = (await user(nFree, () => one(`select public.open_dispute($1, 'The client will not reply to my questions') as id`, [nOrder4]))).id;
+  await user(admin, () => q(`select public.admin_resolve_dispute($1, 'release', 0, null, 'Work was delivered as agreed')`, [nDispute2]));
+  check('a decision notifies both people', (await inbox(nClient)).some((n) => n.kind === 'dispute_resolved' && n.data.resolution === 'release') && (await inbox(nFree)).some((n) => n.kind === 'dispute_resolved'));
+
+  check('an identity decision notified the freelancer', (await kinds(freelancerF)).includes('identity_rejected') && (await kinds(freelancerF)).includes('identity_verified'));
+  check('the rejection reason is in the notification', (await inbox(freelancerF)).some((n) => n.kind === 'identity_rejected' && n.data.reason === 'The ID photo is blurry'));
+  check('a company decision notified its owner', (await kinds(outsider)).includes('company_verified'));
+
+  check('people see only their own notifications', (await inbox(nClient)).every((n) => n.kind !== 'hired') && (await kinds(outsider)).every((k) => !['hired', 'order_paid'].includes(k)));
+  await rejects('notifications cannot be written by the app', () => user(nClient, () => q(`insert into public.notifications (user_id, kind) values ($1, 'hired')`, [nFree])), '42501');
+  await rejects('notifications cannot be edited directly', () => user(nClient, () => q(`update public.notifications set read_at = null`)), '42501');
+  await rejects('the notify helper is not callable by the app', () => user(nClient, () => q(`select public.notify_user($1, 'hired', '{}')`, [nFree])), '42501');
+  await rejects('signed-out users cannot read notifications', () => anon(() => q(`select * from public.notifications`)), '42501');
+  const freeUnread = (await inbox(nFree)).filter((n) => n.read_at === null).length;
+  await user(nClient, () => q(`select public.mark_notifications_read()`));
+  check('marking read never touches another person\'s notifications', (await inbox(nFree)).filter((n) => n.read_at === null).length === freeUnread && freeUnread > 0);
+  const firstFree = (await user(nFree, () => one(`select id from public.notifications order by created_at limit 1`))).id;
+  await user(nFree, () => q(`select public.mark_notifications_read($1)`, [[firstFree]]));
+  check('one notification can be marked read on its own', (await inbox(nFree)).filter((n) => n.read_at === null).length === freeUnread - 1);
+
   // ---- signed-out access is closed everywhere ---------------------------
   for (const table of ['jobs', 'proposals', 'conversations', 'messages', 'orders', 'payments', 'reviews', 'companies', 'freelancer_profiles']) {
     await rejects(`signed-out users cannot read ${table}`, () => anon(() => q(`select 1 from public.${table} limit 1`)), '42501');
