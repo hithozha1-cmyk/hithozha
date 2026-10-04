@@ -739,6 +739,50 @@ const bootstrap = `
   await rejects('too many reports in a day are refused', () => report(freelancerF, 'user', freelancerG), '54000');
   check('admins hear about new identity checks and disputes through the same alerts', (await service(() => one(`select count(*)::int as n from public.notifications where user_id = $1 and kind in ('admin_identity', 'admin_dispute')`, [admin]))).n >= 1);
 
+  // ---- migration 0023: fixed-price packages -----------------------------------------
+  const addPackage = (uid, o = {}) => user(uid, () => one(
+    `insert into public.service_packages (title, description, category_slug, price_paise, delivery_days) values ($1, $2, 'graphic-design', $3, $4) returning id`,
+    [o.title ?? 'Logo design', o.description ?? 'A clean logo for your shop with two changes', o.price ?? 150000, o.days ?? 3]));
+  await service(() => q(`update public.profiles set verification_status = 'none' where id = $1`, [freelancerG]));
+  await rejects('an unverified freelancer cannot publish a package', () => addPackage(freelancerG), '42501');
+  await service(() => q(`update public.profiles set verification_status = 'verified' where id = $1`, [freelancerG]));
+  await rejects('a client cannot publish a package', () => addPackage(clientA), '42501');
+  await rejects('a package title must be long enough', () => addPackage(freelancerF, { title: 'Logo' }), '23514');
+  await rejects('a package costs at least Rs 50', () => addPackage(freelancerF, { price: 4000 }), '23514');
+  await rejects('a package takes 1 to 60 days', () => addPackage(freelancerF, { days: 90 }), '23514');
+  const pkg = (await addPackage(freelancerF)).id;
+  check('a verified freelancer can publish a package', !!pkg);
+  check('clients can see an active package', (await user(clientA, () => q(`select id from public.service_packages where id = $1`, [pkg]))).length === 1);
+  await rejects('a package cannot be created for someone else', () => user(freelancerG, () => q(`insert into public.service_packages (freelancer_id, title, description, category_slug, price_paise, delivery_days) values ($1, 'Logo design', 'A clean logo for your shop with two changes', 'graphic-design', 150000, 3)`, [freelancerF])), '42501');
+  await user(clientA, () => q(`update public.service_packages set price_paise = 5000 where id = $1`, [pkg]));
+  check('others cannot change a package', (await one(`select price_paise from public.service_packages where id = $1`, [pkg])).price_paise === 150000);
+  await user(clientA, () => q(`delete from public.service_packages where id = $1`, [pkg]));
+  check('others cannot delete a package', (await one(`select count(*)::int as n from public.service_packages where id = $1`, [pkg])).n === 1);
+  await rejects('the app cannot mark a proposal as a package order', () => user(freelancerG, () => q(`insert into public.proposals (job_id, message, price_paise, delivery_days, package_id) values ($1, 'I can do this job for you quickly', 10000, 2, $2)`, [jobReported.id, pkg])), '42501');
+
+  const hiredBefore = (await service(() => one(`select count(*)::int as n from public.notifications where user_id = $1 and kind = 'hired'`, [freelancerF]))).n;
+  const receivedBefore = (await service(() => one(`select count(*)::int as n from public.notifications where user_id = $1 and kind = 'proposal_received'`, [clientA]))).n;
+  const pkgOrder = (await user(clientA, () => one(`select public.order_package($1, 'Please use blue') as id`, [pkg]))).id;
+  const po = await service(() => one(`select * from public.orders where id = $1`, [pkgOrder]));
+  check('ordering a package creates an order awaiting payment', po.status === 'awaiting_payment' && po.client_id === clientA && po.freelancer_id === freelancerF);
+  check('the order has the package price, a 5% fee and the delivery days', po.amount_paise === 150000 && po.platform_fee_paise === 7500 && po.freelancer_earnings_paise === 142500 && po.delivery_days === 3);
+  check('the order is titled after the package', po.title === 'Logo design');
+  check('the freelancer is told they were hired', (await service(() => one(`select count(*)::int as n from public.notifications where user_id = $1 and kind = 'hired'`, [freelancerF]))).n === hiredBefore + 1);
+  check('the client is not told they received a proposal', (await service(() => one(`select count(*)::int as n from public.notifications where user_id = $1 and kind = 'proposal_received'`, [clientA]))).n === receivedBefore);
+  check('the order has a chat between the two', (await service(() => one(`select count(*)::int as n from public.conversations where job_id = $1 and client_id = $2 and freelancer_id = $3`, [po.job_id, clientA, freelancerF]))).n === 1);
+  check('the hidden job is closed, so it never shows in the job feed', (await service(() => one(`select status from public.jobs where id = $1`, [po.job_id]))).status === 'closed');
+  check('the same package can be ordered again', !!(await user(clientA, () => one(`select public.order_package($1) as id`, [pkg]))).id);
+  await rejects('you cannot order your own package', () => user(freelancerF, () => q(`select public.order_package($1)`, [pkg])), '42501');
+  await rejects('a note must be short', () => user(clientA, () => q(`select public.order_package($1, $2)`, [pkg, 'x'.repeat(501)])), '22023');
+  await rejects('an unknown package is not found', () => user(clientA, () => q(`select public.order_package('00000000-0000-0000-0000-000000000000')`)), 'P0002');
+  await rejects('signed-out users cannot order', () => anon(() => q(`select public.order_package($1)`, [pkg])), '42501');
+  await user(freelancerF, () => q(`update public.service_packages set active = false where id = $1`, [pkg]));
+  check('a paused package is hidden from clients', (await user(clientA, () => q(`select id from public.service_packages where id = $1`, [pkg]))).length === 0);
+  check('a paused package is still visible to its owner', (await user(freelancerF, () => q(`select id from public.service_packages where id = $1`, [pkg]))).length === 1);
+  await rejects('a paused package cannot be ordered', () => user(clientA, () => q(`select public.order_package($1)`, [pkg])), 'P0002');
+  for (let i = 0; i < 5; i += 1) await addPackage(freelancerF, { title: `Extra package ${i}` });
+  await rejects('a freelancer can have at most 6 packages', () => addPackage(freelancerF, { title: 'One too many' }), '54000');
+
   // ---- migration 0014: notifications ---------------------------------------
   const nClient = await newUser('n-client@test');
   const nFree = await newUser('n-free@test');

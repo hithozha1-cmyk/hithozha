@@ -75,6 +75,7 @@ function Gate({ ready }: { ready: boolean }) {
           <Stack.Screen name="account/edit-profile" />
           <Stack.Screen name="account/freelancer" />
           <Stack.Screen name="account/earnings" />
+          <Stack.Screen name="account/packages" />
           <Stack.Screen name="account/verify-identity" />
           <Stack.Screen name="jobs/mine" />
           <Stack.Screen name="jobs/edit/[id]" />

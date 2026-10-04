@@ -1071,5 +1071,47 @@
   "share": {
     "profile": "Share this profile",
     "profileMessage": "{{name}} is on Hithozha, where you work with friends, not strangers. See the profile: {{url}}"
+  },
+  "packages": {
+    "title": "Packages",
+    "days": "{{count}} days",
+    "order": "Order this package",
+    "note": "Anything the freelancer should know? (optional)",
+    "orderHint": "You will pay on the next screen. Your money is held safely until you approve the work.",
+    "confirmOrder": "Order for {{price}}",
+    "orderFailed": "We could not place the order. Please try again.",
+    "manageTitle": "My packages",
+    "manageIntro": "A package is a service with a fixed price, like \"Logo design, Rs 1500, 3 days\". Clients can order it in one tap.",
+    "needVerified": "Only freelancers with a verified identity can publish packages.",
+    "none": "You have no packages yet.",
+    "live": "Live",
+    "paused": "Paused",
+    "edit": "Edit",
+    "pause": "Pause",
+    "resume": "Make live",
+    "delete": "Delete",
+    "deleteTitle": "Delete this package?",
+    "deleteBody": "Orders already placed are not affected.",
+    "add": "Add a package",
+    "save": "Save package",
+    "feeNote": "Hithozha keeps a 5% fee when an order is completed. You receive the rest.",
+    "limit": "You can have at most {{count}} packages.",
+    "saveFailed": "We could not save that. Please try again.",
+    "fields": {
+      "title": "Package name",
+      "titlePlaceholder": "e.g. Logo design",
+      "category": "Category",
+      "description": "What the client gets",
+      "descriptionPlaceholder": "e.g. A clean logo for your shop with two changes",
+      "price": "Price (Rs)",
+      "days": "Delivery in days"
+    },
+    "errors": {
+      "title": "Give the package a name of 5 to 80 characters.",
+      "description": "Describe what the client gets, in 20 to 600 characters.",
+      "category": "Choose a category.",
+      "price": "Enter a price of at least Rs 50.",
+      "days": "Enter 1 to 60 days."
+    }
   }
 }

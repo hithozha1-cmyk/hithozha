@@ -233,5 +233,19 @@ let rejected = false;
 try { b64.base64ToBytes('not*valid'); } catch { rejected = true; }
 check('base64: rejects characters that are not base64', rejected, true);
 
+// ---- packages --------------------------------------------------------------------------
+const packages = load('src/lib/packages.ts');
+const goodPackage = { title: 'Logo design', description: 'A clean logo for your shop with two changes', category: 'graphic-design', price: '1500', days: '3' };
+check('packages: a good form has no errors', packages.validatePackage(goodPackage).errors, {});
+check('packages: the row stores paise', packages.validatePackage(goodPackage).row, { title: 'Logo design', description: 'A clean logo for your shop with two changes', category_slug: 'graphic-design', price_paise: 150000, delivery_days: 3 });
+check('packages: an empty form is refused with keys', Object.keys(packages.validatePackage(packages.EMPTY_PACKAGE).errors).sort(), ['category', 'days', 'description', 'price', 'title']);
+check('packages: a short name is refused', packages.validatePackage({ ...goodPackage, title: 'Logo' }).errors.title, 'packages.errors.title');
+check('packages: under Rs 50 is refused', packages.validatePackage({ ...goodPackage, price: '49' }).errors.price, 'packages.errors.price');
+check('packages: Rs 50 is accepted', packages.validatePackage({ ...goodPackage, price: '50' }).errors.price, undefined);
+check('packages: decimals in the price are refused', packages.validatePackage({ ...goodPackage, price: '15.5' }).errors.price, 'packages.errors.price');
+check('packages: 61 days is refused', packages.validatePackage({ ...goodPackage, days: '61' }).errors.days, 'packages.errors.days');
+check('packages: zero days is refused', packages.validatePackage({ ...goodPackage, days: '0' }).errors.days, 'packages.errors.days');
+check('packages: a saved package fills the form', packages.packageToFormValues({ id: 'x', freelancer_id: 'y', title: 'Logo design', description: 'd'.repeat(30), category_slug: 'graphic-design', price_paise: 150000, delivery_days: 3, active: true }).price, '1500');
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);

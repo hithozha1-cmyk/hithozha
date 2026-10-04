@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Avatar } from '@/components/Avatar';
 import { Card } from '@/components/Card';
 import { EmptyState } from '@/components/EmptyState';
+import { PackageList } from '@/components/PackageList';
 import { ReportButton } from '@/components/ReportButton';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { useAuth } from '@/providers/AuthProvider';
@@ -164,6 +165,8 @@ export default function FreelancerScreen() {
           </Text>
         ) : null}
       </View>
+
+      <PackageList freelancerId={freelancer.id} canOrder={session?.user.id !== freelancer.id} />
 
       {profile.portfolio_urls.length > 0 || profile.portfolio_website ? (
         <View style={styles.section}>

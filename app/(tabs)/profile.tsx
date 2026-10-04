@@ -58,6 +58,7 @@ export default function ProfileTabScreen() {
             <VerificationChip status={profile?.verification_status ?? 'none'} />
           </Pressable>
           <Button variant="outline" title={t('account.earnings')} onPress={() => router.push('/account/earnings')} />
+          <Button variant="outline" title={t('packages.manageTitle')} onPress={() => router.push('/account/packages')} />
           <Button variant="outline" title={t('account.freelancerEditAction')} onPress={() => router.push('/account/freelancer')} />
           {profile ? (
             <Button
