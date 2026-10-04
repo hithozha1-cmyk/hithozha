@@ -841,6 +841,20 @@ const bootstrap = `
   check('marking read clears the unread notifications', (await inbox(nClient)).every((n) => n.read_at !== null));
   await user(nFree, () => q(`select public.send_message($1, 'Any questions?')`, [nConv]));
   check('after reading, the next message notifies again', (await kinds(nClient)).filter((k) => k === 'message').length === 2);
+  // Opening the chat clears its unread message notification, so the next message buzzes again.
+  const unreadMsgs = async () => (await inbox(nClient)).filter((n) => n.kind === 'message' && n.read_at === null).length;
+  check('there is one unread message notification before opening the chat', (await unreadMsgs()) === 1);
+  await user(nClient, () => q(`select public.mark_conversation_read($1)`, [nConv]));
+  check('opening the chat clears its message notification', (await unreadMsgs()) === 0);
+  await user(nFree, () => q(`select public.send_message($1, 'One more thing')`, [nConv]));
+  check('a message after opening the chat notifies again', (await unreadMsgs()) === 1);
+  await user(nFree, () => q(`select public.send_message($1, 'Right after')`, [nConv]));
+  check('a burst of messages stays one notification', (await unreadMsgs()) === 1);
+  await service(() => q(`update public.notifications set created_at = now() - interval '10 minutes' where user_id = $1 and kind = 'message' and read_at is null`, [nClient]));
+  await user(nFree, () => q(`select public.send_message($1, 'Are you there?')`, [nConv]));
+  check('a message minutes later notifies again even if the last one was never opened', (await unreadMsgs()) === 2);
+  await user(nClient, () => q(`select public.mark_conversation_read($1)`, [nConv]));
+  check('opening the chat clears all of them', (await unreadMsgs()) === 0);
 
   const nOrder = (await user(nClient, () => one(`select public.accept_proposal($1) as id`, [nProp.id]))).id;
   check('hiring notifies the freelancer', (await inbox(nFree)).some((n) => n.kind === 'hired' && n.data.order_id === nOrder && n.data.name === 'Nina Client'));
