@@ -83,6 +83,11 @@ a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px soli
 .hero-art::before { content: ''; position: absolute; inset: -40px; border-radius: 50%; background: var(--brand); opacity: 0.22; filter: blur(30px); }
 .hero-art img { position: relative; width: 260px; height: 260px; border-radius: 56px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35); }
 
+/* video */
+.video-block { text-align: center; }
+.video-block .section-note { margin-left: auto; margin-right: auto; }
+.video { width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: var(--radius); background: var(--night); box-shadow: 0 18px 50px rgba(26, 26, 46, 0.25); margin-top: 8px; }
+
 /* trust */
 .trust { background: var(--card); border-bottom: 1px solid var(--border); }
 .trust-grid { display: grid; gap: 22px; padding-top: 32px; padding-bottom: 32px; }

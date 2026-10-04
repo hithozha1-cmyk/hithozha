@@ -305,7 +305,7 @@ check('tokens: the limit error code matches the database', tokens.LIMIT_REACHED_
     const rel = clean.replace(/^\//, '');
     return [rel, `${rel}/index.html`, `${rel}index.html`, rel === '' ? 'index.html' : ''].some((c) => c !== '' && fs.existsSync(path.join(DIST, c)) && fs.statSync(path.join(DIST, c)).isFile());
   };
-  const brokenLinks = htmlFiles.flatMap((f) => [...fs.readFileSync(f, 'utf8').matchAll(/(?:href|src)="([^"]+)"/g)].map((m) => m[1]).filter((h) => !exists(h)));
+  const brokenLinks = htmlFiles.flatMap((f) => [...fs.readFileSync(f, 'utf8').matchAll(/(?:href|src|poster)="([^"]+)"/g)].map((m) => m[1]).filter((h) => !exists(h)));
   check('site: no broken internal links or images', brokenLinks, []);
   check('site: the sitemap lists every page', (fs.readFileSync(path.join(DIST, 'sitemap.xml'), 'utf8').match(/<loc>/g) || []).length, 10);
   check('site: the home pages link to the app', ['index.html', 'ta/index.html'].every((f) => fs.readFileSync(path.join(DIST, f), 'utf8').includes('https://app.hithozha.in')), true);

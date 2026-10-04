@@ -37,6 +37,12 @@ const en = {
     ['A real team behind it', 'Reports and disputes are read and decided by people, not bots.'],
     ['Payment held until you approve', 'Online payment is opening soon. See the questions below.'],
   ],
+  video: {
+    title: 'See Hithozha in 48 seconds',
+    text: 'A short tour of how it works. The video is in Tamil and has music only, no voice.',
+    label: 'Hithozha tour video, 48 seconds',
+    description: 'A 48-second tour of Hithozha, the freelance marketplace for Tamil Nadu.',
+  },
   how: {
     title: 'How it works',
     clients: {
@@ -134,6 +140,12 @@ const ta = {
     ['பின்னால் உண்மையான குழு', 'புகார்களையும் சர்ச்சைகளையும் ரோபோக்கள் அல்ல, மனிதர்கள் படித்து முடிவு செய்கிறார்கள்.'],
     ['நீங்கள் ஏற்கும் வரை பணம் பாதுகாப்பு', 'ஆன்லைன் பணம் செலுத்துதல் விரைவில் திறக்கும். கீழே உள்ள கேள்விகளைப் பாருங்கள்.'],
   ],
+  video: {
+    title: '48 வினாடிகளில் ஹித்தோழா',
+    text: 'இது எப்படிச் செயல்படுகிறது என்பதற்கான சிறு சுற்றுலா. வீடியோ தமிழில், இசை மட்டும், குரல் இல்லை.',
+    label: 'ஹித்தோழா அறிமுக வீடியோ, 48 வினாடிகள்',
+    description: 'தமிழ்நாட்டுக்கான ஃப்ரீலான்ஸ் தளமான ஹித்தோழாவின் 48 வினாடி அறிமுகம்.',
+  },
   how: {
     title: 'எப்படிச் செயல்படுகிறது',
     clients: {

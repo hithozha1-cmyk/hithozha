@@ -120,6 +120,17 @@ function home(lang) {
     '@type': 'FAQPage',
     mainEntity: t.faq.items.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
   };
+  const videoLd = {
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    name: t.video.title,
+    description: t.video.description,
+    thumbnailUrl: `${ORIGIN}/assets/promo-poster.jpg`,
+    contentUrl: `${ORIGIN}/assets/promo.mp4`,
+    uploadDate: '2026-10-04',
+    duration: 'PT48S',
+    inLanguage: 'ta',
+  };
   const orgLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -134,6 +145,7 @@ function home(lang) {
     head({ t, title: t.meta.title, description: t.meta.description, pathFor: homePath, lang }) +
     `<script type="application/ld+json">${JSON.stringify(orgLd)}</script>
 <script type="application/ld+json">${JSON.stringify(faqLd)}</script>
+<script type="application/ld+json">${JSON.stringify(videoLd)}</script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -160,6 +172,16 @@ ${header(t, homePath, lang)}
 <section class="trust" aria-label="Why Hithozha">
 <div class="wrap trust-grid">
 ${t.trust.map(([h, p]) => `<div class="trust-item"><h3>${esc(h)}</h3><p>${esc(p)}</p></div>`).join('')}
+</div>
+</section>
+
+<section class="block alt" id="video">
+<div class="wrap narrow video-block">
+<h2>${esc(t.video.title)}</h2>
+<p class="section-note">${esc(t.video.text)}</p>
+<video class="video" controls playsinline preload="none" poster="/assets/promo-poster.jpg" aria-label="${esc(t.video.label)}" width="1280" height="720">
+<source src="/assets/promo.mp4" type="video/mp4">
+</video>
 </div>
 </section>
 
