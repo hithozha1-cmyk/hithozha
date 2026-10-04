@@ -437,7 +437,7 @@ const authed = { Authorization: 'Bearer good-token', 'Content-Type': 'applicatio
   const batch = JSON.parse(expoCalls()[0].body);
   check('send-push: sends one message per phone of that person only', res.status === 200 && res.json.sent === 2 && batch.length === 2 && batch.every((m) => m.to.startsWith('ExponentPushToken[') && m.to !== 'ExponentPushToken[cccccccccccc]'));
   check('send-push: the text is in the person\'s language and filled in', batch[0].title === 'Payment received' && batch[0].body === 'Logo for my bakery is paid and held safely. You can start the work.', JSON.stringify(batch[0]));
-  check('send-push: the push carries what the app needs to open the order', batch[0].data.kind === 'order_paid' && batch[0].data.order_id === 'o1' && batch[0].channelId === 'default' && batch[0].sound === 'default');
+  check('send-push: the push carries what the app needs to open the order', batch[0].data.kind === 'order_paid' && batch[0].data.order_id === 'o1' && batch[0].channelId === 'alerts' && batch[0].sound === 'default');
 
   resetWorld();
   seedPush('ta');
@@ -484,7 +484,7 @@ const authed = { Authorization: 'Bearer good-token', 'Content-Type': 'applicatio
   const fcmBody = JSON.parse(fcmCalls()[0].body).message;
   check('send-push: the Firebase message has the text and the phone token', fcmBody.token === FCM1 && fcmBody.notification.title === 'Order approved' && fcmBody.notification.body === 'Logo was approved. ₹950 is on its way to you.', JSON.stringify(fcmBody));
   check('send-push: Firebase data values are all strings and carry the order id', fcmBody.data.kind === 'order_completed' && fcmBody.data.order_id === 'o9' && Object.values(fcmBody.data).every((v) => typeof v === 'string'));
-  check('send-push: the Android channel is set', fcmBody.android.notification.channel_id === 'default' && fcmBody.android.priority === 'HIGH');
+  check('send-push: the Android channel is set', fcmBody.android.notification.channel_id === 'alerts' && fcmBody.android.priority === 'HIGH');
   check('send-push: the call to Firebase carries the Google access token', fcmCalls()[0].headers.Authorization === 'Bearer goog-access-token');
 
   const assertion = new URLSearchParams(googleCalls()[0].body.toString()).get('assertion');

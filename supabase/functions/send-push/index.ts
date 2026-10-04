@@ -153,7 +153,7 @@ async function sendFcm(account: ServiceAccount, accessToken: string, token: stri
         token,
         notification: { title: message.title, body: message.body },
         data,
-        android: { priority: 'HIGH', notification: { channel_id: 'default', sound: 'default' } },
+        android: { priority: 'HIGH', notification: { channel_id: 'alerts', sound: 'default' } },
       },
     }),
   });
@@ -237,7 +237,7 @@ Deno.serve(async (req) => {
     const response = await fetch('https://exp.host/--/api/v2/push/send', {
       method: 'POST',
       headers,
-      body: JSON.stringify(expoTokens.map((to) => ({ to, ...message, sound: 'default', channelId: 'default', priority: 'high' }))),
+      body: JSON.stringify(expoTokens.map((to) => ({ to, ...message, sound: 'default', channelId: 'alerts', priority: 'high' }))),
     });
     if (!response.ok) {
       console.error('Expo push service refused the request', response.status);

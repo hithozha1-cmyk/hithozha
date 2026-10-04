@@ -33,9 +33,11 @@ export async function registerForPushDetailed(): Promise<PushOutcome> {
   if (Platform.OS === 'web' || !Device.isDevice) return { result: 'unsupported' };
   try {
     if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
+      await Notifications.setNotificationChannelAsync('alerts', {
         name: 'Hithozha',
         importance: Notifications.AndroidImportance.MAX,
+        sound: 'default', // without this the channel can be silent; a channel's sound cannot be changed once created, hence a new id
+        vibrationPattern: [0, 250, 250, 250],
       });
     }
 
