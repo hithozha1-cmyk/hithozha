@@ -167,7 +167,7 @@ export default function BrowseScreen() {
   );
 
   return (
-    <Screen scroll={false} edges={['top']} padded={false}>
+    <Screen size="wide" scroll={false} edges={['top']} padded={false}>
       {loading ? (
         <>
           {header}

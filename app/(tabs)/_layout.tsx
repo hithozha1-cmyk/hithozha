@@ -1,26 +1,43 @@
 import { Tabs } from 'expo-router';
 import { ClipboardList, House, MessageCircle, Search, User } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TabIcon } from '@/components/TabIcon';
 import { useBadges } from '@/hooks/useBadges';
+import { useWide } from '@/hooks/useWide';
 import { colors, fonts } from '@/theme';
 
 export default function TabsLayout() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const badges = useBadges();
+  const wide = useWide();
+  const { width } = useWindowDimensions();
+  // On a big screen the tabs sit in a bar at the top, lined up with the 1120px content column.
+  const gutter = Math.max(0, (width - 1120) / 2);
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarPosition: wide ? 'top' : 'bottom',
+        tabBarLabelPosition: wide ? 'beside-icon' : undefined,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
         tabBarBadgeStyle: { backgroundColor: colors.primary, color: colors.onDark, fontFamily: fonts.bodySemi },
-        tabBarLabelStyle: { fontFamily: fonts.bodySemi, fontSize: 11 },
-        tabBarStyle: {
+        tabBarLabelStyle: { fontFamily: fonts.bodySemi, fontSize: wide ? 15 : 11 },
+        tabBarStyle: wide
+          ? {
+              backgroundColor: colors.card,
+              borderBottomColor: colors.border,
+              borderBottomWidth: 1,
+              borderTopWidth: 0,
+              height: 64,
+              paddingHorizontal: gutter,
+            }
+          : {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
           height: 64 + insets.bottom,

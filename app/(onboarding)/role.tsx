@@ -37,7 +37,7 @@ export default function RoleScreen() {
   };
 
   return (
-    <Screen footer={<Button title={t('common.continue')} onPress={() => void next()} loading={saving} />}>
+    <Screen size="narrow" footer={<Button title={t('common.continue')} onPress={() => void next()} loading={saving} />}>
       <ProgressSteps current={progress.current} total={progress.total} />
 
       <View style={styles.header}>

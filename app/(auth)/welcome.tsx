@@ -10,6 +10,7 @@ import { Input } from '@/components/Input';
 import { LanguagePicker } from '@/components/LanguagePicker';
 import { Logo } from '@/components/Logo';
 import { Screen } from '@/components/Screen';
+import { useWide } from '@/hooks/useWide';
 import { currentLanguage } from '@/i18n';
 import { LEGAL_PAGES, legalContent } from '@/legal/content';
 import { supabase } from '@/lib/supabase';
@@ -25,6 +26,7 @@ export default function WelcomeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const passwordRef = useRef<TextInput>(null);
+  const wide = useWide();
 
   const [mode, setMode] = useState<Mode>('signUp');
   const [email, setEmail] = useState('');
@@ -92,37 +94,34 @@ export default function WelcomeScreen() {
     setFormError(null);
   };
 
-  return (
-    <Screen
-      padded={false}
-      edges={['bottom']}
-      contentStyle={styles.content}
-      footer={
-        <View style={styles.footer}>
-          <Button
-            title={mode === 'signUp' ? t('auth.createAccount') : t('auth.signIn')}
-            onPress={() => void submit()}
-            loading={busy}
-          />
-          <Text style={styles.terms}>{t('welcome.terms')}</Text>
-          <View style={styles.legalRow}>
-            {LEGAL_PAGES.map((page) => (
-              <Pressable key={page} accessibilityRole="link" onPress={() => router.push({ pathname: '/legal/[page]', params: { page } })} style={styles.legalLink}>
-                <Text style={styles.legalText}>{legalContent[currentLanguage()][page].title}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      }
-    >
-      <StatusBar style="light" />
-      <View style={styles.hero}>
-        <Logo onDark />
-        <Text style={styles.greeting}>{t('welcome.greeting')}</Text>
-        <Text style={styles.tagline}>{t('welcome.tagline')}</Text>
-      </View>
+  const footerNode = (
+    <View style={[styles.footer, wide && styles.footerWide]}>
+    <Button
+      title={mode === 'signUp' ? t('auth.createAccount') : t('auth.signIn')}
+      onPress={() => void submit()}
+      loading={busy}
+    />
+    <Text style={styles.terms}>{t('welcome.terms')}</Text>
+    <View style={styles.legalRow}>
+      {LEGAL_PAGES.map((page) => (
+        <Pressable key={page} accessibilityRole="link" onPress={() => router.push({ pathname: '/legal/[page]', params: { page } })} style={styles.legalLink}>
+          <Text style={styles.legalText}>{legalContent[currentLanguage()][page].title}</Text>
+        </Pressable>
+      ))}
+    </View>
+  </View>
+  );
 
-      <View style={styles.form}>
+  const heroChildren = (
+    <>
+      <Logo onDark />
+      <Text style={styles.greeting}>{t('welcome.greeting')}</Text>
+      <Text style={styles.tagline}>{t('welcome.tagline')}</Text>
+    </>
+  );
+
+  const formNode = (
+      <View style={[styles.form, wide && styles.formWide]}>
         <View style={styles.tabs} accessibilityRole="tablist">
           {(['signUp', 'signIn'] as const).map((value) => {
             const active = mode === value;
@@ -202,11 +201,40 @@ export default function WelcomeScreen() {
           </Text>
         ) : null}
       </View>
+  );
 
+  const languageNode = (
       <View style={styles.language}>
         <Text style={styles.languageTitle}>{t('welcome.chooseLanguage')}</Text>
         <LanguagePicker />
       </View>
+  );
+
+  if (wide) {
+    // Big screen: a dark welcome panel on the left and the sign-in card on the right, in the middle of the page.
+    return (
+      <Screen size="wide" contentStyle={styles.wideContent}>
+        <StatusBar style="dark" />
+        <View style={styles.wideRow}>
+          <View style={styles.wideHero}>{heroChildren}</View>
+          <View style={styles.wideCard}>
+            {formNode}
+            {footerNode}
+            {languageNode}
+          </View>
+        </View>
+      </Screen>
+    );
+  }
+
+  return (
+    <Screen size="full" padded={false} edges={['bottom']} contentStyle={styles.content} footer={footerNode}>
+      <StatusBar style="light" />
+      <View style={styles.hero}>{heroChildren}</View>
+
+      {formNode}
+
+      {languageNode}
     </Screen>
   );
 }
@@ -225,6 +253,7 @@ const styles = StyleSheet.create({
   greeting: { ...type.display, color: colors.onDark, marginTop: 8 },
   tagline: { ...type.body, fontSize: 16, color: colors.onDarkMuted },
   form: { paddingHorizontal: layout.screenPadding, paddingTop: 24, gap: 16 },
+  formWide: { paddingHorizontal: 0, paddingTop: 0 },
   tabs: { flexDirection: 'row', padding: 4, borderRadius: radius.card, backgroundColor: '#E8E8EF', gap: 4 },
   tab: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
   tabActive: { backgroundColor: colors.card },
@@ -243,6 +272,11 @@ const styles = StyleSheet.create({
   language: { paddingHorizontal: layout.screenPadding, paddingTop: 28, gap: 14 },
   languageTitle: { ...type.subheading, color: colors.text },
   footer: { gap: 10, paddingHorizontal: layout.screenPadding },
+  footerWide: { paddingHorizontal: 0, paddingTop: 20 },
+  wideContent: { justifyContent: 'center', paddingTop: 32, paddingBottom: 32 },
+  wideRow: { flexDirection: 'row', gap: 28, alignItems: 'stretch' },
+  wideHero: { flex: 1, backgroundColor: colors.night, borderRadius: 32, padding: 48, gap: 16, justifyContent: 'center' },
+  wideCard: { flex: 1, backgroundColor: colors.card, borderRadius: 32, padding: 36, borderWidth: 1, borderColor: colors.border },
   terms: { ...type.small, color: colors.muted, textAlign: 'center' },
   legalRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', columnGap: 14 },
   legalLink: { minHeight: 44, justifyContent: 'center' },

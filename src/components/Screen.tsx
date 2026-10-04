@@ -4,6 +4,10 @@ import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { colors, layout } from '@/theme';
 
+/** How wide the content column is on the website. Phones always use the full width. */
+const WEB_MAX_WIDTH = { narrow: 520, normal: 820, wide: 1120, full: undefined } as const;
+export type ScreenSize = keyof typeof WEB_MAX_WIDTH;
+
 type Props = {
   children: ReactNode;
   /** Wrap the content in a scroll view (default true). */
@@ -14,26 +18,30 @@ type Props = {
   footer?: ReactNode;
   edges?: Edge[];
   contentStyle?: StyleProp<ViewStyle>;
+  /** Width of the centred column on the website (default 'normal'). */
+  size?: ScreenSize;
 };
 
-export function Screen({ children, scroll = true, padded = true, footer, edges, contentStyle }: Props) {
+export function Screen({ children, scroll = true, padded = true, footer, edges, contentStyle, size = 'normal' }: Props) {
+  const maxWidth = WEB_MAX_WIDTH[size];
+  const column: ViewStyle | null = Platform.OS === 'web' && maxWidth ? { width: '100%', maxWidth, alignSelf: 'center' } : null;
   const body = scroll ? (
     <ScrollView
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={[styles.scrollContent, padded && styles.padded, contentStyle]}
+      contentContainerStyle={[styles.scrollContent, padded && styles.padded, column, contentStyle]}
     >
       {children}
     </ScrollView>
   ) : (
-    <View style={[styles.fill, padded && styles.padded, contentStyle]}>{children}</View>
+    <View style={[styles.fill, padded && styles.padded, column, contentStyle]}>{children}</View>
   );
 
   return (
     <SafeAreaView style={styles.root} edges={edges ?? ['top', 'bottom']}>
       <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         {body}
-        {footer ? <View style={[styles.footer, padded && styles.padded]}>{footer}</View> : null}
+        {footer ? <View style={[styles.footer, padded && styles.padded, column]}>{footer}</View> : null}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

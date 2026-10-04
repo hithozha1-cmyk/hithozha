@@ -9,6 +9,7 @@ import { Card } from '@/components/Card';
 import { NotificationBell } from '@/components/NotificationBell';
 import { Screen } from '@/components/Screen';
 import { useCategories } from '@/hooks/useCategories';
+import { useWide } from '@/hooks/useWide';
 import { categoryIcon } from '@/lib/categoryIcons';
 import { isClientRole } from '@/lib/types';
 import { useAuth } from '@/providers/AuthProvider';
@@ -19,13 +20,14 @@ export default function HomeScreen() {
   const router = useRouter();
   const { profile, company } = useAuth();
   const { categories, loading, error, reload } = useCategories();
+  const wide = useWide();
   const [searchText, setSearchText] = useState('');
   const firstName = profile?.full_name?.trim().split(/\s+/)[0] ?? '';
   // Company clients are greeted by their company name.
   const greetingName = profile?.client_type === 'company' && company ? company.name : firstName;
 
   return (
-    <Screen padded={false} edges={['top']}>
+    <Screen size="wide" padded={false} edges={['top']}>
       <View style={styles.body}>
         <View style={styles.header}>
           <View style={styles.greetingRow}>
@@ -70,7 +72,7 @@ export default function HomeScreen() {
                 const Icon = categoryIcon(category.icon);
                 const red = index % 2 === 0;
                 return (
-                  <View key={category.id} style={styles.tileCell}>
+                  <View key={category.id} style={[styles.tileCell, wide && styles.tileCellWide]}>
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={i18n.language === 'ta' ? category.name_ta : category.name_en}
@@ -121,6 +123,7 @@ const styles = StyleSheet.create({
   sectionTitle: { ...type.subheading, fontSize: 19, color: colors.text },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 },
   tileCell: { width: '25%', paddingHorizontal: 4, paddingBottom: 14 },
+  tileCellWide: { width: '12.5%' },
   tile: { alignItems: 'center', gap: 6 },
   tileIcon: { width: 56, height: 56, borderRadius: radius.card, alignItems: 'center', justifyContent: 'center' },
   tileLabel: { ...type.caption, color: colors.text, textAlign: 'center' },
