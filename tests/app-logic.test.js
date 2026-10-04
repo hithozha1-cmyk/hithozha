@@ -307,6 +307,9 @@ check('tokens: the limit error code matches the database', tokens.LIMIT_REACHED_
   };
   const brokenLinks = htmlFiles.flatMap((f) => [...fs.readFileSync(f, 'utf8').matchAll(/(?:href|src|poster)="([^"]+)"/g)].map((m) => m[1]).filter((h) => !exists(h)));
   check('site: no broken internal links or images', brokenLinks, []);
+  const homeHtml = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
+  check('site: the video autoplays only muted, inline and looping, and starts from a scroll watcher', /<video[^>]*\bmuted\b[^>]*\bplaysinline\b|<video[^>]*\bplaysinline\b[^>]*\bmuted\b/.test(homeHtml) && /<video[^>]*\bloop\b/.test(homeHtml) && homeHtml.includes('IntersectionObserver') && !/<video[^>]*\bautoplay\b/.test(homeHtml), true);
+  check('site: the video has no heading above it', !/<h2[^>]*>[^<]*See Hithozha in 48 seconds/.test(homeHtml), true);
   check('site: the sitemap lists every page', (fs.readFileSync(path.join(DIST, 'sitemap.xml'), 'utf8').match(/<loc>/g) || []).length, 10);
   check('site: the home pages link to the app', ['index.html', 'ta/index.html'].every((f) => fs.readFileSync(path.join(DIST, f), 'utf8').includes('https://app.hithozha.in')), true);
 }

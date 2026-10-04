@@ -175,11 +175,9 @@ ${t.trust.map(([h, p]) => `<div class="trust-item"><h3>${esc(h)}</h3><p>${esc(p)
 </div>
 </section>
 
-<section class="block alt" id="video">
-<div class="wrap narrow video-block">
-<h2>${esc(t.video.title)}</h2>
-<p class="section-note">${esc(t.video.text)}</p>
-<video class="video" controls playsinline preload="none" poster="/assets/promo-poster.jpg" aria-label="${esc(t.video.label)}" width="1280" height="720">
+<section class="video-section" id="video" aria-label="${esc(t.video.label)}">
+<div class="wrap video-wrap">
+<video class="video" controls playsinline muted loop preload="metadata" poster="/assets/promo-poster.jpg" aria-label="${esc(t.video.label)}" width="1280" height="720">
 <source src="/assets/promo.mp4" type="video/mp4">
 </video>
 </div>
@@ -241,6 +239,47 @@ ${t.faq.items.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}
 </section>
 </main>
 ${footer(t, lang)}
+<script>
+// The video plays by itself (muted, as browsers require) when it scrolls into view and pauses when it leaves.
+// If the visitor pauses it themselves, we leave it alone. Nothing autoplays for people who asked for less motion.
+(function () {
+  var v = document.querySelector('.video');
+  if (!v || !('IntersectionObserver' in window)) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  v.muted = true;
+  var visitorPaused = false;
+  var scripted = false;
+  var inView = false;
+  function start() {
+    if (!inView || visitorPaused || !v.paused) return;
+    var started = v.play();
+    if (started && started.catch) started.catch(function () {});
+  }
+  // Only a pause that comes right after the visitor touched the video counts as their choice.
+  var lastTouch = 0;
+  ['pointerdown', 'keydown', 'touchstart'].forEach(function (name) {
+    v.addEventListener(name, function () { lastTouch = Date.now(); });
+  });
+  v.addEventListener('pause', function () {
+    if (!scripted && Date.now() - lastTouch < 1500) visitorPaused = true;
+    scripted = false;
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) start();
+  });
+  new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      inView = entry.isIntersecting && entry.intersectionRatio >= 0.5;
+      if (inView) {
+        start();
+      } else if (!v.paused) {
+        scripted = true;
+        v.pause();
+      }
+    });
+  }, { threshold: [0, 0.5, 1] }).observe(v);
+})();
+</script>
 </body>
 </html>
 `
@@ -296,7 +335,9 @@ function copyDir(from, to) {
 }
 
 function build() {
-  fs.rmSync(DIST, { recursive: true, force: true });
+  // Empty the folder instead of deleting it, so a local server pointed at it keeps working.
+  fs.mkdirSync(DIST, { recursive: true });
+  for (const entry of fs.readdirSync(DIST)) fs.rmSync(path.join(DIST, entry), { recursive: true, force: true });
   const urls = [];
   for (const lang of ['en', 'ta']) {
     write(lang === 'en' ? 'index.html' : 'ta/index.html', home(lang));
