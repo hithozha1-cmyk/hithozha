@@ -44,7 +44,7 @@ Everything else is a **secret and lives only in Supabase Edge Function secrets**
 | `RAZORPAY_WEBHOOK_SECRET` | A random string you choose, then paste into the Razorpay webhook (see section 3) |
 | `RESEND_API_KEY` | Resend dashboard → API Keys. Used by `review-identity` to email freelancers when their ID check is approved or rejected |
 | `EMAIL_FROM` | Optional. e.g. `Hithozha <hello@yourdomain.com>`. Defaults to Resend's test sender, which can only email the Resend account owner until you verify a domain |
-| `APP_URL` | Optional. The link in those emails. Defaults to `https://hithozha.vercel.app` |
+| `APP_URL` | Optional. The link in those emails. Defaults to `https://hithozha.in` |
 
 `SUPABASE_URL` and `SUPABASE_ANON_KEY` are injected into Edge Functions automatically.
 
