@@ -1,7 +1,6 @@
 import { toPaise } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
 
-export const MAX_PACKAGES = 6;
 export const MIN_PACKAGE_RUPEES = 50;
 
 export type ServicePackage = {

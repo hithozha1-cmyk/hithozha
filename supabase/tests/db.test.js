@@ -121,6 +121,7 @@ const bootstrap = `
   const setProfile = (uid, role, name) =>
     user(uid, () => q(`update public.profiles set role = $2, full_name = $3, city = 'chennai' where id = $1`, [uid, role, name]));
   await setProfile(clientA, 'client', 'Client A');
+  await service(() => q(`insert into public.memberships (user_id, audience, plan_code) values ($1, 'client', 'client_startup')`, [clientA]));
   await setProfile(owner, 'client', 'Company Owner');
   await setProfile(bothUser, 'both', 'Both User');
   await setProfile(freelancerF, 'freelancer', 'Freelancer F');
@@ -780,30 +781,28 @@ const bootstrap = `
   check('a paused package is hidden from clients', (await user(clientA, () => q(`select id from public.service_packages where id = $1`, [pkg]))).length === 0);
   check('a paused package is still visible to its owner', (await user(freelancerF, () => q(`select id from public.service_packages where id = $1`, [pkg]))).length === 1);
   await rejects('a paused package cannot be ordered', () => user(clientA, () => q(`select public.order_package($1)`, [pkg])), 'P0002');
-  for (let i = 0; i < 5; i += 1) await addPackage(freelancerF, { title: `Extra package ${i}` });
-  await rejects('a freelancer can have at most 6 packages', () => addPackage(freelancerF, { title: 'One too many' }), '54000');
+  for (let i = 0; i < 2; i += 1) await addPackage(freelancerF, { title: `Extra package ${i}` });
+  await rejects('the free plan allows 3 packages', () => addPackage(freelancerF, { title: 'One too many' }), '54000');
 
   // ---- migration 0024: referral codes ------------------------------------------------
   const myRef = (uid) => user(uid, () => one(`select * from public.my_referral()`));
-  const credits = (uid) => user(uid, () => one(`select * from public.my_application_credits()`));
+  const credits = (uid) => user(uid, () => one(`select * from public.my_tokens()`));
   const refF = await myRef(freelancerF);
   check('everyone gets a 6-character referral code', /^[A-Z2-9]{6}$/.test(refF.code));
   check('the code stays the same', (await myRef(freelancerF)).code === refF.code);
   check('different people get different codes', (await myRef(freelancerG)).code !== refF.code);
   check('a new person can still enter a code', (await myRef(freelancerG)).can_redeem === true);
   await rejects('referral tables are not readable by the app', () => user(freelancerF, () => q(`select * from public.referral_codes`)), '42501');
-  await rejects('bonuses are not readable by the app', () => user(freelancerF, () => q(`select * from public.application_bonuses`)), '42501');
+  await rejects('the token ledger is not readable by the app', () => user(freelancerF, () => q(`select * from public.token_ledger`)), '42501');
   await rejects('signed-out users cannot use a code', () => anon(() => q(`select public.redeem_referral($1)`, [refF.code])), '42501');
   await rejects('an unknown code is refused', () => user(freelancerG, () => q(`select public.redeem_referral('ZZZZZZ')`)), 'P0002');
   await rejects('you cannot use your own code', () => user(freelancerF, () => q(`select public.redeem_referral($1)`, [refF.code])), '42501');
-  const usedF = (await credits(freelancerF)).used;
-  const realApplicationsF = (await service(() => one(`select count(*)::int as n from public.proposals where freelancer_id = $1 and package_id is null and created_at >= date_trunc('month', now() at time zone 'Asia/Kolkata')`, [freelancerF]))).n;
-  check('package orders do not use up applications', usedF === realApplicationsF);
-  const allowedF = (await credits(freelancerF)).allowed;
-  const allowedG = (await credits(freelancerG)).allowed;
+  check('package orders do not spend tokens', (await service(() => one(`select count(*)::int as n from public.token_ledger where kind = 'spend' and ref_id in (select id from public.proposals where package_id is not null)`))).n === 0);
+  const allowedF = (await credits(freelancerF)).total;
+  const allowedG = (await credits(freelancerG)).total;
   await user(freelancerG, () => q(`select public.redeem_referral(lower($1))`, [refF.code]));
-  check('the new person gets 5 extra credits', (await credits(freelancerG)).allowed === allowedG + 5);
-  check('the friend who shared the code gets 5 extra credits', (await credits(freelancerF)).allowed === allowedF + 5);
+  check('the new person gets 5 extra tokens', (await credits(freelancerG)).total === allowedG + 5);
+  check('the friend who shared the code gets 5 extra tokens', (await credits(freelancerF)).total === allowedF + 5);
   check('the sharer sees one friend and the bonus', (await myRef(freelancerF)).friends === 1 && (await myRef(freelancerF)).bonus === 5);
   check('the sharer is told', (await service(() => one(`select count(*)::int as n from public.notifications where user_id = $1 and kind = 'referral_reward'`, [freelancerF]))).n === 1);
   check('after using a code you cannot enter another', (await myRef(freelancerG)).can_redeem === false);
@@ -958,47 +957,175 @@ const bootstrap = `
   await service(() => q(`delete from vault.decrypted_secrets`));
   check('the push trigger is not callable by the app', await (async () => { try { await user(nClient, () => q(`select public.push_on_notification()`)); return false; } catch (e) { return e.code === '42501'; } })());
 
-  // ---- migration 0018: free application credits ---------------------------
+  // ---- migration 0026: tokens and plans ----------------------------------------------
   const busy = await newUser('busy@test');
   const other = await newUser('other-free@test');
   await setProfile(busy, 'freelancer', 'Busy Bee');
   await setProfile(other, 'freelancer', 'Other Free');
   await verify(busy);
   await verify(other);
-  const creditsOf = (uid) => user(uid, () => one(`select * from public.my_application_credits()`));
+  const tokensOf = (uid) => user(uid, () => one(`select * from public.my_tokens()`));
+  const planOf = (uid, audience) => user(uid, () => one(`select * from public.my_plan($1)`, [audience]));
 
-  const fresh = await creditsOf(busy);
-  check('a new freelancer has 10 free applications this month', fresh.used === 0 && fresh.allowed === 10 && fresh.remaining === 10);
+  const fresh = await tokensOf(busy);
+  check('a new freelancer has 10 free tokens this month', fresh.free === 10 && fresh.bought === 0 && fresh.total === 10 && fresh.monthly === 10);
   const resetsAt = new Date(fresh.resets_at);
-  check('the allowance resets on the 1st of next month, India time', resetsAt > new Date() && resetsAt.getTime() - Date.now() < 32 * 86400000);
+  check('free tokens reset on the 1st of next month, India time', resetsAt > new Date() && resetsAt.getTime() - Date.now() < 32 * 86400000);
+  check('asking twice does not hand out tokens twice', (await tokensOf(busy)).total === 10);
+  const freePlan = await planOf(busy, 'freelancer');
+  check('everyone starts on the free plan', freePlan.plan_code === 'freelancer_free' && freePlan.commission_bps === 500 && freePlan.max_packages === 3);
+  check('a client starts on the free client plan', (await planOf(clientA, 'client')).plan_code === 'client_startup' && (await planOf(newbie, 'client')).plan_code === 'client_free');
 
   const sentIds = [];
   for (let n = 0; n < 10; n++) {
     const jb = await job(clientA);
     sentIds.push((await propose(busy, jb.id, 60000)).id);
   }
-  check('ten proposals in a month are accepted', sentIds.length === 10);
-  const spent = await creditsOf(busy);
-  check('the counter shows all ten used and none left', spent.used === 10 && spent.remaining === 0);
+  check('ten proposals cost ten tokens and are accepted', sentIds.length === 10);
+  const spent = await tokensOf(busy);
+  check('the balance shows none left', spent.free === 0 && spent.total === 0);
 
   const jobEleven = await job(clientA);
-  await rejects('the eleventh proposal of the month is refused', () => propose(busy, jobEleven.id, 60000), '54000');
-  check('a refused proposal is not saved', (await creditsOf(busy)).used === 10);
+  await rejects('with no tokens, applying is refused', () => propose(busy, jobEleven.id, 60000), '54000');
+  check('a refused proposal costs nothing and is not saved', (await tokensOf(busy)).total === 0 && (await service(() => one(`select count(*)::int as n from public.proposals where freelancer_id = $1`, [busy]))).n === 10);
 
   await user(busy, () => q(`update public.proposals set status = 'withdrawn' where id = $1`, [sentIds[0]]));
-  await rejects('withdrawing a proposal does not give the credit back', () => propose(busy, jobEleven.id, 60000), '54000');
+  await rejects('withdrawing a proposal does not give the token back', () => propose(busy, jobEleven.id, 60000), '54000');
+  check('another freelancer is not affected by someone else\'s balance', !!(await propose(other, jobEleven.id, 60000)).id && (await tokensOf(other)).total === 9);
+  check('a client has no tokens', (await tokensOf(clientA)).total === 0);
 
-  check('another freelancer is not affected by someone else\'s limit', !!(await propose(other, jobEleven.id, 60000)).id && (await creditsOf(other)).used === 1);
-  check('a client cannot read or spend anyone\'s credits', (await user(clientA, () => one(`select * from public.my_application_credits()`))).used === 0);
+  // Bought tokens never expire; free ones do, and free ones are spent first.
+  await user(admin, () => q(`select public.admin_grant_tokens($1, 5, 'welcome gift')`, [busy]));
+  check('an admin gift adds tokens that last', (await tokensOf(busy)).bought === 5 && (await tokensOf(busy)).total === 5);
+  // Pretend the month ended: this month's free rows now belong to an old month.
+  await service(() => q(`update public.token_ledger set month_key = '2000-01' where user_id = $1 and pool = 'free'`, [busy]));
+  const afterMonthEnd = await service(() => one(`select * from public.token_balances($1)`, [busy]));
+  check('unused free tokens vanish at month end, bought ones stay', afterMonthEnd.free === 0 && afterMonthEnd.bought === 5);
+  const nextMonth = await tokensOf(busy);
+  check('in a new month free tokens come again and the gift is still there', nextMonth.free === 10 && nextMonth.bought === 5);
+  const jobTwelve = await job(clientA);
+  const propFree = (await propose(busy, jobTwelve.id, 60000)).id;
+  const freeSpend = await service(() => one(`select pool, amount from public.token_ledger where user_id = $1 and kind = 'spend' and ref_id = $2`, [busy, propFree]));
+  check('applying spends a free token first', freeSpend.pool === 'free' && freeSpend.amount === -1 && (await tokensOf(busy)).bought === 5);
+  for (let n = 0; n < 9; n++) await propose(busy, (await job(clientA)).id, 60000);
+  check('with the free ones used up, the lasting ones are still all there', (await tokensOf(busy)).free === 0 && (await tokensOf(busy)).bought === 5);
+  const propBought = (await propose(busy, (await job(clientA)).id, 60000)).id;
+  const boughtSpend = await service(() => one(`select pool, amount from public.token_ledger where user_id = $1 and kind = 'spend' and ref_id = $2`, [busy, propBought]));
+  check('then a lasting token is spent', boughtSpend.pool === 'bought' && (await tokensOf(busy)).bought === 4);
 
-  await service(() => q(`update public.proposals set created_at = created_at - interval '40 days' where freelancer_id = $1`, [busy]));
-  check('last month\'s proposals no longer count', (await creditsOf(busy)).used === 0);
-  check('the freelancer can apply again in a new month', !!(await propose(busy, jobEleven.id, 60000)).id);
-  check('this month\'s proposal counts again from one', (await creditsOf(busy)).used === 1);
+  await rejects('the token helpers are not callable by the app', () => user(busy, () => q(`select public.spend_tokens($1, 1, 'x', 'x', null)`, [busy])), '42501');
+  await rejects('the balance helper is not callable by the app', () => user(busy, () => q(`select * from public.token_balances($1)`, [busy])), '42501');
+  await rejects('signed-out users cannot read tokens', () => anon(() => q(`select * from public.my_tokens()`)), '42501');
+  await rejects('signed-out users cannot read their plan', () => anon(() => q(`select * from public.my_plan('freelancer')`)), '42501');
+  await rejects('memberships are not readable by the app', () => user(busy, () => q(`select * from public.memberships`)), '42501');
+  check('plans and prices are readable by signed-in users', (await user(busy, () => q(`select code from public.plans`))).length === 6);
+  await rejects('plans cannot be edited from the app', () => user(busy, () => q(`update public.plans set commission_bps = 0`)), '42501');
 
-  await rejects('signed-out users cannot read credits', () => anon(() => q(`select * from public.my_application_credits()`)), '42501');
-  await rejects('the counting helper is not callable by the app', () => user(busy, () => q(`select public.applications_this_month($1)`, [busy])), '42501');
-  await rejects('the allowance helper is not callable by the app', () => user(busy, () => q(`select public.application_allowance($1)`, [busy])), '42501');
+  // Refunds
+  const tk = await newUser('tokens-client@test');
+  const tf = await newUser('tokens-free@test');
+  const tf2 = await newUser('tokens-free2@test');
+  await setProfile(tk, 'client', 'Token Client');
+  await setProfile(tf, 'freelancer', 'Token Free');
+  await setProfile(tf2, 'freelancer', 'Token Free Two');
+  await verify(tf);
+  await verify(tf2);
+  const tj = await job(tk);
+  const tp1 = (await propose(tf, tj.id, 60000)).id;
+  const tp2 = (await propose(tf2, tj.id, 60000)).id;
+  check('each application cost a token', (await tokensOf(tf)).total === 9 && (await tokensOf(tf2)).total === 9);
+  await rejects('only the job owner can mark proposals seen', () => user(tf, () => q(`select public.mark_job_proposals_viewed($1)`, [tj.id])), '42501');
+  await user(tk, () => q(`select public.mark_job_proposals_viewed($1)`, [tj.id]));
+  check('seen proposals are stamped', (await service(() => one(`select count(*)::int as n from public.proposals where job_id = $1 and viewed_at is not null`, [tj.id]))).n === 2);
+  await user(tk, () => q(`select public.accept_proposal($1)`, [tp1]));
+  check('being hired gives the token back', (await tokensOf(tf)).total === 10);
+  check('the person who was not hired gets nothing back', (await tokensOf(tf2)).total === 9);
+
+  const tj2 = await job(tk);
+  const tp3 = (await propose(tf, tj2.id, 60000)).id;
+  const tp4 = (await propose(tf2, tj2.id, 60000)).id;
+  check('both paid a token again', (await tokensOf(tf)).total === 9 && (await tokensOf(tf2)).total === 8);
+  await service(() => q(`update public.proposals set viewed_at = now() where id = $1`, [tp4]));
+  await user(tk, () => q(`update public.jobs set status = 'closed' where id = $1`, [tj2.id]));
+  check('closing a job without opening a proposal gives that token back', (await tokensOf(tf)).total === 10 && !!tp3);
+  check('a proposal that was opened gets nothing back', (await tokensOf(tf2)).total === 8);
+  await user(tk, () => q(`update public.jobs set status = 'open' where id = $1`, [tj2.id]));
+  await user(tk, () => q(`update public.jobs set status = 'closed' where id = $1`, [tj2.id]));
+  check('closing the same job again does not refund twice', (await tokensOf(tf)).total === 10);
+
+  // Plans: commission locked on the order, limits by plan
+  const pf = await newUser('pro-free@test');
+  const pc = await newUser('pro-client@test');
+  await setProfile(pf, 'freelancer', 'Pro Freelancer');
+  await setProfile(pc, 'client', 'Pro Client');
+  await verify(pf);
+  await rejects('only admins can give a plan', () => user(pc, () => q(`select public.admin_set_membership($1, 'freelancer_pro')`, [pf])), '42501');
+  await rejects('a password-only admin session cannot give a plan', () => userAal1(admin, () => q(`select public.admin_set_membership($1, 'freelancer_pro')`, [pf])), '42501');
+  await rejects('an unknown plan is refused', () => user(admin, () => q(`select public.admin_set_membership($1, 'gold')`, [pf])), 'P0002');
+  await rejects('a plan lasts 1 to 36 months', () => user(admin, () => q(`select public.admin_set_membership($1, 'freelancer_pro', 0)`, [pf])), '22023');
+  await user(admin, () => q(`select public.admin_set_membership($1, 'freelancer_pro', 1)`, [pf]));
+  const proPlan = await planOf(pf, 'freelancer');
+  check('the plan is active with its commission and limits', proPlan.plan_code === 'freelancer_pro' && proPlan.commission_bps === 300 && proPlan.max_packages === 10 && proPlan.expires_at !== null);
+  check('upgrading in the middle of the month adds the missing tokens', (await tokensOf(pf)).free === 50);
+  const pj = await job(pc);
+  const pp = (await propose(pf, pj.id, 100000)).id;
+  const pOrder = (await user(pc, () => one(`select public.accept_proposal($1) as id`, [pp]))).id;
+  const po2 = await service(() => one(`select * from public.orders where id = $1`, [pOrder]));
+  check('the order keeps the plan commission of 3%', po2.commission_bps === 300 && po2.platform_fee_paise === 3000 && po2.freelancer_earnings_paise === 97000);
+  await service(() => q(`update public.memberships set expires_at = now() - interval '1 day' where user_id = $1`, [pf]));
+  check('when the plan ends the freelancer is back on free', (await planOf(pf, 'freelancer')).plan_code === 'freelancer_free');
+  check('an order already made keeps its locked commission', (await service(() => one(`select commission_bps from public.orders where id = $1`, [pOrder]))).commission_bps === 300);
+  const pj2 = await job(pc);
+  const pp2 = (await propose(pf, pj2.id, 100000)).id;
+  const pOrder2 = (await user(pc, () => one(`select public.accept_proposal($1) as id`, [pp2]))).id;
+  check('a new order after the plan ends uses 5%', (await service(() => one(`select commission_bps, platform_fee_paise from public.orders where id = $1`, [pOrder2]))).platform_fee_paise === 5000);
+  check('a free order made earlier is not touched by a later plan', (await service(() => one(`select commission_bps from public.orders where id = $1`, [po.id]))).commission_bps === 500);
+  await user(admin, () => q(`select public.admin_set_membership($1, 'freelancer_elite')`, [pf]));
+  check('a plan with no end date has no expiry', (await planOf(pf, 'freelancer')).expires_at === null && (await planOf(pf, 'freelancer')).max_packages === null);
+
+  // A disputed order splits using its own locked rate (3% here), not a fixed 5%
+  const dj = await job(pc);
+  await user(admin, () => q(`select public.admin_set_membership($1, 'freelancer_pro')`, [pf]));
+  const dprop = (await propose(pf, dj.id, 100000)).id;
+  const dOrder = (await user(pc, () => one(`select public.accept_proposal($1) as id`, [dprop]))).id;
+  check('a new order picks up the new plan', (await service(() => one(`select commission_bps from public.orders where id = $1`, [dOrder]))).commission_bps === 300);
+  await service(() => q(`update public.orders set status = 'in_progress' where id = $1`, [dOrder]));
+  const dId = (await user(pc, () => one(`select public.open_dispute($1, $2) as id`, [dOrder, 'The freelancer stopped answering after I paid for the work.']))).id;
+  await user(admin, () => q(`select public.admin_resolve_dispute($1, 'split', 20000, 'UTR123456', 'Half the work was delivered')`, [dId]));
+  const tokenSplit = await service(() => one(`select platform_fee_paise, freelancer_earnings_paise, refunded_paise from public.orders where id = $1`, [dOrder]));
+  check('a split takes the locked 3 percent from the freelancer share', tokenSplit.refunded_paise === 20000 && tokenSplit.platform_fee_paise === 2400 && tokenSplit.freelancer_earnings_paise === 77600);
+
+  // Open jobs by client plan
+  const cf = await newUser('limit-client@test');
+  await setProfile(cf, 'client', 'Limited Client');
+  const cfJobs = [];
+  for (let n = 0; n < 3; n++) cfJobs.push((await job(cf)).id);
+  await rejects('the free client plan allows 3 open jobs', () => job(cf), '54000');
+  await user(cf, () => q(`update public.jobs set status = 'closed' where id = $1`, [cfJobs[0]]));
+  check('closing a job makes room for another', !!(await job(cf)).id);
+  await user(admin, () => q(`select public.admin_set_membership($1, 'client_business')`, [cf]));
+  check('a Business client can have 10 open jobs', !!(await job(cf)).id);
+  // A client at the limit can still order a package: the short-lived job behind it is exempt.
+  const full = await newUser('full-client@test');
+  await setProfile(full, 'client', 'Full Client');
+  for (let n = 0; n < 3; n++) await job(full);
+  const proPkg = (await addPackage(pf)).id;
+  const fullOrder = (await user(full, () => one(`select public.order_package($1) as id`, [proPkg]))).id;
+  check('a client at the open-jobs limit can still order a package', !!fullOrder);
+  check('the package order did not use up a job slot', (await service(() => one(`select count(*)::int as n from public.jobs where client_id = $1 and status = 'open'`, [full]))).n === 3);
+  await rejects('the free client plan still blocks a 4th open job', () => job(full), '54000');
+
+  // Admin tools
+  await rejects('only admins can give tokens', () => user(pc, () => q(`select public.admin_grant_tokens($1, 5, 'hello')`, [pf])), '42501');
+  await rejects('a token gift needs a reason', () => user(admin, () => q(`select public.admin_grant_tokens($1, 5, '')`, [pf])), '22023');
+  await rejects('a token gift is 1 to 1000', () => user(admin, () => q(`select public.admin_grant_tokens($1, 0, 'zero')`, [pf])), '22023');
+  const tokensBefore = await user(admin, () => one(`select * from public.admin_user_tokens($1)`, [pf]));
+  await user(admin, () => q(`select public.admin_grant_tokens($1, 20, 'launch gift')`, [pf]));
+  const tokensAfter = await user(admin, () => one(`select * from public.admin_user_tokens($1)`, [pf]));
+  check('the admin sees the balance and the plan', tokensAfter.bought === tokensBefore.bought + 20 && tokensAfter.freelancer_plan === 'freelancer_pro');
+  await rejects('non-admins cannot read other balances', () => user(pc, () => q(`select * from public.admin_user_tokens($1)`, [pf])), '42501');
+  const tokenLog = await user(admin, () => q(`select action from public.admin_audit_log_list(300, 0)`));
+  check('plans and gifts are written to the audit log', tokenLog.some((l) => l.action === 'set_membership') && tokenLog.some((l) => l.action === 'grant_tokens'));
 
   // ---- signed-out access is closed everywhere ---------------------------
   for (const table of ['jobs', 'proposals', 'conversations', 'messages', 'orders', 'payments', 'reviews', 'companies', 'freelancer_profiles']) {

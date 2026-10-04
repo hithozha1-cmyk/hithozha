@@ -7,10 +7,10 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Screen } from '@/components/Screen';
-import { LIMIT_REACHED_CODE, fetchApplicationCredits, type ApplicationCredits } from '@/lib/credits';
+import { LIMIT_REACHED_CODE, commissionPercent, fetchMyPlan, fetchTokens, type MyPlan, type Tokens } from '@/lib/tokens';
 import { fetchJob, type Job } from '@/lib/jobs';
 import { formatINR, toPaise } from '@/lib/money';
-import { MIN_PROPOSAL_MESSAGE, MIN_PROPOSAL_RUPEES, PLATFORM_FEE_PERCENT, earningsAfterFee } from '@/lib/proposals';
+import { MIN_PROPOSAL_MESSAGE, MIN_PROPOSAL_RUPEES, earningsAfterFee } from '@/lib/proposals';
 import { supabase } from '@/lib/supabase';
 import { isFreelancerRole } from '@/lib/types';
 import { useAuth } from '@/providers/AuthProvider';
@@ -34,7 +34,8 @@ export default function ApplyScreen() {
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [credits, setCredits] = useState<ApplicationCredits | null>(null);
+  const [tokens, setTokens] = useState<Tokens | null>(null);
+  const [plan, setPlan] = useState<MyPlan | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -49,7 +50,8 @@ export default function ApplyScreen() {
   }, [id]);
 
   useEffect(() => {
-    void fetchApplicationCredits().then(setCredits);
+    void fetchTokens().then(setTokens);
+    void fetchMyPlan('freelancer').then(setPlan);
   }, []);
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
@@ -69,7 +71,7 @@ export default function ApplyScreen() {
   }
 
   const priceRupees = Number(price);
-  const earnings = priceRupees >= MIN_PROPOSAL_RUPEES ? earningsAfterFee(toPaise(priceRupees)) : null;
+  const earnings = priceRupees >= MIN_PROPOSAL_RUPEES ? earningsAfterFee(toPaise(priceRupees), plan?.commissionBps) : null;
 
   const submit = async () => {
     const next: Errors = {};
@@ -80,7 +82,7 @@ export default function ApplyScreen() {
     if (!(dayCount >= 1 && dayCount <= 365)) next.days = t(`${e}.days`);
     setErrors(next);
     setFormError(null);
-    if (credits && credits.remaining === 0) return setFormError(t('credits.limitReached'));
+    if (tokens && tokens.total === 0) return setFormError(t('tokens.limitReached'));
     if (Object.keys(next).length > 0 || !session) return;
 
     setSaving(true);
@@ -94,8 +96,8 @@ export default function ApplyScreen() {
 
     if (error) {
       if (error.code === LIMIT_REACHED_CODE) {
-        setFormError(t('credits.limitReached'));
-        void fetchApplicationCredits().then(setCredits);
+        setFormError(t('tokens.limitReached'));
+        void fetchTokens().then(setTokens);
       } else {
         setFormError(error.code === '23505' ? t(`${e}.alreadyApplied`) : t(`${e}.failed`));
       }
@@ -125,12 +127,12 @@ export default function ApplyScreen() {
     <Screen footer={<Button title={t('proposals.send')} onPress={() => void submit()} loading={saving} />}>
       {back}
       <Text style={styles.title}>{t('proposals.applyTitle')}</Text>
-      {credits ? (
-        <View style={[styles.creditBox, credits.remaining === 0 && styles.creditBoxEmpty]} accessibilityRole="summary">
-          <Text style={styles.creditTitle}>{t('credits.left', { remaining: credits.remaining, allowed: credits.allowed })}</Text>
+      {tokens ? (
+        <View style={[styles.creditBox, tokens.total === 0 && styles.creditBoxEmpty]} accessibilityRole="summary">
+          <Text style={styles.creditTitle}>{t('tokens.left', { count: tokens.total })}</Text>
           <Text style={styles.creditHint}>
-            {credits.remaining === 0 ? t('credits.noneLeft') : t('credits.resets')}{' '}
-            {t('credits.resetsOn', { date: credits.resetsAt.toLocaleDateString(i18n.language === 'ta' ? 'ta-IN' : 'en-IN', { day: 'numeric', month: 'long' }) })}
+            {tokens.total === 0 ? t('tokens.noneLeft') : t('tokens.cost')}{' '}
+            {t('tokens.resetsOn', { date: tokens.resetsAt.toLocaleDateString(i18n.language === 'ta' ? 'ta-IN' : 'en-IN', { day: 'numeric', month: 'long' }) })}
           </Text>
         </View>
       ) : null}
@@ -164,8 +166,8 @@ export default function ApplyScreen() {
           />
           <Text style={styles.hint}>
             {earnings !== null
-              ? t('proposals.priceHint', { percent: PLATFORM_FEE_PERCENT, amount: formatINR(earnings) })
-              : t('proposals.priceHintEmpty', { percent: PLATFORM_FEE_PERCENT })}
+              ? t('proposals.priceHint', { percent: commissionPercent(plan?.commissionBps ?? 500), amount: formatINR(earnings) })
+              : t('proposals.priceHintEmpty', { percent: commissionPercent(plan?.commissionBps ?? 500) })}
           </Text>
         </View>
         <Input

@@ -17,7 +17,6 @@ import {
   deletePackage,
   EMPTY_PACKAGE,
   fetchPackages,
-  MAX_PACKAGES,
   packageToFormValues,
   savePackage,
   setPackageActive,
@@ -26,6 +25,7 @@ import {
   type PackageFormValues,
   type ServicePackage,
 } from '@/lib/packages';
+import { fetchMyPlan, type MyPlan } from '@/lib/tokens';
 import { useAuth } from '@/providers/AuthProvider';
 import { colors, type } from '@/theme';
 
@@ -37,6 +37,7 @@ export default function PackagesScreen() {
   const { categories } = useCategories();
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [plan, setPlan] = useState<MyPlan | null>(null);
   const [editing, setEditing] = useState<string | 'new' | null>(null);
   const [values, setValues] = useState<PackageFormValues>(EMPTY_PACKAGE);
   const [errors, setErrors] = useState<Partial<Record<PackageField, string>>>({});
@@ -54,6 +55,7 @@ export default function PackagesScreen() {
 
   useEffect(() => {
     void load();
+    void fetchMyPlan('freelancer').then(setPlan);
   }, [load]);
 
   const categoryOptions = useMemo(
@@ -90,7 +92,7 @@ export default function PackagesScreen() {
       setEditing(null);
       await load();
     } else {
-      setMessage({ text: t(outcome === 'limit' ? 'packages.limit' : 'packages.saveFailed', { count: MAX_PACKAGES }), good: false });
+      setMessage({ text: t(outcome === 'limit' ? 'packages.limit' : 'packages.saveFailed'), good: false });
     }
   };
 
@@ -183,7 +185,7 @@ export default function PackagesScreen() {
           <Button title={t('packages.save')} onPress={() => void save()} loading={saving} />
           <Button variant="outline" title={t('common.cancel')} onPress={() => setEditing(null)} disabled={saving} />
         </Card>
-      ) : verified && packages.length < MAX_PACKAGES ? (
+      ) : verified && (plan?.maxPackages == null || packages.length < plan.maxPackages) ? (
         <Button title={t('packages.add')} onPress={startNew} />
       ) : null}
     </Screen>

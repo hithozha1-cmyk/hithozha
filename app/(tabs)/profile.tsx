@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
+import { PlanCard } from '@/components/PlanCard';
 import { ReferralCard } from '@/components/ReferralCard';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { LanguagePicker } from '@/components/LanguagePicker';
@@ -50,6 +51,8 @@ export default function ProfileTabScreen() {
       <Button variant="outline" title={t('account.editProfile')} onPress={() => router.push('/account/edit-profile')} style={styles.editProfile} />
 
       {client ? <Button variant="outline" title={t('account.myJobs')} onPress={() => router.push('/jobs/mine')} style={styles.editProfile} /> : null}
+
+      <PlanCard freelancer={!!freelancer} client={!!client} />
 
       <ReferralCard />
 

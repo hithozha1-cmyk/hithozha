@@ -19,6 +19,7 @@ import { sanitizeSearch } from '@/lib/jobs';
 import { useAuth } from '@/providers/AuthProvider';
 import { colors, radius, type } from '@/theme';
 
+import { Membership } from './Membership';
 import { Empty, ErrorLine, Field, Loading, LoadMore, ReasonAction, useWhen, usePaged } from './ui';
 
 function UserDetail({ id, onChanged }: { id: string; onChanged: () => void }) {
@@ -63,6 +64,7 @@ function UserDetail({ id, onChanged }: { id: string; onChanged: () => void }) {
       ) : null}
       {detail.company ? <Field label={t('admin.users.company')} value={`${detail.company.name} · ${t(`admin.verification.${detail.company.verification_status}`)}`} /> : null}
       <Field label={t('admin.users.flagged')} value={String(detail.flagged_messages)} />
+      <Membership userId={id} />
       {detail.suspended_at ? (
         <>
           <Field label={t('admin.users.suspendedWhy')} value={`${detail.suspension_reason ?? ''} · ${when(detail.suspended_at)}`} />

@@ -50,7 +50,7 @@ const TEXT: Record<string, Record<Language, Text>> = {
   admin_identity: { en: { title: 'New identity check', body: '{{name}} sent ID photos to check.' }, ta: { title: 'புதிய அடையாள சரிபார்ப்பு', body: '{{name}} சரிபார்க்க அடையாள புகைப்படங்களை அனுப்பினார்.' } },
   admin_dispute: { en: { title: 'New dispute', body: 'A problem was reported on {{title}}.' }, ta: { title: 'புதிய சர்ச்சை', body: '{{title}} இல் ஒரு பிரச்சினை புகாரளிக்கப்பட்டது.' } },
   admin_report: { en: { title: 'New report', body: '{{name}} was reported.' }, ta: { title: 'புதிய புகார்', body: '{{name}} பற்றி புகார் வந்துள்ளது.' } },
-  referral_reward: { en: { title: 'A friend joined', body: '{{name}} joined with your code. You both got 5 extra applications.' }, ta: { title: 'ஒரு நண்பர் இணைந்தார்', body: '{{name}} உங்கள் குறியீட்டுடன் இணைந்தார். இருவருக்கும் 5 கூடுதல் விண்ணப்பங்கள் கிடைத்தன.' } },
+  referral_reward: { en: { title: 'A friend joined', body: '{{name}} joined with your code. You both got 5 extra tokens.' }, ta: { title: 'ஒரு நண்பர் இணைந்தார்', body: '{{name}} உங்கள் குறியீட்டுடன் இணைந்தார். இருவருக்கும் 5 கூடுதல் டோக்கன்கள் கிடைத்தன.' } },
 };
 
 const rupees = (paise: number) =>

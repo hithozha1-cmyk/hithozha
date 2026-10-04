@@ -1,9 +1,9 @@
 import { supabase } from '@/lib/supabase';
+import { DEFAULT_COMMISSION_BPS } from '@/lib/tokens';
 
 export const PROPOSAL_STATUSES = ['pending', 'accepted', 'rejected', 'withdrawn'] as const;
 export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
 
-export const PLATFORM_FEE_PERCENT = 5;
 export const MIN_PROPOSAL_RUPEES = 50;
 export const MIN_PROPOSAL_MESSAGE = 20;
 
@@ -37,8 +37,8 @@ export const PROPOSAL_SELECT =
   'freelancer:profiles!freelancer_id(full_name, avatar_url, city, verification_status, freelancer_profiles(headline, rating_avg, rating_count, completed_orders))';
 
 /** What the freelancer keeps after the platform fee, in paise (rounded half up, same as the database). */
-export const earningsAfterFee = (pricePaise: number): number =>
-  pricePaise - Math.floor((pricePaise * PLATFORM_FEE_PERCENT * 100 + 5000) / 10000);
+export const earningsAfterFee = (pricePaise: number, commissionBps: number = DEFAULT_COMMISSION_BPS): number =>
+  pricePaise - Math.floor((pricePaise * commissionBps + 5000) / 10000);
 
 export async function fetchJobProposals(jobId: string): Promise<Proposal[] | null> {
   const { data, error } = await supabase
@@ -74,3 +74,8 @@ export async function fetchConversationId(proposalId: string): Promise<string | 
   const { data } = await supabase.from('conversations').select('id').eq('proposal_id', proposalId).maybeSingle();
   return data?.id ?? null;
 }
+
+/** The client opened their proposals list: the freelancers' tokens are not given back for these. */
+export const markProposalsViewed = async (jobId: string): Promise<void> => {
+  await supabase.rpc('mark_job_proposals_viewed', { p_job: jobId });
+};

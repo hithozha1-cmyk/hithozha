@@ -82,6 +82,8 @@ check('formatINR groups the Indian way', money.formatINR(12345600).replace(/\s/g
 check('earnings after 5% fee', proposals.earningsAfterFee(250000), 237500);
 check('earnings round half up', proposals.earningsAfterFee(123457), 123457 - 6173);
 check('earnings tiny price', proposals.earningsAfterFee(99), 94);
+check('earnings with a 3% plan', proposals.earningsAfterFee(100000, 300), 97000);
+check('earnings with a 2% plan', proposals.earningsAfterFee(250000, 200), 245000);
 check('earnings large price', proposals.earningsAfterFee(1000000000), 950000000);
 
 // ---- jobs --------------------------------------------------------------------------
@@ -253,6 +255,14 @@ check('referral: a typed code is cleaned up', referrals.cleanReferralCode(' ab-c
 check('referral: lower case becomes upper case', referrals.cleanReferralCode('k7m2pq'), 'K7M2PQ');
 check('referral: empty stays empty', referrals.cleanReferralCode(''), '');
 check('referral: the share message carries the code', referrals.referralMessage('Use {{code}} now', 'K7M2PQ'), 'Use K7M2PQ now');
+
+// ---- tokens and plans -------------------------------------------------------------------
+const tokens = load('src/lib/tokens.ts');
+check('tokens: 5% shows as 5', tokens.commissionPercent(500), '5');
+check('tokens: 3% shows as 3', tokens.commissionPercent(300), '3');
+check('tokens: 2.5% keeps its decimal', tokens.commissionPercent(250), '2.5');
+check('tokens: the default commission is 5%', tokens.DEFAULT_COMMISSION_BPS, 500);
+check('tokens: the limit error code matches the database', tokens.LIMIT_REACHED_CODE, '54000');
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);

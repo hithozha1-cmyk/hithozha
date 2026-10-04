@@ -16,6 +16,8 @@ export type Order = {
   title: string;
   amount_paise: number;
   platform_fee_paise: number;
+  /** The commission rate locked when the order was made, in basis points (500 = 5%). */
+  commission_bps: number;
   freelancer_earnings_paise: number;
   refunded_paise: number;
   delivery_days: number;
@@ -30,7 +32,7 @@ export type Order = {
 };
 
 export const ORDER_SELECT =
-  'id, proposal_id, job_id, client_id, freelancer_id, company_id, title, amount_paise, platform_fee_paise, ' +
+  'id, proposal_id, job_id, client_id, freelancer_id, company_id, title, amount_paise, platform_fee_paise, commission_bps, ' +
   'freelancer_earnings_paise, refunded_paise, delivery_days, status, delivered_at, completed_at, created_at, ' +
   'client:profiles!client_id(full_name, avatar_url), freelancer:profiles!freelancer_id(full_name, avatar_url), ' +
   'company:companies!company_id(id, name, logo_url, verification_status), review:reviews(id, rating)';

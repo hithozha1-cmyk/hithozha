@@ -451,7 +451,8 @@
         "budget": "Enter a budget of ₹50 or more for both fields.",
         "budgetRange": "The maximum must be at least the minimum.",
         "city": "Select the city.",
-        "failed": "We could not post your job. Please try again."
+        "failed": "We could not post your job. Please try again.",
+        "limit": "You have reached the number of open jobs your plan allows. Close one first."
       }
     },
     "detail": {
@@ -872,6 +873,30 @@
       "actionedConfirm": "Close as acted on",
       "note": "What did you do?",
       "dismiss": "Dismiss (nothing wrong)"
+    },
+    "membership": {
+      "title": "Plan and tokens",
+      "tokens": "Tokens",
+      "tokensValue": "{{free}} free this month, {{bought}} lasting",
+      "freelancerPlan": "Freelancer plan",
+      "clientPlan": "Client plan",
+      "until": "until {{date}}",
+      "givePlan": "Give a plan",
+      "months": "For how many months (empty = no end)",
+      "applyPlan": "Apply plan",
+      "planFailed": "Could not set the plan. Months must be 1 to 36.",
+      "giftAmount": "Gift tokens (1 to 1000)",
+      "giftReason": "Reason for the gift",
+      "giveTokens": "Give tokens",
+      "giftInvalid": "Enter 1 to 1000 tokens and a reason.",
+      "plans": {
+        "freelancer_free": "Free (freelancer)",
+        "freelancer_pro": "Pro (freelancer)",
+        "freelancer_elite": "Elite (freelancer)",
+        "client_free": "Free (client)",
+        "client_business": "Business (client)",
+        "client_startup": "Startup (client)"
+      }
     }
   },
   "dispute": {
@@ -1031,16 +1056,9 @@
       },
       "referral_reward": {
         "title": "A friend joined",
-        "body": "{{name}} joined with your code. You both got 5 extra applications."
+        "body": "{{name}} joined with your code. You both got 5 extra tokens."
       }
     }
-  },
-  "credits": {
-    "left": "{{remaining}} of {{allowed}} free applications left this month",
-    "resets": "Your free applications come back on the 1st.",
-    "noneLeft": "You have used all your free applications this month.",
-    "resetsOn": "Next batch: {{date}}.",
-    "limitReached": "You have used all your free applications this month. They come back on the 1st of next month."
   },
   "pushStatus": {
     "title": "Phone notifications",
@@ -1100,7 +1118,7 @@
     "add": "Add a package",
     "save": "Save package",
     "feeNote": "Hithozha keeps a 5% fee when an order is completed. You receive the rest.",
-    "limit": "You can have at most {{count}} packages.",
+    "limit": "You have reached the number of packages your plan allows.",
     "saveFailed": "We could not save that. Please try again.",
     "fields": {
       "title": "Package name",
@@ -1121,21 +1139,67 @@
   },
   "referral": {
     "title": "Invite friends",
-    "intro": "Share your code. When a friend joins and enters it, you both get {{count}} extra job applications.",
+    "intro": "Share your code. When a friend joins and enters it, you both get {{count}} extra tokens that never expire.",
     "yourCode": "Your referral code",
     "share": "Share my code",
-    "shareMessage": "Join me on Hithozha, where you work with friends, not strangers. Use my code {{code}} when you sign up and we both get {{count}} extra job applications. https://hithozha.in",
-    "progress": "{{friends}} of {{max}} friends joined. Extra applications earned: {{bonus}}.",
+    "shareMessage": "Join me on Hithozha, where you work with friends, not strangers. Use my code {{code}} when you sign up and we both get {{count}} free tokens. https://hithozha.in",
+    "progress": "{{friends}} of {{max}} friends joined. Tokens earned: {{bonus}}.",
     "haveCode": "Did a friend invite you? Enter their code",
     "apply": "Use this code",
     "redeem": {
-      "ok": "Done. You both got {{count}} extra applications.",
+      "ok": "Done. You both got {{count}} extra tokens.",
       "not_found": "We could not find that code. Check it and try again.",
       "own": "You cannot use your own code.",
       "used": "You have already used a code.",
       "late": "Codes can be used only in your first 7 days.",
       "full": "That code cannot give any more rewards.",
       "failed": "Something went wrong. Please try again."
+    }
+  },
+  "tokens": {
+    "left": "{{count}} tokens left",
+    "cost": "Applying costs 1 token. You get it back if you are hired, or if the client closes the job without opening your proposal.",
+    "noneLeft": "You have no tokens left. Free tokens come back on the 1st.",
+    "resetsOn": "Next free tokens: {{date}}.",
+    "limitReached": "You have no tokens left to apply. Free tokens come back on the 1st of next month."
+  },
+  "plans": {
+    "cardTitle": "Tokens and plan",
+    "tokensTotal": "{{count}} tokens",
+    "tokensSplit": "{{free}} free this month, {{bought}} that never expire",
+    "freeResets": "Free tokens come again on {{date}}.",
+    "yourPlan": "Your plan: {{name}}",
+    "yourClientPlan": "Your client plan: {{name}}",
+    "commission": "Hithozha keeps {{percent}}%",
+    "unlimitedJobs": "unlimited open jobs",
+    "openJobs": "{{count}} open jobs at a time",
+    "until": "Until {{date}}",
+    "seePlans": "See plans and how tokens work",
+    "title": "Plans and tokens",
+    "notBuyable": "Paid plans and token packs cannot be bought in the app yet. We will tell you when they open.",
+    "for": {
+      "freelancer": "For freelancers",
+      "client": "For clients"
+    },
+    "current": "Your plan",
+    "free": "Free",
+    "perMonth": "{{price}} a month",
+    "perYear": "{{price}} a year (2 months free)",
+    "lines": {
+      "tokens": "{{count}} tokens every month",
+      "commission": "Hithozha keeps {{percent}}% of each order",
+      "packages": "Up to {{count}} packages",
+      "packagesUnlimited": "As many packages as you like",
+      "jobs": "{{count}} open jobs at a time",
+      "jobsUnlimited": "Unlimited open jobs"
+    },
+    "rules": {
+      "title": "How tokens work",
+      "apply": "Applying to a job costs 1 token.",
+      "free": "Free tokens come every month with your plan and expire at the end of that month.",
+      "spend": "Free tokens are used first. Tokens you earn or buy never expire.",
+      "refund": "You get a token back if you are hired, or if the client closes the job without opening your proposal.",
+      "nocash": "Tokens cannot be exchanged for cash or given to someone else."
     }
   }
 }

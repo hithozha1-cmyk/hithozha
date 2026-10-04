@@ -12,7 +12,7 @@ import { confirmAction } from '@/lib/confirm';
 import { fetchJob, type Job } from '@/lib/jobs';
 import { formatINR } from '@/lib/money';
 import { acceptProposal, rejectProposal } from '@/lib/orders';
-import { fetchConversationId, fetchJobProposals, type Proposal } from '@/lib/proposals';
+import { fetchConversationId, fetchJobProposals, markProposalsViewed, type Proposal } from '@/lib/proposals';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/providers/AuthProvider';
 import { colors, type } from '@/theme';
@@ -35,6 +35,8 @@ export default function JobProposalsScreen() {
     setJob(jobResult);
     setProposals(list);
     setLoading(false);
+    // Opening the list marks them seen (a freelancer gets a token back if their proposal is never opened).
+    void markProposalsViewed(id);
   }, [id]);
 
   useFocusEffect(

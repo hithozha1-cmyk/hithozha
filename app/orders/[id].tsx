@@ -28,7 +28,8 @@ import {
   type Dispute,
   type Order,
 } from '@/lib/orders';
-import { PLATFORM_FEE_PERCENT, fetchConversationId } from '@/lib/proposals';
+import { fetchConversationId } from '@/lib/proposals';
+import { commissionPercent } from '@/lib/tokens';
 import { useAuth } from '@/providers/AuthProvider';
 import { colors, radius, type } from '@/theme';
 
@@ -259,7 +260,7 @@ export default function OrderDetailScreen() {
         ) : (
           <>
             <Row label={t('orders.detail.amount')} value={formatINR(order.amount_paise)} />
-            <Row label={t('orders.detail.fee', { percent: PLATFORM_FEE_PERCENT })} value={`− ${formatINR(order.platform_fee_paise)}`} />
+            <Row label={t('orders.detail.fee', { percent: commissionPercent(order.commission_bps) })} value={`− ${formatINR(order.platform_fee_paise)}`} />
             <Row label={t('orders.detail.youReceive')} value={formatINR(order.freelancer_earnings_paise)} strong />
           </>
         )}

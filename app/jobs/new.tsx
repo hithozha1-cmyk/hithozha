@@ -115,7 +115,7 @@ export default function PostJobScreen() {
     setSaving(false);
 
     if (error || !data) {
-      setFormError(t(`${e}.failed`));
+      setFormError(t(error?.code === '54000' ? `${e}.limit` : `${e}.failed`));
       return;
     }
     router.replace({ pathname: '/jobs/[id]', params: { id: data.id } });

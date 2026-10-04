@@ -286,3 +286,21 @@ export const fetchReports = (status: ReportFilter, offset: number) =>
   call<AdminReport[]>('admin_reports', { p_status: status, p_limit: PAGE_SIZE, p_offset: offset });
 export const closeReport = (id: string, outcome: 'dismissed' | 'actioned', note: string | null) =>
   call<null>('admin_close_report', { p_id: id, p_outcome: outcome, p_note: note });
+
+export type UserTokens = {
+  free: number;
+  bought: number;
+  freelancer_plan: string;
+  freelancer_expires: string | null;
+  client_plan: string;
+  client_expires: string | null;
+};
+
+export const fetchUserTokens = async (userId: string): Promise<Result<UserTokens>> => {
+  const r = await call<UserTokens[]>('admin_user_tokens', { p_user: userId });
+  return r.ok && r.data[0] ? { ok: true, data: r.data[0] } : { ok: false };
+};
+export const setMembership = (userId: string, planCode: string, months: number | null) =>
+  call<null>('admin_set_membership', { p_user: userId, p_plan_code: planCode, p_months: months });
+export const giveTokens = (userId: string, amount: number, reason: string) =>
+  call<null>('admin_grant_tokens', { p_user: userId, p_amount: amount, p_reason: reason });
