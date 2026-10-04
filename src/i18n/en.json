@@ -1201,5 +1201,10 @@
       "refund": "You get a token back if you are hired, or if the client closes the job without opening your proposal.",
       "nocash": "Tokens cannot be exchanged for cash or given to someone else."
     }
+  },
+  "loading": {
+    "label": "Loading",
+    "tagline": "Work with friends, not strangers",
+    "slow": "Still loading. Please check your internet connection."
   }
 }

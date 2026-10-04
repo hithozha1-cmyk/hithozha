@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import { PushSetup } from '@/components/PushSetup';
 import { Screen } from '@/components/Screen';
 import '@/i18n';
@@ -26,13 +27,12 @@ void SplashScreen.preventAutoHideAsync();
 function Gate({ ready }: { ready: boolean }) {
   const { t } = useTranslation();
   const { signedIn, loading, profileError, onboarded, needsVerification, refreshProfile } = useAuth();
-  const settled = ready && !loading;
 
   useEffect(() => {
-    if (settled || (ready && profileError)) {
+    if (ready) {
       void SplashScreen.hideAsync();
     }
-  }, [settled, ready, profileError]);
+  }, [ready]);
 
   if (!ready) return null;
 
@@ -44,7 +44,7 @@ function Gate({ ready }: { ready: boolean }) {
     );
   }
 
-  if (loading) return null;
+  if (loading) return <LoadingScreen />;
 
   return (
     <>
