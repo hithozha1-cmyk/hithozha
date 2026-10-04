@@ -281,3 +281,13 @@ supabase/
 ```
 
 The root layout (`app/_layout.tsx`) is the auth gate: no session shows the welcome screen, a session without a completed profile shows onboarding, otherwise the tabs.
+
+## Admin site (separate from the public app)
+
+The admin panel is **not** part of the public app or website. It is a second build of this project that contains only the admin screens (`admin-app/`), while the public build (`app/`) contains none of the admin code (checked: the public bundle has no admin function names).
+
+- **Two steps to get in:** email + password, then a 6-digit code from an authenticator app (Google Authenticator, Authy). The first time, the site shows a QR code to set it up.
+- **The database enforces it.** Since migration `20261004000020_admin_needs_mfa.sql`, `is_admin()` is true only when the session passed the authenticator step (`aal2`). Even someone with an admin password cannot read ID photos or run any admin action without the code.
+- **Turn it on in Supabase:** Authentication -> Sign In / Providers -> Multi-Factor -> make sure **TOTP** is enabled (enrol and verify).
+- **Deploy as its own Vercel project** (same GitHub repo): add the environment variable `APP_MODE=admin`; leave the build command and output folder as they are. Give it its own address, for example `admin.hithozha.in`, and later put Cloudflare Access in front of it.
+- **Run locally:** `APP_MODE=admin npx expo start --web` (PowerShell: `$env:APP_MODE='admin'; npx expo start --web`).

@@ -20,7 +20,7 @@ import { colors, radius, type } from '@/theme';
 export default function ProfileTabScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { profile, company, isAdmin, signOut } = useAuth();
+  const { profile, company, signOut } = useAuth();
   const client = isClientRole(profile?.role ?? null);
   const freelancer = isFreelancerRole(profile?.role ?? null);
 
@@ -49,7 +49,6 @@ export default function ProfileTabScreen() {
       <Button variant="outline" title={t('account.editProfile')} onPress={() => router.push('/account/edit-profile')} style={styles.editProfile} />
 
       {client ? <Button variant="outline" title={t('account.myJobs')} onPress={() => router.push('/jobs/mine')} style={styles.editProfile} /> : null}
-      {isAdmin ? <Button variant="dark" title={t('account.adminTools')} onPress={() => router.push('/admin')} style={styles.editProfile} /> : null}
 
       {freelancer ? (
         <Card style={styles.section}>

@@ -79,7 +79,6 @@ function Gate({ ready }: { ready: boolean }) {
           <Stack.Screen name="jobs/mine" />
           <Stack.Screen name="jobs/edit/[id]" />
           <Stack.Screen name="notifications" />
-          <Stack.Screen name="admin" />
         </Stack.Protected>
         {/*
           Public: Razorpay and new visitors can read these without an account. Keep this LAST: on a phone

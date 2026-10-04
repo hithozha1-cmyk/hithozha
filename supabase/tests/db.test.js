@@ -27,7 +27,9 @@ const bootstrap = `
   create function auth.uid() returns uuid language sql stable as
     $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   grant usage on schema auth, public to anon, authenticated, service_role;
-  grant execute on function auth.uid() to anon, authenticated, service_role;
+  create function auth.jwt() returns jsonb language sql stable as
+    $$ select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb $$;
+  grant execute on function auth.uid(), auth.jwt() to anon, authenticated, service_role;
   -- Supabase grants everything on new public objects to these roles by default.
   alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
   alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
@@ -80,15 +82,17 @@ const bootstrap = `
   }
 
   // ---- helpers -----------------------------------------------------------
-  const as = async (role, uid, fn) => {
-    await db.exec(`set role ${role}; select set_config('request.jwt.claim.sub', '${uid ?? ''}', false);`);
+  // Signed-in people carry aal2 (second step done) unless a test says otherwise.
+  const as = async (role, uid, fn, aal = 'aal2') => {
+    await db.exec(`set role ${role}; select set_config('request.jwt.claim.sub', '${uid ?? ''}', false); select set_config('request.jwt.claims', '{"aal":"${aal}"}', false);`);
     try {
       return await fn();
     } finally {
-      await db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false);`);
+      await db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false); select set_config('request.jwt.claims', '', false);`);
     }
   };
   const user = (uid, fn) => as('authenticated', uid, fn);
+  const userAal1 = (uid, fn) => as('authenticated', uid, fn, 'aal1');
   const anon = (fn) => as('anon', null, fn);
   const service = (fn) => as('service_role', null, fn);
   const q = async (sql, params) => (await db.query(sql, params)).rows;
@@ -688,6 +692,16 @@ const bootstrap = `
   for (const a of ['view_identity', 'reject_identity', 'verify_identity', 'delete_identity_files']) {
     check(`the audit log records ${a}`, idLog.some((l) => l.action === a));
   }
+
+  // ---- migration 0020: admin actions need the authenticator step -----------------
+  check('an admin who finished the second step is an admin', (await user(admin, () => one(`select public.is_admin() as a`))).a === true);
+  check('an admin who has only typed the password is not yet an admin', (await userAal1(admin, () => one(`select public.is_admin() as a`))).a === false);
+  check('that account is still recognised as an admin account (so the site asks for the code)', (await userAal1(admin, () => one(`select public.is_admin_account() as a`))).a === true);
+  check('a normal user is not an admin account', (await user(clientA, () => one(`select public.is_admin_account() as a`))).a === false);
+  await rejects('admin functions refuse a password-only session', () => userAal1(admin, () => q(`select * from public.admin_identities('pending', 10, 0)`)), '42501');
+  await rejects('the admin overview refuses a password-only session', () => userAal1(admin, () => q(`select public.admin_stats()`)), '42501');
+  check('an admin identity photo is not readable with a password-only session', (await userAal1(admin, () => q(`select * from storage.objects where bucket_id = 'identity'`))).length === 0);
+  await rejects('category changes refuse a password-only session', () => userAal1(admin, () => q(`insert into public.categories (slug, name_en, name_ta) values ('mfa-test', 'x', 'x')`)), '42501');
 
   // ---- migration 0014: notifications ---------------------------------------
   const nClient = await newUser('n-client@test');

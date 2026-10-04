@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { ReasonAction } from '@/admin/ui';
+import { ReasonAction } from '@/components/ReasonAction';
 import { Button } from '@/components/Button';
 import { formatINR } from '@/lib/money';
 import { openDispute, withdrawDispute, type Dispute, type Order } from '@/lib/orders';

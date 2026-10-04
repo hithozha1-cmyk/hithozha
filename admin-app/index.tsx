@@ -1,5 +1,3 @@
-import { Redirect, useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +10,8 @@ import { Audit, Payouts, Verifications } from '@/admin/Review';
 import { Disputes } from '@/admin/Disputes';
 import { Jobs, Orders } from '@/admin/Work';
 import { Screen } from '@/components/Screen';
-import { useAuth } from '@/providers/AuthProvider';
+import { supabase } from '@/lib/supabase';
+import { Button } from '@/components/Button';
 import { colors, radius, type } from '@/theme';
 
 const SECTIONS = ['overview', 'users', 'jobs', 'orders', 'disputes', 'identity', 'verifications', 'chats', 'payouts', 'categories', 'audit'] as const;
@@ -20,18 +19,14 @@ type Section = (typeof SECTIONS)[number];
 
 const WIDE = 900;
 
-/** The admin panel. Every action behind it is a database function that checks is_admin() itself. */
+/** The admin panel. Every action behind it is a database function that checks is_admin() itself (which also needs the authenticator step). */
 export default function AdminScreen() {
   const { t } = useTranslation();
-  const router = useRouter();
-  const { isAdmin } = useAuth();
   const { width } = useWindowDimensions();
   const [section, setSection] = useState<Section>('overview');
   const [userSearch, setUserSearch] = useState('');
   // Changing this remounts the section so a fresh search or reload starts clean.
   const [version, setVersion] = useState(0);
-
-  if (!isAdmin) return <Redirect href="/" />;
 
   const wide = width >= WIDE;
   const go = (next: Section) => {
@@ -42,7 +37,6 @@ export default function AdminScreen() {
     setUserSearch(name);
     go('users');
   };
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
   const nav = SECTIONS.map((value) => {
     const active = value === section;
@@ -82,10 +76,9 @@ export default function AdminScreen() {
   return (
     <Screen contentStyle={styles.page}>
       <View style={styles.titleRow}>
-        <Pressable accessibilityRole="button" accessibilityLabel={t('common.back')} onPress={goBack} style={styles.back}>
-          <ChevronLeft size={24} color={colors.text} strokeWidth={2} />
-        </Pressable>
         <Text style={styles.title}>{t('admin.title')}</Text>
+        <View style={styles.spacer} />
+        <Button variant="outline" title="Sign out" onPress={() => void supabase.auth.signOut()} />
       </View>
 
       {wide ? (
@@ -109,8 +102,8 @@ export default function AdminScreen() {
 
 const styles = StyleSheet.create({
   page: { width: '100%', maxWidth: 1180, alignSelf: 'center' },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingBottom: 12 },
-  back: { width: 44, height: 44, marginLeft: -10, alignItems: 'center', justifyContent: 'center' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingBottom: 12 },
+  spacer: { flex: 1 },
   title: { ...type.title, color: colors.text },
   heading: { ...type.heading, color: colors.text, marginBottom: 4 },
   wideRow: { flexDirection: 'row', gap: 24, alignItems: 'flex-start' },
