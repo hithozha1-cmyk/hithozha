@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [profileResult, companyResult, adminResult] = await Promise.all([
       supabase.from('profiles').select(PROFILE_COLUMNS).eq('id', id).maybeSingle(),
       supabase.rpc('get_my_company'),
-      supabase.rpc('is_admin'),
+      supabase.rpc('is_admin_account'),
     ]);
     setIsAdmin(!adminResult.error && adminResult.data === true);
     if (profileResult.error || !profileResult.data) {

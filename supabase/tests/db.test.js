@@ -311,8 +311,8 @@ const bootstrap = `
   await rejects('completing an undelivered order is refused', () => user(clientA, () => q(`select public.complete_order($1)`, [orderId])), '55000');
 
   // fee rounding on an awkward price
-  const jobR = await job(clientA);
-  const propR = await propose(freelancerG, jobR.id, 123457);
+  const jobRep = await job(clientA);
+  const propR = await propose(freelancerG, jobRep.id, 123457);
   const orderRId = (await user(clientA, () => one(`select public.accept_proposal($1) as id`, [propR.id]))).id;
   const orderR = await user(clientA, () => one(`select * from public.orders where id = $1`, [orderRId]));
   check('fee rounds half up and still adds up', orderR.platform_fee_paise === 6173 && orderR.platform_fee_paise + orderR.freelancer_earnings_paise === 123457);
@@ -707,6 +707,37 @@ const bootstrap = `
   await rejects('the admin overview refuses a password-only session', () => userAal1(admin, () => q(`select public.admin_stats()`)), '42501');
   check('an admin identity photo is not readable with a password-only session', (await userAal1(admin, () => q(`select * from storage.objects where bucket_id = 'identity'`))).length === 0);
   await rejects('category changes refuse a password-only session', () => userAal1(admin, () => q(`insert into public.categories (slug, name_en, name_ta) values ('mfa-test', 'x', 'x')`)), '42501');
+
+  // ---- migration 0022: reports and admin alerts -----------------------------------
+  const report = (uid, type, target, reason = 'spam', details = null) => user(uid, () => one(`select public.submit_report($1, $2, $3, $4) as id`, [type, target, reason, details]));
+  const jobReported = await job(clientA);
+  await rejects('signed-out users cannot report', () => anon(() => q(`select public.submit_report('user', $1, 'spam')`, [freelancerG])), '42501');
+  await rejects('you cannot report yourself', () => report(freelancerG, 'user', freelancerG), '23514');
+  await rejects('an unknown reason is refused', () => report(clientA, 'user', freelancerG, 'rude'), '22023');
+  await rejects('an unknown target type is refused', () => report(clientA, 'order', freelancerG), '22023');
+  await rejects('a report about nobody is refused', () => report(clientA, 'user', '00000000-0000-0000-0000-000000000000'), 'P0002');
+  const adminNotesBefore = (await service(() => one(`select count(*)::int as n from public.notifications where user_id = $1 and kind = 'admin_report'`, [admin]))).n;
+  const rep1 = (await report(clientA, 'user', freelancerG, 'scam', 'Asked for money outside the app')).id;
+  check('a report is saved', !!rep1);
+  check('admins are told about a new report', (await service(() => one(`select count(*)::int as n from public.notifications where user_id = $1 and kind = 'admin_report'`, [admin]))).n === adminNotesBefore + 1);
+  await rejects('the same open report cannot be sent twice', () => report(clientA, 'user', freelancerG, 'spam'), '23505');
+  check('a job can be reported', !!(await report(clientA, 'job', jobReported.id, 'fake')).id);
+  await rejects('reports are not readable by the app', () => user(clientA, () => q(`select * from public.reports`)), '42501');
+  await rejects('non-admins cannot list reports', () => user(clientA, () => q(`select * from public.admin_reports('open', 10, 0)`)), '42501');
+  await rejects('non-admins cannot close reports', () => user(clientA, () => q(`select public.admin_close_report($1, 'dismissed')`, [rep1])), '42501');
+  await rejects('a password-only admin session cannot read reports', () => userAal1(admin, () => q(`select * from public.admin_reports('open', 10, 0)`)), '42501');
+  const openReports = await user(admin, () => q(`select * from public.admin_reports('open', 10, 0)`));
+  check('admin sees both open reports with names', openReports.length === 2 && openReports.some((r) => r.target_type === 'user' && r.reporter_name === 'Client A') && openReports.some((r) => r.target_type === 'job' && r.target_name === 'Logo for my bakery'));
+  await rejects('an unknown outcome is refused', () => user(admin, () => q(`select public.admin_close_report($1, 'banana')`, [rep1])), '22023');
+  await user(admin, () => q(`select public.admin_close_report($1, 'actioned', 'Suspended the account')`, [rep1]));
+  check('a closed report leaves the open list', (await user(admin, () => q(`select * from public.admin_reports('open', 10, 0)`))).length === 1);
+  check('a closed report keeps the admin note', (await user(admin, () => q(`select * from public.admin_reports('closed', 10, 0)`)))[0].admin_note === 'Suspended the account');
+  await rejects('a report is closed only once', () => user(admin, () => q(`select public.admin_close_report($1, 'dismissed')`, [rep1])), 'P0002');
+  check('after closing, the same person can report again', !!(await report(clientA, 'user', freelancerG, 'abuse')).id);
+  check('the audit log records closing a report', (await user(admin, () => q(`select action from public.admin_audit_log_list(200, 0)`))).some((l) => l.action === 'close_report'));
+  for (let i = 0; i < 10; i += 1) await service(() => q(`insert into public.reports (reporter_id, target_user, reason, status) values ($1, $2, 'spam', 'dismissed')`, [freelancerF, clientA]));
+  await rejects('too many reports in a day are refused', () => report(freelancerF, 'user', freelancerG), '54000');
+  check('admins hear about new identity checks and disputes through the same alerts', (await service(() => one(`select count(*)::int as n from public.notifications where user_id = $1 and kind in ('admin_identity', 'admin_dispute')`, [admin]))).n >= 1);
 
   // ---- migration 0014: notifications ---------------------------------------
   const nClient = await newUser('n-client@test');

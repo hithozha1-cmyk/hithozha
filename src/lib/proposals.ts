@@ -11,6 +11,7 @@ export type ProposalFreelancer = {
   full_name: string | null;
   avatar_url: string | null;
   city: string | null;
+  verification_status: string;
   freelancer_profiles: {
     headline: string | null;
     rating_avg: number;
@@ -33,7 +34,7 @@ export type Proposal = {
 
 export const PROPOSAL_SELECT =
   'id, job_id, freelancer_id, message, price_paise, delivery_days, status, created_at, ' +
-  'freelancer:profiles!freelancer_id(full_name, avatar_url, city, freelancer_profiles(headline, rating_avg, rating_count, completed_orders))';
+  'freelancer:profiles!freelancer_id(full_name, avatar_url, city, verification_status, freelancer_profiles(headline, rating_avg, rating_count, completed_orders))';
 
 /** What the freelancer keeps after the platform fee, in paise (rounded half up, same as the database). */
 export const earningsAfterFee = (pricePaise: number): number =>

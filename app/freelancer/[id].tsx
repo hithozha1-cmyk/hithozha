@@ -1,13 +1,16 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, ExternalLink, UserX } from 'lucide-react-native';
+import { ChevronLeft, ExternalLink, Share2, UserX } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Avatar } from '@/components/Avatar';
 import { Card } from '@/components/Card';
 import { EmptyState } from '@/components/EmptyState';
+import { ReportButton } from '@/components/ReportButton';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { useAuth } from '@/providers/AuthProvider';
 import { Screen } from '@/components/Screen';
 import { Stars } from '@/components/Stars';
 import { useCategories } from '@/hooks/useCategories';
@@ -29,6 +32,7 @@ function Chips({ items }: { items: string[] }) {
 export default function FreelancerScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const { session } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { categories } = useCategories();
 
@@ -92,9 +96,20 @@ export default function FreelancerScreen() {
       <View style={styles.header}>
         <Avatar name={freelancer.full_name} uri={freelancer.avatar_url} size={88} />
         <Text style={styles.name}>{freelancer.full_name}</Text>
+        {freelancer.verification_status === 'verified' ? <VerifiedBadge /> : null}
         {profile.headline ? <Text style={styles.headline}>{profile.headline}</Text> : null}
         {freelancer.city ? <Text style={styles.city}>{t(`cities.${freelancer.city}`, { defaultValue: freelancer.city })}</Text> : null}
       </View>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('share.profile')}
+        onPress={() => void Share.share({ message: t('share.profileMessage', { name: freelancer.full_name ?? '', url: `https://hithozha.in/freelancer/${freelancer.id}` }) })}
+        style={styles.shareRow}
+      >
+        <Share2 size={18} color={colors.primary} strokeWidth={2} />
+        <Text style={styles.shareText}>{t('share.profile')}</Text>
+      </Pressable>
 
       <Card style={styles.stats}>
         <View style={styles.stat}>
@@ -189,11 +204,14 @@ export default function FreelancerScreen() {
           ))
         )}
       </View>
+      {session?.user.id !== freelancer.id ? <ReportButton targetType="user" targetId={freelancer.id} /> : null}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  shareRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44 },
+  shareText: { ...type.label, color: colors.primary },
   websiteRow: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 },
   websiteText: { ...type.body, color: colors.primary, flexShrink: 1 },
   back: { width: 44, height: 44, marginLeft: -10, alignItems: 'center', justifyContent: 'center' },

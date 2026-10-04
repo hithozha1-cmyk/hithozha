@@ -7,6 +7,7 @@ import { Avatar } from '@/components/Avatar';
 import { Card } from '@/components/Card';
 import { StatusChip, type ChipTone } from '@/components/StatusChip';
 import { Stars } from '@/components/Stars';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { formatINR } from '@/lib/money';
 import type { Proposal, ProposalStatus } from '@/lib/proposals';
 import { colors, type } from '@/theme';
@@ -43,6 +44,7 @@ export function ProposalCard({ proposal, actions }: Props) {
           <Text style={styles.name} numberOfLines={1}>
             {person?.full_name}
           </Text>
+          {person?.verification_status === 'verified' ? <VerifiedBadge /> : null}
           {profile?.headline ? (
             <Text style={styles.headline} numberOfLines={1}>
               {profile.headline}

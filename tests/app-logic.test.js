@@ -216,7 +216,7 @@ check('push: a missing kind opens nothing', push.hrefFromPushData({ order_id: 'o
 check('push: a non-object payload opens nothing', push.hrefFromPushData('hello'), null);
 check('push: a missing payload opens nothing', push.hrefFromPushData(undefined), null);
 check('push: a push without the needed id opens nothing', push.hrefFromPushData({ kind: 'hired' }), null);
-check('push: every notification kind is a known push kind', notes.NOTIFICATION_KINDS.length, 17);
+check('push: every notification kind is a known push kind', notes.NOTIFICATION_KINDS.length, 20);
 
 // ---- base64 decoding for photo uploads (no Blob on phones) ---------------------------
 const b64 = load('src/lib/base64.ts');

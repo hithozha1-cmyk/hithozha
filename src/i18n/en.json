@@ -636,7 +636,8 @@
       "categories": "Categories",
       "audit": "Audit log",
       "disputes": "Disputes",
-      "identity": "Identity checks"
+      "identity": "Identity checks",
+      "reports": "Reports"
     },
     "overview": {
       "needsYou": "Needs you",
@@ -851,6 +852,25 @@
       "emailNotSent": "Decision saved, but the email could not be sent. Check the email settings.",
       "aadhaarPhoto": "Aadhaar photo",
       "panPhoto": "PAN photo"
+    },
+    "reports": {
+      "filter": "Show",
+      "open": "Open",
+      "closed": "Closed",
+      "status": {
+        "open": "Open",
+        "dismissed": "Dismissed",
+        "actioned": "Acted on"
+      },
+      "target": {
+        "user": "Person",
+        "job": "Job"
+      },
+      "by": "Reported by {{name}}",
+      "actioned": "I took action",
+      "actionedConfirm": "Close as acted on",
+      "note": "What did you do?",
+      "dismiss": "Dismiss (nothing wrong)"
     }
   },
   "dispute": {
@@ -995,6 +1015,18 @@
       "company_rejected": {
         "title": "Business not verified",
         "body": "We could not verify {{name}}. You can submit again."
+      },
+      "admin_identity": {
+        "title": "New identity check",
+        "body": "{{name}} sent ID photos to check."
+      },
+      "admin_dispute": {
+        "title": "New dispute",
+        "body": "A problem was reported on {{title}}."
+      },
+      "admin_report": {
+        "title": "New report",
+        "body": "{{name}} was reported."
       }
     }
   },
@@ -1014,5 +1046,30 @@
     "unsupported": "This device cannot receive phone notifications (emulators cannot).",
     "no_project": "This build is missing its notification setup.",
     "error": "Something went wrong while setting up notifications."
+  },
+  "report": {
+    "open": {
+      "user": "Report this person",
+      "job": "Report this job"
+    },
+    "title": "Why are you reporting this?",
+    "reasons": {
+      "spam": "Spam",
+      "scam": "Scam or fraud",
+      "abuse": "Abuse or harassment",
+      "fake": "Fake profile or job",
+      "other": "Something else"
+    },
+    "details": "Tell us more (optional)",
+    "pickReason": "Choose a reason first.",
+    "send": "Send report",
+    "sent": "Thank you. Our team will look at it.",
+    "duplicate": "You already reported this. Our team will look at it.",
+    "limit": "You have sent many reports today. Please try again tomorrow.",
+    "failed": "We could not send your report. Please try again."
+  },
+  "share": {
+    "profile": "Share this profile",
+    "profileMessage": "{{name}} is on Hithozha, where you work with friends, not strangers. See the profile: {{url}}"
   }
 }

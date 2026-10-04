@@ -47,6 +47,9 @@ const TEXT: Record<string, Record<Language, Text>> = {
   identity_rejected: { en: { title: 'Identity not verified', body: 'We could not verify you. Open to read why and send new photos.' }, ta: { title: 'அடையாளம் சரிபார்க்கப்படவில்லை', body: 'உங்களைச் சரிபார்க்க முடியவில்லை. காரணத்தைப் படிக்கவும், புதிய புகைப்படங்களை அனுப்பவும்.' } },
   company_verified: { en: { title: 'Business verified', body: '{{name}} now has the verified badge.' }, ta: { title: 'நிறுவனம் சரிபார்க்கப்பட்டது', body: '{{name}} இப்போது சரிபார்க்கப்பட்ட அடையாளத்தைப் பெற்றுள்ளது.' } },
   company_rejected: { en: { title: 'Business not verified', body: 'We could not verify {{name}}. You can submit again.' }, ta: { title: 'நிறுவனம் சரிபார்க்கப்படவில்லை', body: '{{name}} ஐச் சரிபார்க்க முடியவில்லை. மீண்டும் சமர்ப்பிக்கலாம்.' } },
+  admin_identity: { en: { title: 'New identity check', body: '{{name}} sent ID photos to check.' }, ta: { title: 'புதிய அடையாள சரிபார்ப்பு', body: '{{name}} சரிபார்க்க அடையாள புகைப்படங்களை அனுப்பினார்.' } },
+  admin_dispute: { en: { title: 'New dispute', body: 'A problem was reported on {{title}}.' }, ta: { title: 'புதிய சர்ச்சை', body: '{{title}} இல் ஒரு பிரச்சினை புகாரளிக்கப்பட்டது.' } },
+  admin_report: { en: { title: 'New report', body: '{{name}} was reported.' }, ta: { title: 'புதிய புகார்', body: '{{name}} பற்றி புகார் வந்துள்ளது.' } },
 };
 
 const rupees = (paise: number) =>

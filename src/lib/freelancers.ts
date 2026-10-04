@@ -5,6 +5,7 @@ export type FreelancerPage = {
   full_name: string | null;
   avatar_url: string | null;
   city: string | null;
+  verification_status: string;
   freelancer_profiles: {
     headline: string | null;
     bio: string | null;
@@ -29,7 +30,7 @@ export type FreelancerReview = {
 };
 
 const PAGE_SELECT =
-  'id, full_name, avatar_url, city, freelancer_profiles(headline, bio, skills, languages, experience_level, availability, rating_avg, rating_count, completed_orders, portfolio_urls, portfolio_website)';
+  'id, full_name, avatar_url, city, verification_status, freelancer_profiles(headline, bio, skills, languages, experience_level, availability, rating_avg, rating_count, completed_orders, portfolio_urls, portfolio_website)';
 
 export async function fetchFreelancer(id: string): Promise<FreelancerPage | null> {
   const { data, error } = await supabase.from('profiles').select(PAGE_SELECT).eq('id', id).maybeSingle();

@@ -20,6 +20,9 @@ export const NOTIFICATION_KINDS = [
   'identity_rejected',
   'company_verified',
   'company_rejected',
+  'admin_identity',
+  'admin_dispute',
+  'admin_report',
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
@@ -43,6 +46,11 @@ export function notificationHref(n: Pick<AppNotification, 'kind' | 'data'>): Hre
       return data.job_id ? { pathname: '/jobs/[id]', params: { id: text(data.job_id) } } : null;
     case 'message':
       return data.conversation_id ? { pathname: '/chat/[id]', params: { id: text(data.conversation_id) } } : null;
+    // Admin alerts only tell the admin something is waiting; the work itself is on the admin site.
+    case 'admin_identity':
+    case 'admin_dispute':
+    case 'admin_report':
+      return null;
     case 'identity_verified':
     case 'identity_rejected':
       return '/account/verify-identity';

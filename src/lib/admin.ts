@@ -140,6 +140,23 @@ async function call<T>(name: string, args?: Record<string, unknown>): Promise<Re
 
 export const PAGE_SIZE = 30;
 
+export type AdminReport = {
+  id: string;
+  reporter_id: string;
+  reporter_name: string | null;
+  target_type: 'user' | 'job';
+  target_user: string | null;
+  target_job: string | null;
+  target_name: string | null;
+  reason: string;
+  details: string | null;
+  status: 'open' | 'dismissed' | 'actioned';
+  admin_note: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+};
+export type ReportFilter = 'open' | 'closed' | 'all';
+
 export const fetchStats = () => call<AdminStats>('admin_stats');
 export const fetchRevenue = (granularity: 'day' | 'month') => call<RevenueRow[]>('admin_revenue', { p_granularity: granularity, p_periods: 14 });
 
@@ -264,3 +281,8 @@ export async function deleteIdentityPhotos(id: string): Promise<boolean> {
   if (removed.error) return false;
   return (await call<null>('admin_identity_files_deleted', { p_id: id })).ok;
 }
+
+export const fetchReports = (status: ReportFilter, offset: number) =>
+  call<AdminReport[]>('admin_reports', { p_status: status, p_limit: PAGE_SIZE, p_offset: offset });
+export const closeReport = (id: string, outcome: 'dismissed' | 'actioned', note: string | null) =>
+  call<null>('admin_close_report', { p_id: id, p_outcome: outcome, p_note: note });

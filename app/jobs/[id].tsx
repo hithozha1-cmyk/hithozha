@@ -10,6 +10,7 @@ import { Card } from '@/components/Card';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { EmptyState } from '@/components/EmptyState';
 import { JobProposalPanel } from '@/components/JobProposalPanel';
+import { ReportButton } from '@/components/ReportButton';
 import { Screen } from '@/components/Screen';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { useCategories } from '@/hooks/useCategories';
@@ -195,6 +196,7 @@ export default function JobDetailScreen() {
           {actionError}
         </Text>
       ) : null}
+      {!isOwner ? <ReportButton targetType="job" targetId={job.id} /> : null}
     </Screen>
   );
 }
