@@ -62,10 +62,15 @@ export const completeOrder = (orderId: string) => rpc('complete_order', { p_orde
 export const submitReview = (orderId: string, rating: number, comment: string) =>
   rpc('submit_review', { p_order_id: orderId, p_rating: rating, p_comment: comment.trim() || null });
 
-/** Asks the server for a Razorpay payment link for this order. */
-export async function createPaymentLink(orderId: string): Promise<string | null> {
+export type PaymentStart = { status: 'ok'; url: string } | { status: 'not_enabled' } | { status: 'failed' };
+
+/** Asks the server for a payment link for this order. */
+export async function createPaymentLink(orderId: string): Promise<PaymentStart> {
   const { data, error } = await supabase.functions.invoke<{ url?: string }>('create-payment', { body: { orderId } });
-  return error || !data?.url ? null : data.url;
+  if (!error && data?.url) return { status: 'ok', url: data.url };
+  // A 503 comes back as an error from invoke; the body says why.
+  const body = error && 'context' in error ? await (error.context as Response).json().catch(() => null) : null;
+  return body?.error === 'payments_not_enabled' ? { status: 'not_enabled' } : { status: 'failed' };
 }
 
 export async function cancelUnpaidOrder(orderId: string): Promise<'cancelled' | 'already_paid' | 'failed'> {

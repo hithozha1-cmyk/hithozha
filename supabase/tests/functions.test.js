@@ -191,6 +191,15 @@ const authed = { Authorization: 'Bearer good-token', 'Content-Type': 'applicatio
   seedOrder({ status: 'in_progress' });
   check('create-payment: only unpaid orders can be paid', (await call(createPayment, { headers: authed, body: { orderId: ORDER_ID } })).status === 409);
 
+  // Without the payment keys the function says so plainly (the app shows a friendly message).
+  resetWorld();
+  seedOrder();
+  const savedKeyId = ENV.RAZORPAY_KEY_ID;
+  delete ENV.RAZORPAY_KEY_ID;
+  const noKeys = await call(createPayment, { headers: authed, body: { orderId: ORDER_ID } });
+  ENV.RAZORPAY_KEY_ID = savedKeyId;
+  check('create-payment: without keys it says payments are not enabled', noKeys.status === 503 && noKeys.json.error === 'payments_not_enabled', JSON.stringify(noKeys));
+
   resetWorld();
   seedOrder();
   razorpayHandler = () => ({ status: 200, body: { id: 'plink_abc', short_url: 'https://rzp.io/i/abc' } });

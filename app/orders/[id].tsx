@@ -119,13 +119,13 @@ export default function OrderDetailScreen() {
   const pay = async () => {
     setError(null);
     setBusy('pay');
-    const url = await createPaymentLink(order.id);
-    if (!url) {
+    const started = await createPaymentLink(order.id);
+    if (started.status !== 'ok') {
       setBusy(null);
-      setError(t('orders.actions.payFailed'));
+      setError(t(started.status === 'not_enabled' ? 'orders.actions.payNotEnabled' : 'orders.actions.payFailed'));
       return;
     }
-    await WebBrowser.openBrowserAsync(url);
+    await WebBrowser.openBrowserAsync(started.url);
     // Razorpay tells us about the payment a moment later, so check for a short while.
     setBusy('check');
     for (let attempt = 0; attempt < 10; attempt++) {

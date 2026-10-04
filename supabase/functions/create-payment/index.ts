@@ -67,6 +67,9 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (existing?.payment_url) return json({ url: existing.payment_url });
 
+  // Until the payment account is approved and its keys are saved, say so plainly instead of failing.
+  if (!Deno.env.get('RAZORPAY_KEY_ID') || !Deno.env.get('RAZORPAY_KEY_SECRET')) return json({ error: 'payments_not_enabled' }, 503);
+
   const credentials = btoa(`${requiredEnv('RAZORPAY_KEY_ID')}:${requiredEnv('RAZORPAY_KEY_SECRET')}`);
   const response = await fetch('https://api.razorpay.com/v1/payment_links', {
     method: 'POST',

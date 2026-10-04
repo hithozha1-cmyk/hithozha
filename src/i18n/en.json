@@ -279,7 +279,8 @@
       "approveBody": "The payment will be released to the freelancer. This cannot be undone.",
       "approveFailed": "We could not release the payment. Please try again.",
       "review": "Rate the freelancer",
-      "message": "Message"
+      "message": "Message",
+      "payNotEnabled": "Online payment is not switched on yet. We will tell you as soon as it is. Your order stays saved."
     }
   },
   "profile": {
