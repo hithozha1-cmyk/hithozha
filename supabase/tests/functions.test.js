@@ -500,9 +500,9 @@ const authed = { Authorization: 'Bearer good-token', 'Content-Type': 'applicatio
 
   resetWorld();
   seedFcm('en');
-  razorpayHandler = fcmWorld((url, init) => (JSON.parse(init.body).message.token === FCM2 ? { status: 404, body: { error: { status: 'NOT_FOUND' } } } : { status: 200, body: {} }));
+  razorpayHandler = fcmWorld((url, init) => (JSON.parse(init.body).message.token === FCM2 ? { status: 404, body: { error: { status: 'NOT_FOUND', message: 'Requested entity was not found.', details: [{ errorCode: 'UNREGISTERED' }] } } } : { status: 200, body: {} }));
   res = await call(pushFcm, { headers: hook, body: insertEvent() });
-  check('send-push: a phone Firebase says is gone is forgotten', res.json.sent === 1 && !tables.push_tokens.some((t) => t.token === FCM2) && tables.push_tokens.some((t) => t.token === FCM1));
+  check('send-push: a phone Firebase says is unregistered is forgotten, and the reply says so', res.json.sent === 1 && res.json.gone === 1 && !tables.push_tokens.some((t) => t.token === FCM2) && tables.push_tokens.some((t) => t.token === FCM1));
 
   resetWorld();
   seedFcm('ta', [FCM1, 'ExponentPushToken[iphoneAAAAAAAAAA]']);
@@ -517,6 +517,30 @@ const authed = { Authorization: 'Bearer good-token', 'Content-Type': 'applicatio
   res = await call(pushFcm, { headers: hook, body: insertEvent() });
   console.error = errorLog;
   check('send-push: if Firebase is down it says so and keeps the phones', res.status === 502 && tables.push_tokens.length === 2);
+
+
+  // a bare 404 (for example a wrong Firebase project) must NOT delete a phone, and the reply must say what happened
+  resetWorld();
+  seedFcm('en', [FCM1]);
+  razorpayHandler = fcmWorld(() => ({ status: 404, body: { error: { status: 'NOT_FOUND', message: 'Requested entity was not found.' } } }));
+  console.error = () => {};
+  res = await call(pushFcm, { headers: hook, body: insertEvent() });
+  console.error = errorLog;
+  check('send-push: a plain 404 from Firebase does not delete the phone', tables.push_tokens.some((t) => t.token === FCM1));
+  check('send-push: the reply names what Firebase answered', res.status === 502 && res.json.notes.some((n) => n.includes('fcm 404') && n.includes('NOT_FOUND')), JSON.stringify(res.json));
+
+  resetWorld();
+  seedFcm('en', [FCM1]);
+  razorpayHandler = fcmWorld(() => ({ status: 403, body: { error: { status: 'PERMISSION_DENIED', message: 'SenderId mismatch', details: [{ errorCode: 'SENDER_ID_MISMATCH' }] } } }));
+  console.error = () => {};
+  res = await call(pushFcm, { headers: hook, body: insertEvent() });
+  console.error = errorLog;
+  check('send-push: a sender mismatch is reported by name and keeps the phone', res.status === 502 && res.json.notes[0].includes('SENDER_ID_MISMATCH') && tables.push_tokens.length === 1);
+
+  resetWorld();
+  tables.profiles.push({ id: U1, language: 'en' });
+  res = await call(pushFcm, { headers: hook, body: insertEvent() });
+  check('send-push: a person with no phone gets a clear note', res.json.sent === 0 && res.json.notes[0].includes('no phone registered'));
 
   const b64 = Buffer.from(JSON.stringify(SERVICE_ACCOUNT)).toString('base64');
   const saved = ENV.FIREBASE_SERVICE_ACCOUNT;

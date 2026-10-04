@@ -139,8 +139,10 @@ const isExpoToken = (token: string) => /^(Expo|Exponent)PushToken\[/.test(token)
 
 type PushMessage = { title: string; body: string; data: Record<string, string | number> };
 
-/** Sends to one Android phone. Returns 'ok', 'gone' (the phone no longer exists) or 'error'. */
-async function sendFcm(account: ServiceAccount, accessToken: string, token: string, message: PushMessage): Promise<'ok' | 'gone' | 'error'> {
+type FcmOutcome = { result: 'ok' | 'gone' | 'error'; note?: string };
+
+/** Sends to one Android phone. 'gone' only when Firebase explicitly says the phone is unregistered. */
+async function sendFcm(account: ServiceAccount, accessToken: string, token: string, message: PushMessage): Promise<FcmOutcome> {
   const data: Record<string, string> = {};
   for (const [key, value] of Object.entries(message.data)) data[key] = String(value); // FCM data values must be strings
   const response = await fetch(`https://fcm.googleapis.com/v1/projects/${account.project_id}/messages:send`, {
@@ -155,11 +157,15 @@ async function sendFcm(account: ServiceAccount, accessToken: string, token: stri
       },
     }),
   });
-  if (response.ok) return 'ok';
-  const detail = (await response.json().catch(() => null)) as { error?: { status?: string } } | null;
-  if (response.status === 404 || detail?.error?.status === 'NOT_FOUND' || detail?.error?.status === 'UNREGISTERED') return 'gone';
-  console.error('Firebase refused a message', response.status, detail?.error?.status ?? '');
-  return 'error';
+  if (response.ok) return { result: 'ok' };
+  const detail = (await response.json().catch(() => null)) as {
+    error?: { status?: string; message?: string; details?: { errorCode?: string }[] };
+  } | null;
+  const code = detail?.error?.details?.find((d) => d.errorCode)?.errorCode ?? detail?.error?.status ?? '';
+  const note = `fcm ${response.status} ${code} ${(detail?.error?.message ?? '').slice(0, 90)}`.trim();
+  if (code === 'UNREGISTERED') return { result: 'gone', note };
+  console.error('Firebase refused a message:', note);
+  return { result: 'error', note };
 }
 
 Deno.serve(async (req) => {
@@ -182,11 +188,15 @@ Deno.serve(async (req) => {
   const data = record.data && typeof record.data === 'object' ? (record.data as Record<string, unknown>) : {};
 
   const admin = createClient(requiredEnv('SUPABASE_URL'), requiredEnv('SUPABASE_SERVICE_ROLE_KEY'), { auth: { persistSession: false } });
-  const [{ data: tokens }, { data: profile }] = await Promise.all([
+  const [{ data: tokens, error: tokensError }, { data: profile }] = await Promise.all([
     admin.from('push_tokens').select('token').eq('user_id', record.user_id),
     admin.from('profiles').select('language').eq('id', record.user_id).maybeSingle(),
   ]);
-  if (!tokens || tokens.length === 0) return json({ sent: 0 });
+  if (tokensError) {
+    console.error('could not read push_tokens:', tokensError.message);
+    return json({ error: 'tokens_query_failed', notes: [tokensError.message.slice(0, 120)] }, 500);
+  }
+  if (!tokens || tokens.length === 0) return json({ sent: 0, gone: 0, failed: 0, notes: ['no phone registered for this user'] });
 
   const language: Language = profile?.language === 'en' ? 'en' : 'ta';
   const copy = TEXT[record.kind][language];
@@ -196,7 +206,9 @@ Deno.serve(async (req) => {
   const expoTokens = all.filter(isExpoToken);
   const fcmTokens = all.filter((token) => !isExpoToken(token));
   const dead: string[] = [];
+  const notes: string[] = [];
   let failed = false;
+  let delivered = 0;
 
   // Android phones: straight to Firebase.
   if (fcmTokens.length > 0) {
@@ -204,12 +216,15 @@ Deno.serve(async (req) => {
     const accessToken = account ? await googleAccessToken(account).catch(() => null) : null;
     if (!account || !accessToken) {
       console.error('FIREBASE_SERVICE_ACCOUNT is missing or not accepted, so Android pushes were not sent');
+      notes.push(account ? 'google refused the service account key' : 'FIREBASE_SERVICE_ACCOUNT is missing or unreadable');
       failed = true;
     } else {
       for (const token of fcmTokens) {
-        const result = await sendFcm(account, accessToken, token, message);
-        if (result === 'gone') dead.push(token);
-        else if (result === 'error') failed = true;
+        const outcome = await sendFcm(account, accessToken, token, message);
+        if (outcome.result === 'ok') delivered += 1;
+        else if (outcome.result === 'gone') dead.push(token);
+        else failed = true;
+        if (outcome.note) notes.push(outcome.note);
       }
     }
   }
@@ -226,11 +241,17 @@ Deno.serve(async (req) => {
     });
     if (!response.ok) {
       console.error('Expo push service refused the request', response.status);
+      notes.push(`expo ${response.status}`);
       failed = true;
     } else {
       const result = (await response.json().catch(() => null)) as { data?: { status?: string; details?: { error?: string } }[] } | null;
       (result?.data ?? []).forEach((ticket, index) => {
-        if (ticket.status === 'error' && ticket.details?.error === 'DeviceNotRegistered') dead.push(expoTokens[index]);
+        if (ticket.status === 'ok') delivered += 1;
+        else if (ticket.status === 'error' && ticket.details?.error === 'DeviceNotRegistered') dead.push(expoTokens[index]);
+        else if (ticket.status === 'error') {
+          failed = true;
+          notes.push(`expo ${ticket.details?.error ?? 'error'}`);
+        }
       });
     }
   }
@@ -238,6 +259,6 @@ Deno.serve(async (req) => {
   // Forget phones that no longer exist (app uninstalled, token expired).
   if (dead.length > 0) await admin.from('push_tokens').delete().in('token', dead);
 
-  if (failed && dead.length === 0 && all.length > 0) return json({ error: 'push_provider_error' }, 502);
-  return json({ sent: all.length - dead.length });
+  if (failed && delivered === 0 && dead.length === 0 && all.length > 0) return json({ error: 'push_provider_error', notes }, 502);
+  return json({ sent: delivered, gone: dead.length, failed: all.length - delivered - dead.length, notes });
 });
