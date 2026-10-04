@@ -364,7 +364,7 @@ const authed = { Authorization: 'Bearer good-token', 'Content-Type': 'applicatio
   check('review-identity: the decision goes through the admin-checked database function as the admin', userRpcCalls.length === 1 && userRpcCalls[0].name === 'admin_review_identity' && userRpcCalls[0].args.p_status === 'verified' && userRpcCalls[0].token === 'Bearer admin-token');
   const approvedMail = JSON.parse(emailsSent()[0].body);
   check('review-identity: the approval email goes to the freelancer in their language', approvedMail.to[0] === 'priya@example.com' && approvedMail.subject === 'You are verified on Hithozha');
-  check('review-identity: the email is sent with the Resend key', emailsSent()[0].headers.Authorization === 'Bearer re_test_key' && approvedMail.from === 'Hithozha <onboarding@resend.dev>');
+  check('review-identity: the email is sent with the Resend key', emailsSent()[0].headers.Authorization === 'Bearer re_test_key' && approvedMail.from === 'Hithozha <noreply@hithozha.in>');
   check('review-identity: names are escaped in the email', approvedMail.html.includes('Priya &lt;b&gt;R&lt;/b&gt;') && !approvedMail.html.includes('<b>R</b>'));
 
   resetWorld();
