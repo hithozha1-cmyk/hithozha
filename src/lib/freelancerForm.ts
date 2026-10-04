@@ -1,3 +1,4 @@
+import { normalizeUrl } from '@/lib/company';
 import { toPaise } from '@/lib/money';
 import type { FreelancerDetails } from '@/lib/onboarding';
 import {
@@ -20,6 +21,8 @@ export type FreelancerFormValues = {
   bio: string;
   education: string;
   portfolio: string[];
+  /** The freelancer's own website, as typed. Empty means none. */
+  website: string;
 };
 
 export const EMPTY_FREELANCER: FreelancerFormValues = {
@@ -32,11 +35,12 @@ export const EMPTY_FREELANCER: FreelancerFormValues = {
   bio: '',
   education: '',
   portfolio: [],
+  website: '',
 };
 
 /** The freelancer_profiles columns the form reads and writes. */
 export const FREELANCER_COLUMNS =
-  'headline, skills, experience_level, languages, availability, starting_price_paise, bio, education, portfolio_urls';
+  'headline, skills, experience_level, languages, availability, starting_price_paise, bio, education, portfolio_urls, portfolio_website';
 
 export type FreelancerRow = {
   headline: string | null;
@@ -48,6 +52,7 @@ export type FreelancerRow = {
   bio: string | null;
   education: string | null;
   portfolio_urls: string[];
+  portfolio_website?: string | null;
 };
 
 export function freelancerToFormValues(row: FreelancerRow): FreelancerFormValues {
@@ -61,10 +66,11 @@ export function freelancerToFormValues(row: FreelancerRow): FreelancerFormValues
     bio: row.bio ?? '',
     education: row.education ?? '',
     portfolio: row.portfolio_urls ?? [],
+    website: row.portfolio_website ?? '',
   };
 }
 
-export type FreelancerField = 'headline' | 'skills' | 'experience' | 'languages' | 'availability' | 'price' | 'bio';
+export type FreelancerField = 'headline' | 'skills' | 'experience' | 'languages' | 'availability' | 'price' | 'bio' | 'website';
 
 const E = 'onboarding.professional';
 
@@ -83,6 +89,9 @@ export function validateFreelancer(values: FreelancerFormValues): {
   if (values.languages.length === 0) errors.languages = `${E}.languagesRequired`;
   if (!values.availability) errors.availability = `${E}.availabilityRequired`;
   if (values.bio.trim().length < MIN_BIO_LENGTH) errors.bio = `${E}.bioRequired`;
+
+  const website = normalizeUrl(values.website);
+  if (values.website.trim() !== '' && !website) errors.website = `${E}.websiteInvalid`;
 
   let startingPricePaise: number | null = null;
   if (values.price.trim() !== '') {
@@ -105,6 +114,7 @@ export function validateFreelancer(values: FreelancerFormValues): {
       bio: values.bio.trim(),
       education: values.education.trim() || null,
       portfolio_urls: values.portfolio,
+      portfolio_website: website,
     },
   };
 }

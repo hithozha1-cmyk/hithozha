@@ -148,6 +148,21 @@ export function FreelancerForm({ values, onChange, errors }: Props) {
       />
 
       <View style={styles.group}>
+        <Input
+          label={t('onboarding.professional.website')}
+          placeholder="https://yourname.com"
+          value={values.website}
+          onChangeText={(value) => set('website', value)}
+          error={message('website')}
+          keyboardType="url"
+          autoCapitalize="none"
+          autoCorrect={false}
+          maxLength={200}
+        />
+        <Text style={styles.hint}>{t('onboarding.professional.websiteHint')}</Text>
+      </View>
+
+      <View style={styles.group}>
         <Text style={styles.sectionLabel}>{t('onboarding.professional.portfolio')}</Text>
         <Text style={styles.hint}>{t('onboarding.professional.portfolioHint', { count: MAX_PORTFOLIO_IMAGES })}</Text>
         <View style={styles.grid}>

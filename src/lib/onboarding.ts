@@ -30,6 +30,7 @@ export type FreelancerDetails = {
   bio: string;
   education: string | null;
   portfolio_urls: string[];
+  portfolio_website: string | null;
 };
 
 type CompleteParams = {

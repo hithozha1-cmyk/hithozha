@@ -1,8 +1,8 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, UserX } from 'lucide-react-native';
+import { ChevronLeft, ExternalLink, UserX } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Avatar } from '@/components/Avatar';
@@ -150,9 +150,17 @@ export default function FreelancerScreen() {
         ) : null}
       </View>
 
-      {profile.portfolio_urls.length > 0 ? (
+      {profile.portfolio_urls.length > 0 || profile.portfolio_website ? (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('freelancer.portfolio')}</Text>
+          {profile.portfolio_website && /^https?:\/\//i.test(profile.portfolio_website) ? (
+            <Pressable accessibilityRole="link" onPress={() => void Linking.openURL(profile.portfolio_website as string)} style={styles.websiteRow}>
+              <Text style={styles.websiteText} numberOfLines={1}>
+                {profile.portfolio_website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}
+              </Text>
+              <ExternalLink size={14} color={colors.primary} strokeWidth={2} />
+            </Pressable>
+          ) : null}
           <View style={styles.grid}>
             {profile.portfolio_urls.map((url) => (
               <Image key={url} source={{ uri: url }} style={styles.thumb} contentFit="cover" />
@@ -186,6 +194,8 @@ export default function FreelancerScreen() {
 }
 
 const styles = StyleSheet.create({
+  websiteRow: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 },
+  websiteText: { ...type.body, color: colors.primary, flexShrink: 1 },
   back: { width: 44, height: 44, marginLeft: -10, alignItems: 'center', justifyContent: 'center' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: { alignItems: 'center', gap: 4, paddingVertical: 8 },

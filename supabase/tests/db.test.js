@@ -146,6 +146,11 @@ const bootstrap = `
   await user(freelancerG, () => q(`insert into public.freelancer_profiles (user_id, bio, skills, headline) values ($1, 'I edit videos for brands', array['video-editing'], 'Video editor')`, [freelancerG]));
   await rejects('client cannot create a freelancer profile', () => user(clientA, () => q(`insert into public.freelancer_profiles (user_id, bio) values ($1, 'x')`, [clientA])), '42501');
   await rejects('freelancer cannot set own rating', () => user(freelancerF, () => q(`update public.freelancer_profiles set rating_avg = 5 where user_id = $1`, [freelancerF])), '42501');
+  await user(freelancerF, () => q(`update public.freelancer_profiles set portfolio_website = 'https://logos.example.in' where user_id = $1`, [freelancerF]));
+  check('a freelancer can save a portfolio website, and others can read it', (await user(clientA, () => one(`select portfolio_website from public.freelancer_profiles where user_id = $1`, [freelancerF]))).portfolio_website === 'https://logos.example.in');
+  await rejects('a portfolio website must be an http(s) link', () => user(freelancerF, () => q(`update public.freelancer_profiles set portfolio_website = 'javascript:alert(1)' where user_id = $1`, [freelancerF])), '23514');
+  await user(freelancerG, () => q(`update public.freelancer_profiles set portfolio_website = 'https://evil.example' where user_id = $1`, [freelancerF]));
+  check('nobody else can change another freelancer website', (await one(`select portfolio_website from public.freelancer_profiles where user_id = $1`, [freelancerF])).portfolio_website === 'https://logos.example.in');
   await rejects('freelancer cannot grant themselves premium', () => user(freelancerF, () => q(`update public.freelancer_profiles set is_premium = true where user_id = $1`, [freelancerF])), '42501');
 
   // ---- categories --------------------------------------------------------

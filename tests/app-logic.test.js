@@ -128,6 +128,17 @@ check('freelancer: blank price is allowed', freelancer.validateFreelancer(goodFr
 check('freelancer: price under Rs 50 is rejected', Object.keys(freelancer.validateFreelancer({ ...goodFreelancer, price: '49' }).errors), ['price']);
 check('freelancer: short bio is rejected', Object.keys(freelancer.validateFreelancer({ ...goodFreelancer, bio: 'too short' }).errors), ['bio']);
 check('freelancer: error values are translation keys', freelancer.validateFreelancer(freelancer.EMPTY_FREELANCER).errors.headline, 'onboarding.professional.headlineRequired');
+const loaded0 = {
+  headline: 'Editor',
+  skills: ['video-editing'],
+  experience_level: 'intermediate',
+  languages: ['ta', 'en'],
+  availability: 'weekends',
+  starting_price_paise: 150000,
+  bio: 'Reels and ads',
+  education: null,
+  portfolio_urls: [],
+};
 const loaded = freelancer.freelancerToFormValues({
   headline: 'Editor',
   skills: ['video-editing'],
@@ -140,6 +151,12 @@ const loaded = freelancer.freelancerToFormValues({
   portfolio_urls: ['https://x/y.jpg'],
 });
 check('freelancer: a saved row fills the form', [loaded.price, loaded.experience, loaded.availability, loaded.education, loaded.portfolio.length], ['1500', 'intermediate', 'weekends', '', 1]);
+check('freelancer: a website is optional', freelancer.validateFreelancer({ ...freelancer.EMPTY_FREELANCER, website: '' }).errors.website, undefined);
+check('freelancer: a bad website is refused with a key', freelancer.validateFreelancer({ ...freelancer.EMPTY_FREELANCER, website: 'not a site' }).errors.website, 'onboarding.professional.websiteInvalid');
+const validForm = { ...freelancer.EMPTY_FREELANCER, headline: 'Editor', skills: ['video-editing'], experience: 'intermediate', availability: 'weekends', bio: 'x'.repeat(60) };
+check('freelancer: a bare domain is saved as https', freelancer.validateFreelancer({ ...validForm, website: 'yourname.com' }).details?.portfolio_website, 'https://yourname.com');
+check('freelancer: no website saves null', freelancer.validateFreelancer({ ...validForm, website: '  ' }).details?.portfolio_website, null);
+check('freelancer: a saved website fills the form', freelancer.freelancerToFormValues({ ...loaded0, portfolio_website: 'https://a.in' }).website, 'https://a.in');
 check('freelancer: unknown saved values are ignored', freelancer.freelancerToFormValues({ ...loaded, headline: null, skills: [], experience_level: 'wizard', languages: [], availability: 'sometimes', starting_price_paise: null, bio: null, education: null, portfolio_urls: [] }).experience, null);
 
 // ---- earnings summary ---------------------------------------------------------------

@@ -126,7 +126,10 @@
       "languagesRequired": "Choose at least one language.",
       "availabilityRequired": "Choose your availability.",
       "bioRequired": "Write at least 20 characters about yourself.",
-      "priceInvalid": "Enter a price of ₹50 or more."
+      "priceInvalid": "Enter a price of ₹50 or more.",
+      "website": "Your portfolio website (optional)",
+      "websiteHint": "Clients can open it from your profile. If you have one, add it: it builds trust.",
+      "websiteInvalid": "Enter a valid website address, e.g. https://yourname.com."
     },
     "clientType": {
       "title": "Who's hiring?",
