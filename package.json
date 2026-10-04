@@ -48,7 +48,9 @@
     "test:functions": "node supabase/tests/functions.test.js",
     "test": "npm run test:logic && npm run test:db && npm run test:functions",
     "build:web": "expo export --platform web --output-dir dist",
-    "test:logic": "node tests/app-logic.test.js"
+    "test:logic": "node tests/app-logic.test.js",
+    "site:legal": "node scripts/export-legal.js",
+    "site:build": "node site/build.js"
   },
   "private": true
 }

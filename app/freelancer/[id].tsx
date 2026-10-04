@@ -105,7 +105,7 @@ export default function FreelancerScreen() {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={t('share.profile')}
-        onPress={() => void Share.share({ message: t('share.profileMessage', { name: freelancer.full_name ?? '', url: `https://hithozha.in/freelancer/${freelancer.id}` }) })}
+        onPress={() => void Share.share({ message: t('share.profileMessage', { name: freelancer.full_name ?? '', url: `https://app.hithozha.in/freelancer/${freelancer.id}` }) })}
         style={styles.shareRow}
       >
         <Share2 size={18} color={colors.primary} strokeWidth={2} />

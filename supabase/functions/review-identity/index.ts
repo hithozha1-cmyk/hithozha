@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
     if (!to) return json({ reviewed: true, emailed });
 
     const language: Language = profile?.language === 'en' ? 'en' : 'ta';
-    const email = buildEmail(language, status, profile?.full_name?.trim() || (language === 'ta' ? 'நண்பரே' : 'there'), reason, Deno.env.get('APP_URL') ?? 'https://hithozha.in');
+    const email = buildEmail(language, status, profile?.full_name?.trim() || (language === 'ta' ? 'நண்பரே' : 'there'), reason, Deno.env.get('APP_URL') ?? 'https://app.hithozha.in');
     const sent = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },

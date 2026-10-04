@@ -44,7 +44,7 @@ Everything else is a **secret and lives only in Supabase Edge Function secrets**
 | `RAZORPAY_WEBHOOK_SECRET` | A random string you choose, then paste into the Razorpay webhook (see section 3) |
 | `RESEND_API_KEY` | Resend dashboard → API Keys. Used by `review-identity` to email freelancers when their ID check is approved or rejected |
 | `EMAIL_FROM` | Optional. e.g. `Hithozha <hello@yourdomain.com>`. Defaults to Resend's test sender, which can only email the Resend account owner until you verify a domain |
-| `APP_URL` | Optional. The link in those emails. Defaults to `https://hithozha.in` |
+| `APP_URL` | Optional. The link in those emails. Defaults to `https://app.hithozha.in` |
 
 `SUPABASE_URL` and `SUPABASE_ANON_KEY` are injected into Edge Functions automatically.
 
@@ -291,3 +291,13 @@ The admin panel is **not** part of the public app or website. It is a second bui
 - **Turn it on in Supabase:** Authentication -> Sign In / Providers -> Multi-Factor -> make sure **TOTP** is enabled (enrol and verify).
 - **Deploy as its own Vercel project** (same GitHub repo): add the environment variable `APP_MODE=admin`; leave the build command and output folder as they are. Give it its own address, for example `admin.hithozha.in`, and later put Cloudflare Access in front of it.
 - **Run locally:** `APP_MODE=admin npx expo start --web` (PowerShell: `$env:APP_MODE='admin'; npx expo start --web`).
+
+## Website (hithozha.in) and app (app.hithozha.in)
+
+The public website is a small static site in `site/` (plain HTML and CSS, no packages, English and Tamil). The app is the Expo web build at `app.hithozha.in`.
+
+- **Build it:** `npm run site:build` writes `site/dist`. Text for the home page is in `site/strings.js`. The Terms, Privacy, Refunds and Contact pages are copied from the app's own text (`npm run site:legal` refreshes `site/legal.json`); a test fails if they drift apart.
+- **Deploy as its own Vercel project** from the same GitHub repo: set **Root Directory** to `site`, leave the build command and output folder as in `site/vercel.json`, then give it the domain `hithozha.in` (and `www.hithozha.in`).
+- **The app project** keeps its settings and gets the domain `app.hithozha.in` (add a CNAME `app` in your DNS provider).
+- **When you move the domain:** in Supabase, set Authentication, URL Configuration, Site URL to `https://app.hithozha.in` and add `https://app.hithozha.in/**` as a redirect URL; add `https://app.hithozha.in` to the CORS rule of the R2 bucket (photo uploads); optionally set the `APP_URL` Edge Function secret to `https://app.hithozha.in`.
+- **Preview locally:** `npm run site:build`, then serve the `site/dist` folder (the repo's `.claude/launch.json` has a `hithozha-site` entry).

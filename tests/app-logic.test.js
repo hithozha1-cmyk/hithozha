@@ -264,5 +264,52 @@ check('tokens: 2.5% keeps its decimal', tokens.commissionPercent(250), '2.5');
 check('tokens: the default commission is 5%', tokens.DEFAULT_COMMISSION_BPS, 500);
 check('tokens: the limit error code matches the database', tokens.LIMIT_REACHED_CODE, '54000');
 
+// ---- public website (site/) ----------------------------------------------------------------
+{
+  const siteStrings = require('../site/strings.js');
+  const flatten = (value, prefix = '') =>
+    value !== null && typeof value === 'object'
+      ? Object.entries(value).flatMap(([k, v]) => flatten(v, `${prefix}.${k}`))
+      : [prefix];
+  check('site: Tamil has exactly the same keys as English', flatten(siteStrings.ta), flatten(siteStrings.en));
+  const emptyText = (lang) => flatten(siteStrings[lang]).filter((k) => k.slice(1).split('.').reduce((o, p) => o[p], siteStrings[lang]) === '');
+  check('site: no empty text in either language', [emptyText('en'), emptyText('ta')], [[], []]);
+
+  // The prices and limits on the home page must be the ones in the database seed.
+  const seed = fs.readFileSync(path.join(ROOT, 'supabase/migrations/20261004000026_tokens_and_plans.sql'), 'utf8');
+  const seedRows = [...seed.matchAll(/\('(freelancer|client)_(\w+)',\s*'(\w+)',\s*'(\w+)',\s*(\d+),\s*(\d+),\s*(\w+),\s*(\w+),\s*(\d+),\s*(\d+),\s*\d+\)/g)]
+    .map((m) => ({ audience: m[1], tokens: Number(m[5]), bps: Number(m[6]), packages: m[7], jobs: m[8], price: Number(m[9]) / 100 }));
+  const homePlans = { freelancer: siteStrings.en.plans.freelancer, client: siteStrings.en.plans.client };
+  const rowsFor = (audience) => seedRows.filter((r) => r.audience === audience);
+  check('site: freelancer plan prices match the database', homePlans.freelancer.map((p) => Number(p[1])), rowsFor('freelancer').map((r) => r.price));
+  check('site: client plan prices match the database', homePlans.client.map((p) => Number(p[1])), rowsFor('client').map((r) => r.price));
+  check('site: freelancer tokens and commission match the database', homePlans.freelancer.every((p, i) => p[2][0].includes(String(rowsFor('freelancer')[i].tokens)) && p[2][1].includes(`${rowsFor('freelancer')[i].bps / 100}%`)), true);
+  check('site: client open-job limits match the database', homePlans.client.every((p, i) => { const j = rowsFor('client')[i].jobs; return j === 'null' ? /nlimited/.test(p[2].join(' ')) : p[2].join(' ').includes(`${j} open`); }), true);
+
+  const { exportLegal } = require('../scripts/export-legal.js');
+  check('site: the website legal pages match the app text (run npm run site:legal)', fs.readFileSync(path.join(ROOT, 'site/legal.json'), 'utf8') === exportLegal(), true);
+
+  const { build, DIST } = require('../site/build.js');
+  const urls = build();
+  check('site: ten pages are built (home plus four legal pages, in two languages)', urls.length, 10);
+  const htmlFiles = [];
+  const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).forEach((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : e.name.endsWith('.html') && htmlFiles.push(path.join(dir, e.name))));
+  walk(DIST);
+  check('site: every page has one h1, a canonical link and a title', htmlFiles.every((f) => {
+    const html = fs.readFileSync(f, 'utf8');
+    return (html.match(/<h1[ >]/g) || []).length === 1 && /<link rel="canonical" href="https:\/\/hithozha\.in/.test(html) && /<title>[^<]{10,}<\/title>/.test(html) && !html.includes('undefined');
+  }), true);
+  const exists = (href) => {
+    const clean = href.split('#')[0].split('?')[0];
+    if (clean === '' || /^(https?:|mailto:)/.test(clean)) return true;
+    const rel = clean.replace(/^\//, '');
+    return [rel, `${rel}/index.html`, `${rel}index.html`, rel === '' ? 'index.html' : ''].some((c) => c !== '' && fs.existsSync(path.join(DIST, c)) && fs.statSync(path.join(DIST, c)).isFile());
+  };
+  const brokenLinks = htmlFiles.flatMap((f) => [...fs.readFileSync(f, 'utf8').matchAll(/(?:href|src)="([^"]+)"/g)].map((m) => m[1]).filter((h) => !exists(h)));
+  check('site: no broken internal links or images', brokenLinks, []);
+  check('site: the sitemap lists every page', (fs.readFileSync(path.join(DIST, 'sitemap.xml'), 'utf8').match(/<loc>/g) || []).length, 10);
+  check('site: the home pages link to the app', ['index.html', 'ta/index.html'].every((f) => fs.readFileSync(path.join(DIST, f), 'utf8').includes('https://app.hithozha.in')), true);
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);
