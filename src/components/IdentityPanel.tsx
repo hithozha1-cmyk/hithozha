@@ -5,9 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
-import { FilterChips } from '@/components/FilterChips';
 import { StatusChip } from '@/components/StatusChip';
-import { fetchMyIdentity, ID_TYPES, pickIdentityPhoto, submitIdentity, type IdentityCheck, type IdType, type PhotoKind, type PhotoResult } from '@/lib/identity';
+import { fetchMyIdentity, pickIdentityPhoto, submitIdentity, type IdentityCheck, type PhotoKind, type PhotoResult } from '@/lib/identity';
 import { useAuth } from '@/providers/AuthProvider';
 import { colors, radius, type } from '@/theme';
 
@@ -25,7 +24,6 @@ export function IdentityPanel() {
 
   const [check, setCheck] = useState<IdentityCheck | null>(null);
   const [loading, setLoading] = useState(true);
-  const [idType, setIdType] = useState<IdType>('aadhaar');
   const [paths, setPaths] = useState<Partial<Record<PhotoKind, string>>>({});
   const [uploading, setUploading] = useState<PhotoKind | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -62,10 +60,10 @@ export function IdentityPanel() {
   };
 
   const submit = async () => {
-    if (!paths.id || !paths.selfie) return setError(t('identity.bothNeeded'));
+    if (!paths.aadhaar || !paths.pan || !paths.selfie) return setError(t('identity.allNeeded'));
     setSubmitting(true);
     setError(null);
-    const ok = await submitIdentity(idType, paths.id, paths.selfie);
+    const ok = await submitIdentity(paths.aadhaar, paths.pan, paths.selfie);
     if (ok) {
       setPaths({});
       await Promise.all([load(), refreshProfile()]);
@@ -105,20 +103,21 @@ export function IdentityPanel() {
 
       {canSubmit ? (
         <Card style={styles.card}>
-          <Text style={styles.label}>{t('identity.idType')}</Text>
-          <FilterChips
-            accessibilityLabel={t('identity.idType')}
-            selected={idType}
-            onChange={(value) => setIdType((value as IdType) ?? 'aadhaar')}
-            options={ID_TYPES.map((value) => ({ value, label: t(`identity.types.${value}`) }))}
-          />
-          <Text style={styles.hint}>{t('identity.idHint')}</Text>
+          <Text style={styles.hint}>{t('identity.aadhaarHint')}</Text>
           <Button
             variant="outline"
-            title={paths.id ? t('identity.idDone') : t('identity.idPick')}
-            icon={paths.id ? <CheckCircle2 size={20} color={colors.success} strokeWidth={2} /> : undefined}
-            onPress={() => void pick('id')}
-            loading={uploading === 'id'}
+            title={paths.aadhaar ? t('identity.aadhaarDone') : t('identity.aadhaarPick')}
+            icon={paths.aadhaar ? <CheckCircle2 size={20} color={colors.success} strokeWidth={2} /> : undefined}
+            onPress={() => void pick('aadhaar')}
+            loading={uploading === 'aadhaar'}
+          />
+          <Text style={styles.hint}>{t('identity.panHint')}</Text>
+          <Button
+            variant="outline"
+            title={paths.pan ? t('identity.panDone') : t('identity.panPick')}
+            icon={paths.pan ? <CheckCircle2 size={20} color={colors.success} strokeWidth={2} /> : undefined}
+            onPress={() => void pick('pan')}
+            loading={uploading === 'pan'}
           />
           <Text style={styles.hint}>{t('identity.selfieHint')}</Text>
           <Button
@@ -133,7 +132,7 @@ export function IdentityPanel() {
               {error}
             </Text>
           ) : null}
-          <Button title={t('identity.submit')} onPress={() => void submit()} loading={submitting} disabled={!paths.id || !paths.selfie} />
+          <Button title={t('identity.submit')} onPress={() => void submit()} loading={submitting} disabled={!paths.aadhaar || !paths.pan || !paths.selfie} />
         </Card>
       ) : null}
     </View>

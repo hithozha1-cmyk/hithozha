@@ -31,7 +31,7 @@ const COPY = {
     verified: {
       subject: 'You are verified on Hithozha',
       title: 'You are verified',
-      body: 'Good news: our team checked your ID and selfie and your identity is verified. You can now apply to jobs. We delete your photos after verification.',
+      body: 'Good news: our team checked your Aadhaar, PAN and selfie and your identity is verified. You can now apply to jobs. We delete your photos after verification.',
       button: 'Open Hithozha',
     },
     rejected: {

@@ -821,7 +821,7 @@
       "referenceNeeded": "Enter the bank reference (UTR) of the refund."
     },
     "identity": {
-      "policy": "ID photos and selfies are private and used only to check identity. After you approve or reject a check, delete its photos here. We do not keep them. Photos open as links that expire after 60 seconds, and every open, decision and deletion is recorded in the audit log.",
+      "policy": "Aadhaar photos, PAN photos and selfies are private and used only to check identity. After you approve or reject a check, delete its photos here. We do not keep them. Photos open as links that expire after 60 seconds, and every open, decision and deletion is recorded in the audit log.",
       "filter": "Show",
       "pending": "Waiting for review",
       "toDelete": "Photos to delete",
@@ -838,14 +838,16 @@
       "reason": "Reason (the person sees this)",
       "delete": "Delete the photos",
       "deleteTitle": "Delete these photos?",
-      "deleteBody": "The ID photo and selfie are removed from storage for good. The decision stays on record.",
+      "deleteBody": "The Aadhaar photo, PAN photo and selfie are removed from storage for good. The decision stays on record.",
       "deleteAllButton": "Delete all photos ({{count}})",
       "deleteAllTitle": "Delete photos of {{count}} checks?",
       "deleteAll": "Delete all",
       "someFailed": "{{count}} could not be deleted. Try again.",
       "deletedOn": "Photos deleted {{when}}",
       "emailSent": "Decision saved and the person was emailed.",
-      "emailNotSent": "Decision saved, but the email could not be sent. Check the email settings."
+      "emailNotSent": "Decision saved, but the email could not be sent. Check the email settings.",
+      "aadhaarPhoto": "Aadhaar photo",
+      "panPhoto": "PAN photo"
     }
   },
   "dispute": {
@@ -868,7 +870,7 @@
   "identity": {
     "action": "Verify your identity",
     "title": "Verify your identity",
-    "intro": "Send a photo of an ID and a selfie so clients know a real person is behind your profile.",
+    "intro": "Send photos of your Aadhaar card and PAN card, and a selfie, so clients know a real person is behind your profile.",
     "privacy": "Your photos are private. Only the Hithozha team can see them, only to check your identity. We delete them after we verify you.",
     "idType": "Which ID are you sending?",
     "types": {
@@ -876,7 +878,8 @@
       "pan": "PAN card",
       "voter": "Voter ID",
       "driving_licence": "Driving licence",
-      "passport": "Passport"
+      "passport": "Passport",
+      "aadhaar_pan": "Aadhaar + PAN"
     },
     "idHint": "A clear photo of the front of your ID. Make sure the name is readable.",
     "idPick": "Choose ID photo",
@@ -900,11 +903,18 @@
       "rejected": "We could not verify you from those photos. You can send new ones."
     },
     "gateTitle": "Verify your identity to get started",
-    "gateIntro": "Your account is ready. Send an ID photo and a selfie. You can start working as soon as our team approves them.",
+    "gateIntro": "Your account is ready. Send your Aadhaar card photo, your PAN card photo and a selfie. You can start working as soon as our team approves them.",
     "emailPromise": "You can close the app. We will email you as soon as we decide, and this screen opens the app for you once you are approved.",
     "emailedRejected": "We also sent you an email with this reason.",
     "applyBlockedTitle": "Verify your identity first",
-    "applyBlockedBody": "Only freelancers whose identity is verified can apply to jobs. Send your ID photo and selfie, and we will email you when you are approved."
+    "applyBlockedBody": "Only freelancers whose identity is verified can apply to jobs. Send your Aadhaar, PAN and selfie, and we will email you when you are approved.",
+    "aadhaarHint": "A clear photo of the front of your Aadhaar card. Make sure the name is readable.",
+    "aadhaarPick": "Choose Aadhaar photo",
+    "aadhaarDone": "Aadhaar photo added",
+    "panHint": "A clear photo of your PAN card. Make sure the name and number are readable.",
+    "panPick": "Choose PAN photo",
+    "panDone": "PAN photo added",
+    "allNeeded": "Add all three photos first: Aadhaar, PAN and selfie."
   },
   "notifications": {
     "title": "Notifications",

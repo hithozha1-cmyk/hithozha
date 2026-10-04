@@ -4,7 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@/lib/supabase';
 import { shrinkToBytes } from '@/lib/upload';
 
-export const ID_TYPES = ['aadhaar', 'pan', 'voter', 'driving_licence', 'passport'] as const;
+export const ID_TYPES = ['aadhaar', 'pan', 'voter', 'driving_licence', 'passport', 'aadhaar_pan'] as const;
 export type IdType = (typeof ID_TYPES)[number];
 
 export type IdentityCheck = {
@@ -17,7 +17,7 @@ export type IdentityCheck = {
   files_deleted_at: string | null;
 };
 
-export type PhotoKind = 'id' | 'selfie';
+export type PhotoKind = 'aadhaar' | 'pan' | 'selfie';
 export type PhotoResult =
   | { status: 'ok'; path: string }
   | { status: 'cancelled' }
@@ -58,8 +58,8 @@ export async function pickIdentityPhoto(kind: PhotoKind, userId: string): Promis
   }
 }
 
-export async function submitIdentity(idType: IdType, idPath: string, selfiePath: string): Promise<boolean> {
-  const { error } = await supabase.rpc('submit_identity_verification', { p_id_type: idType, p_id_path: idPath, p_selfie_path: selfiePath });
+export async function submitIdentity(aadhaarPath: string, panPath: string, selfiePath: string): Promise<boolean> {
+  const { error } = await supabase.rpc('submit_identity_verification', { p_aadhaar_path: aadhaarPath, p_pan_path: panPath, p_selfie_path: selfiePath });
   return !error;
 }
 

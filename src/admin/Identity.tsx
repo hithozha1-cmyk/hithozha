@@ -14,6 +14,7 @@ import {
   openIdentityPhotos,
   reviewIdentity,
   type AdminIdentity,
+  type IdentityPhotoUrls,
   type IdentityFilter,
 } from '@/lib/admin';
 import { confirmAction } from '@/lib/confirm';
@@ -23,7 +24,7 @@ import { Empty, ErrorLine, Loading, LoadMore, ReasonAction, usePaged, useWhen } 
 
 function Photos({ id, onReviewed }: { id: string; onReviewed: (emailed: boolean) => Promise<unknown> }) {
   const { t } = useTranslation();
-  const [urls, setUrls] = useState<{ idUrl: string; selfieUrl: string } | null>(null);
+  const [urls, setUrls] = useState<IdentityPhotoUrls | null>(null);
   const [opening, setOpening] = useState(false);
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -51,9 +52,15 @@ function Photos({ id, onReviewed }: { id: string; onReviewed: (emailed: boolean)
     <View style={styles.stack}>
       <View style={styles.photos}>
         <View style={styles.photoBox}>
-          <Text style={styles.label}>{t('admin.identity.idPhoto')}</Text>
-          <Image source={{ uri: urls.idUrl }} style={styles.photo} contentFit="contain" accessibilityLabel={t('admin.identity.idPhoto')} />
+          <Text style={styles.label}>{t('admin.identity.aadhaarPhoto')}</Text>
+          <Image source={{ uri: urls.aadhaarUrl }} style={styles.photo} contentFit="contain" accessibilityLabel={t('admin.identity.aadhaarPhoto')} />
         </View>
+        {urls.panUrl ? (
+          <View style={styles.photoBox}>
+            <Text style={styles.label}>{t('admin.identity.panPhoto')}</Text>
+            <Image source={{ uri: urls.panUrl }} style={styles.photo} contentFit="contain" accessibilityLabel={t('admin.identity.panPhoto')} />
+          </View>
+        ) : null}
         <View style={styles.photoBox}>
           <Text style={styles.label}>{t('admin.identity.selfie')}</Text>
           <Image source={{ uri: urls.selfieUrl }} style={styles.photo} contentFit="contain" accessibilityLabel={t('admin.identity.selfie')} />

@@ -238,24 +238,29 @@ export async function reviewIdentity(id: string, status: 'verified' | 'rejected'
   return error || !data?.reviewed ? { ok: false } : { ok: true, data: { emailed: data.emailed === true } };
 }
 
-type IdentityPaths = { id_path: string; selfie_path: string };
+type IdentityPaths = { id_path: string; pan_path: string | null; selfie_path: string };
 
-/** Short-lived signed links (60 seconds) to an ID photo and selfie. Opening them is audit-logged. */
-export async function openIdentityPhotos(id: string): Promise<{ idUrl: string; selfieUrl: string } | null> {
+export type IdentityPhotoUrls = { aadhaarUrl: string; panUrl: string | null; selfieUrl: string };
+
+/** Short-lived signed links (60 seconds) to the Aadhaar, PAN and selfie photos. Opening them is audit-logged. */
+export async function openIdentityPhotos(id: string): Promise<IdentityPhotoUrls | null> {
   const files = await call<IdentityPaths[]>('admin_identity_files', { p_id: id, p_purpose: 'view' });
   if (!files.ok || !files.data[0]) return null;
-  const { id_path, selfie_path } = files.data[0];
-  const { data, error } = await supabase.storage.from('identity').createSignedUrls([id_path, selfie_path], 60);
-  const urls = data?.map((entry) => entry.signedUrl) ?? [];
-  return error || urls.length !== 2 || !urls[0] || !urls[1] ? null : { idUrl: urls[0], selfieUrl: urls[1] };
+  const { id_path, pan_path, selfie_path } = files.data[0];
+  const paths = [id_path, ...(pan_path ? [pan_path] : []), selfie_path];
+  const { data, error } = await supabase.storage.from('identity').createSignedUrls(paths, 60);
+  const urls = (data ?? []).map((entry) => entry.signedUrl).filter((url): url is string => !!url);
+  if (error || urls.length !== paths.length) return null;
+  // Older checks have no PAN photo: their list is [id, selfie].
+  return pan_path ? { aadhaarUrl: urls[0], panUrl: urls[1], selfieUrl: urls[2] } : { aadhaarUrl: urls[0], panUrl: null, selfieUrl: urls[1] };
 }
 
 /** Removes the photos from storage, then records that they are gone. Only after the check is reviewed. */
 export async function deleteIdentityPhotos(id: string): Promise<boolean> {
   const files = await call<IdentityPaths[]>('admin_identity_files', { p_id: id, p_purpose: 'delete' });
   if (!files.ok || !files.data[0]) return false;
-  const { id_path, selfie_path } = files.data[0];
-  const removed = await supabase.storage.from('identity').remove([id_path, selfie_path]);
+  const { id_path, pan_path, selfie_path } = files.data[0];
+  const removed = await supabase.storage.from('identity').remove([id_path, ...(pan_path ? [pan_path] : []), selfie_path]);
   if (removed.error) return false;
   return (await call<null>('admin_identity_files_deleted', { p_id: id })).ok;
 }
