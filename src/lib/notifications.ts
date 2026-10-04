@@ -23,6 +23,7 @@ export const NOTIFICATION_KINDS = [
   'admin_identity',
   'admin_dispute',
   'admin_report',
+  'referral_reward',
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
@@ -50,6 +51,7 @@ export function notificationHref(n: Pick<AppNotification, 'kind' | 'data'>): Hre
     case 'admin_identity':
     case 'admin_dispute':
     case 'admin_report':
+    case 'referral_reward':
       return null;
     case 'identity_verified':
     case 'identity_rejected':

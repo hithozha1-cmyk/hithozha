@@ -783,6 +783,41 @@ const bootstrap = `
   for (let i = 0; i < 5; i += 1) await addPackage(freelancerF, { title: `Extra package ${i}` });
   await rejects('a freelancer can have at most 6 packages', () => addPackage(freelancerF, { title: 'One too many' }), '54000');
 
+  // ---- migration 0024: referral codes ------------------------------------------------
+  const myRef = (uid) => user(uid, () => one(`select * from public.my_referral()`));
+  const credits = (uid) => user(uid, () => one(`select * from public.my_application_credits()`));
+  const refF = await myRef(freelancerF);
+  check('everyone gets a 6-character referral code', /^[A-Z2-9]{6}$/.test(refF.code));
+  check('the code stays the same', (await myRef(freelancerF)).code === refF.code);
+  check('different people get different codes', (await myRef(freelancerG)).code !== refF.code);
+  check('a new person can still enter a code', (await myRef(freelancerG)).can_redeem === true);
+  await rejects('referral tables are not readable by the app', () => user(freelancerF, () => q(`select * from public.referral_codes`)), '42501');
+  await rejects('bonuses are not readable by the app', () => user(freelancerF, () => q(`select * from public.application_bonuses`)), '42501');
+  await rejects('signed-out users cannot use a code', () => anon(() => q(`select public.redeem_referral($1)`, [refF.code])), '42501');
+  await rejects('an unknown code is refused', () => user(freelancerG, () => q(`select public.redeem_referral('ZZZZZZ')`)), 'P0002');
+  await rejects('you cannot use your own code', () => user(freelancerF, () => q(`select public.redeem_referral($1)`, [refF.code])), '42501');
+  const usedF = (await credits(freelancerF)).used;
+  const realApplicationsF = (await service(() => one(`select count(*)::int as n from public.proposals where freelancer_id = $1 and package_id is null and created_at >= date_trunc('month', now() at time zone 'Asia/Kolkata')`, [freelancerF]))).n;
+  check('package orders do not use up applications', usedF === realApplicationsF);
+  const allowedF = (await credits(freelancerF)).allowed;
+  const allowedG = (await credits(freelancerG)).allowed;
+  await user(freelancerG, () => q(`select public.redeem_referral(lower($1))`, [refF.code]));
+  check('the new person gets 5 extra credits', (await credits(freelancerG)).allowed === allowedG + 5);
+  check('the friend who shared the code gets 5 extra credits', (await credits(freelancerF)).allowed === allowedF + 5);
+  check('the sharer sees one friend and the bonus', (await myRef(freelancerF)).friends === 1 && (await myRef(freelancerF)).bonus === 5);
+  check('the sharer is told', (await service(() => one(`select count(*)::int as n from public.notifications where user_id = $1 and kind = 'referral_reward'`, [freelancerF]))).n === 1);
+  check('after using a code you cannot enter another', (await myRef(freelancerG)).can_redeem === false);
+  await rejects('a code can be used only once per person', () => user(freelancerG, () => q(`select public.redeem_referral($1)`, [refF.code])), '55000');
+  await service(() => q(`update public.profiles set created_at = now() - interval '30 days' where id = $1`, [newbie]));
+  await rejects('an older account cannot use a code', () => user(newbie, () => q(`select public.redeem_referral($1)`, [refF.code])), '55000');
+  check('an older account is not offered the code box', (await myRef(newbie)).can_redeem === false);
+  for (let i = 0; i < 9; i += 1) {
+    const u = await newUser(`ref-extra-${i}@test`);
+    await service(() => q(`insert into public.referrals (referred_id, referrer_id) values ($1, $2)`, [u, freelancerF]));
+  }
+  const lateJoiner = await newUser('ref-late@test');
+  await rejects('a code stops giving rewards after 10 friends', () => user(lateJoiner, () => q(`select public.redeem_referral($1)`, [refF.code])), '54000');
+
   // ---- migration 0014: notifications ---------------------------------------
   const nClient = await newUser('n-client@test');
   const nFree = await newUser('n-free@test');
@@ -916,9 +951,9 @@ const bootstrap = `
   await setProfile(other, 'freelancer', 'Other Free');
   await verify(busy);
   await verify(other);
-  const credits = (uid) => user(uid, () => one(`select * from public.my_application_credits()`));
+  const creditsOf = (uid) => user(uid, () => one(`select * from public.my_application_credits()`));
 
-  const fresh = await credits(busy);
+  const fresh = await creditsOf(busy);
   check('a new freelancer has 10 free applications this month', fresh.used === 0 && fresh.allowed === 10 && fresh.remaining === 10);
   const resetsAt = new Date(fresh.resets_at);
   check('the allowance resets on the 1st of next month, India time', resetsAt > new Date() && resetsAt.getTime() - Date.now() < 32 * 86400000);
@@ -929,23 +964,23 @@ const bootstrap = `
     sentIds.push((await propose(busy, jb.id, 60000)).id);
   }
   check('ten proposals in a month are accepted', sentIds.length === 10);
-  const spent = await credits(busy);
+  const spent = await creditsOf(busy);
   check('the counter shows all ten used and none left', spent.used === 10 && spent.remaining === 0);
 
   const jobEleven = await job(clientA);
   await rejects('the eleventh proposal of the month is refused', () => propose(busy, jobEleven.id, 60000), '54000');
-  check('a refused proposal is not saved', (await credits(busy)).used === 10);
+  check('a refused proposal is not saved', (await creditsOf(busy)).used === 10);
 
   await user(busy, () => q(`update public.proposals set status = 'withdrawn' where id = $1`, [sentIds[0]]));
   await rejects('withdrawing a proposal does not give the credit back', () => propose(busy, jobEleven.id, 60000), '54000');
 
-  check('another freelancer is not affected by someone else\'s limit', !!(await propose(other, jobEleven.id, 60000)).id && (await credits(other)).used === 1);
+  check('another freelancer is not affected by someone else\'s limit', !!(await propose(other, jobEleven.id, 60000)).id && (await creditsOf(other)).used === 1);
   check('a client cannot read or spend anyone\'s credits', (await user(clientA, () => one(`select * from public.my_application_credits()`))).used === 0);
 
   await service(() => q(`update public.proposals set created_at = created_at - interval '40 days' where freelancer_id = $1`, [busy]));
-  check('last month\'s proposals no longer count', (await credits(busy)).used === 0);
+  check('last month\'s proposals no longer count', (await creditsOf(busy)).used === 0);
   check('the freelancer can apply again in a new month', !!(await propose(busy, jobEleven.id, 60000)).id);
-  check('this month\'s proposal counts again from one', (await credits(busy)).used === 1);
+  check('this month\'s proposal counts again from one', (await creditsOf(busy)).used === 1);
 
   await rejects('signed-out users cannot read credits', () => anon(() => q(`select * from public.my_application_credits()`)), '42501');
   await rejects('the counting helper is not callable by the app', () => user(busy, () => q(`select public.applications_this_month($1)`, [busy])), '42501');

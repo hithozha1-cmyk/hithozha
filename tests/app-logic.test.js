@@ -216,7 +216,7 @@ check('push: a missing kind opens nothing', push.hrefFromPushData({ order_id: 'o
 check('push: a non-object payload opens nothing', push.hrefFromPushData('hello'), null);
 check('push: a missing payload opens nothing', push.hrefFromPushData(undefined), null);
 check('push: a push without the needed id opens nothing', push.hrefFromPushData({ kind: 'hired' }), null);
-check('push: every notification kind is a known push kind', notes.NOTIFICATION_KINDS.length, 20);
+check('push: every notification kind is a known push kind', notes.NOTIFICATION_KINDS.length, 21);
 
 // ---- base64 decoding for photo uploads (no Blob on phones) ---------------------------
 const b64 = load('src/lib/base64.ts');
@@ -246,6 +246,13 @@ check('packages: decimals in the price are refused', packages.validatePackage({ 
 check('packages: 61 days is refused', packages.validatePackage({ ...goodPackage, days: '61' }).errors.days, 'packages.errors.days');
 check('packages: zero days is refused', packages.validatePackage({ ...goodPackage, days: '0' }).errors.days, 'packages.errors.days');
 check('packages: a saved package fills the form', packages.packageToFormValues({ id: 'x', freelancer_id: 'y', title: 'Logo design', description: 'd'.repeat(30), category_slug: 'graphic-design', price_paise: 150000, delivery_days: 3, active: true }).price, '1500');
+
+// ---- referrals ----------------------------------------------------------------------------
+const referrals = load('src/lib/referrals.ts');
+check('referral: a typed code is cleaned up', referrals.cleanReferralCode(' ab-c d2e3x9 '), 'ABCD2E');
+check('referral: lower case becomes upper case', referrals.cleanReferralCode('k7m2pq'), 'K7M2PQ');
+check('referral: empty stays empty', referrals.cleanReferralCode(''), '');
+check('referral: the share message carries the code', referrals.referralMessage('Use {{code}} now', 'K7M2PQ'), 'Use K7M2PQ now');
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);

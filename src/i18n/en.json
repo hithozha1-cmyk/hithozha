@@ -1027,6 +1027,10 @@
       "admin_report": {
         "title": "New report",
         "body": "{{name}} was reported."
+      },
+      "referral_reward": {
+        "title": "A friend joined",
+        "body": "{{name}} joined with your code. You both got 5 extra applications."
       }
     }
   },
@@ -1112,6 +1116,25 @@
       "category": "Choose a category.",
       "price": "Enter a price of at least Rs 50.",
       "days": "Enter 1 to 60 days."
+    }
+  },
+  "referral": {
+    "title": "Invite friends",
+    "intro": "Share your code. When a friend joins and enters it, you both get {{count}} extra job applications.",
+    "yourCode": "Your referral code",
+    "share": "Share my code",
+    "shareMessage": "Join me on Hithozha, where you work with friends, not strangers. Use my code {{code}} when you sign up and we both get {{count}} extra job applications. https://hithozha.in",
+    "progress": "{{friends}} of {{max}} friends joined. Extra applications earned: {{bonus}}.",
+    "haveCode": "Did a friend invite you? Enter their code",
+    "apply": "Use this code",
+    "redeem": {
+      "ok": "Done. You both got {{count}} extra applications.",
+      "not_found": "We could not find that code. Check it and try again.",
+      "own": "You cannot use your own code.",
+      "used": "You have already used a code.",
+      "late": "Codes can be used only in your first 7 days.",
+      "full": "That code cannot give any more rewards.",
+      "failed": "Something went wrong. Please try again."
     }
   }
 }
