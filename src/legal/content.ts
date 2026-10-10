@@ -6,8 +6,9 @@ export const LEGAL_PAGES: LegalPage[] = ['terms', 'privacy', 'refunds', 'contact
 /** Fill in phone and address here; empty values are simply not shown on the Contact page. */
 export const BUSINESS = {
   name: 'Hithozha',
+  legalName: 'Kaushik Sundaramoorthy',
   email: 'hithozha1@gmail.com',
-  phone: '',
+  phone: '+91 9150104102',
   address: 'Tamil Nadu, India',
 };
 
