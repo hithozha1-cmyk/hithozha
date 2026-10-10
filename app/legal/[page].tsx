@@ -39,6 +39,7 @@ export default function LegalScreen() {
         {key === 'contact' ? (
           <View style={styles.section}>
             <Text style={styles.heading}>{BUSINESS.name}</Text>
+            {BUSINESS.legalName ? <Text style={styles.body}>{BUSINESS.legalName}</Text> : null}
             <Pressable accessibilityRole="link" onPress={() => void Linking.openURL(`mailto:${BUSINESS.email}`)} style={styles.linkRow}>
               <Text style={styles.link}>{BUSINESS.email}</Text>
             </Pressable>
