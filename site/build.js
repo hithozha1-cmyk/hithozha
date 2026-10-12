@@ -85,6 +85,7 @@ ${pageLinks}
 </div>
 <div>
 <h3>${esc(t.footer.contact)}</h3>
+${legal.business.legalName ? `<span>${esc(legal.business.legalName)}</span>` : ''}
 <a href="mailto:${esc(legal.business.email)}">${esc(legal.business.email)}</a>
 ${legal.business.phone ? `<span>${esc(legal.business.phone)}</span>` : ''}
 <a class="lang" href="${homePath(other)}" hreflang="${other}" lang="${other}">${esc(strings[other].footer.language)}</a>
@@ -304,7 +305,7 @@ ${header(t, pathFor, lang)}
 ${content.sections.map(([h, p]) => `<section><h2>${esc(h)}</h2><p>${esc(p)}</p></section>`).join('\n')}
 ${
   page === 'contact'
-    ? `<section><h2>${esc(b.name)}</h2><p><a href="mailto:${esc(b.email)}">${esc(b.email)}</a></p>${b.phone ? `<p>${esc(b.phone)}</p>` : ''}${b.address ? `<p>${esc(b.address)}</p>` : ''}</section>`
+    ? `<section><h2>${esc(b.name)}</h2>${b.legalName ? `<p>${esc(b.legalName)}</p>` : ''}<p><a href="mailto:${esc(b.email)}">${esc(b.email)}</a></p>${b.phone ? `<p>${esc(b.phone)}</p>` : ''}${b.address ? `<p>${esc(b.address)}</p>` : ''}</section>`
     : ''
 }
 <nav class="others" aria-label="More">
