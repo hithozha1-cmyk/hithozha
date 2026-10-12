@@ -314,5 +314,21 @@ check('tokens: the limit error code matches the database', tokens.LIMIT_REACHED_
   check('site: the home pages link to the app', ['index.html', 'ta/index.html'].every((f) => fs.readFileSync(path.join(DIST, f), 'utf8').includes('https://app.hithozha.in')), true);
 }
 
+// ---- the app's own SEO files (public/) — served at hithozha.in, since that domain runs the app, not site/ ----
+{
+  const { LEGAL_PAGES } = load('src/legal/content.ts');
+  const { generate, PUBLIC } = require('../scripts/generate-app-seo.js');
+  generate();
+  const sitemap = fs.readFileSync(path.join(PUBLIC, 'sitemap.xml'), 'utf8');
+  check('app seo: sitemap lists the home page plus every real /legal/<page> route', [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1]), [
+    'https://hithozha.in/',
+    ...LEGAL_PAGES.map((p) => `https://hithozha.in/legal/${p}`),
+  ]);
+  const robots = fs.readFileSync(path.join(PUBLIC, 'robots.txt'), 'utf8');
+  check('app seo: robots.txt points at the real sitemap and allows everything', robots.includes('Sitemap: https://hithozha.in/sitemap.xml') && /^User-agent: \*\nAllow: \/$/m.test(robots), true);
+  const llms = fs.readFileSync(path.join(PUBLIC, 'llms.txt'), 'utf8');
+  check('app seo: llms.txt links only to real /legal/<page> routes', LEGAL_PAGES.every((p) => llms.includes(`https://hithozha.in/legal/${p}`)) && !llms.includes('hithozha.in/terms)') && !llms.includes('hithozha.in/privacy)'), true);
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);
