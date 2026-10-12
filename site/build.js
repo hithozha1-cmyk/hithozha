@@ -9,6 +9,17 @@ const DIST = path.join(__dirname, 'dist');
 const strings = require('./strings');
 const legal = JSON.parse(fs.readFileSync(path.join(__dirname, 'legal.json'), 'utf8'));
 
+// All 38 districts of Tamil Nadu — together they cover the whole state, which is truthful for an
+// online marketplace operating statewide. Listing individual towns/villages instead would be far less
+// meaningful to search engines and reads as keyword-stuffing (risk of a manual spam penalty).
+const TN_DISTRICTS = [
+  'Ariyalur', 'Chengalpattu', 'Chennai', 'Coimbatore', 'Cuddalore', 'Dharmapuri', 'Dindigul', 'Erode',
+  'Kallakurichi', 'Kanchipuram', 'Kanyakumari', 'Karur', 'Krishnagiri', 'Madurai', 'Mayiladuthurai',
+  'Nagapattinam', 'Namakkal', 'Nilgiris', 'Perambalur', 'Pudukkottai', 'Ramanathapuram', 'Ranipet',
+  'Salem', 'Sivaganga', 'Tenkasi', 'Thanjavur', 'Theni', 'Thoothukudi', 'Tiruchirappalli', 'Tirunelveli',
+  'Tirupathur', 'Tiruppur', 'Tiruvallur', 'Tiruvannamalai', 'Tiruvarur', 'Vellore', 'Viluppuram', 'Virudhunagar',
+];
+
 const esc = (text) =>
   String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -154,7 +165,10 @@ function home(lang) {
           };
         })()
       : undefined,
-    areaServed: 'Tamil Nadu, India',
+    areaServed: [
+      { '@type': 'State', name: 'Tamil Nadu' },
+      ...TN_DISTRICTS.map((name) => ({ '@type': 'AdministrativeArea', name: `${name} District` })),
+    ],
     slogan: strings.en.footer.tagline,
   };
   return (
@@ -350,7 +364,7 @@ Hithozha is a freelance marketplace for Tamil Nadu, India. Clients post jobs and
 - App: ${t.appUrl}
 - Contact: ${legal.business.email}${legal.business.phone ? `, ${legal.business.phone}` : ''}
 - Legal business name: ${legal.business.legalName || legal.business.name}
-- Service area: Tamil Nadu, India
+- Service area: all of Tamil Nadu, India (every district: ${TN_DISTRICTS.join(', ')})
 
 ## Key facts
 
