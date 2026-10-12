@@ -13,6 +13,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/Button';
+import { DesktopScale } from '@/components/DesktopScale';
 import { EmptyState } from '@/components/EmptyState';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { PushSetup } from '@/components/PushSetup';
@@ -110,6 +111,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
+      <DesktopScale />
       <StatusBar style="dark" />
       <AuthProvider>
         <Gate ready={fontsLoaded && languageLoaded} />
