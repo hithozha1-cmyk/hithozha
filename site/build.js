@@ -32,6 +32,8 @@ function head({ t, title, description, pathFor, lang }) {
 <link rel="alternate" hreflang="ta" href="${ORIGIN + pathFor('ta')}">
 <link rel="alternate" hreflang="x-default" href="${ORIGIN + pathFor('en')}">
 <meta name="theme-color" content="#1A1A2E">
+<meta name="geo.region" content="IN-TN">
+<meta name="geo.placename" content="Tamil Nadu, India">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Hithozha">
 <meta property="og:title" content="${esc(title)}">
@@ -136,9 +138,22 @@ function home(lang) {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'Hithozha',
+    legalName: legal.business.legalName || undefined,
     url: ORIGIN,
     logo: `${ORIGIN}/assets/icon-512.png`,
     email: legal.business.email,
+    telephone: legal.business.phone || undefined,
+    address: legal.business.address
+      ? (() => {
+          const locality = legal.business.address.split(',')[0].trim();
+          return {
+            '@type': 'PostalAddress',
+            ...(locality && locality !== 'Tamil Nadu' ? { addressLocality: locality } : {}),
+            addressRegion: 'Tamil Nadu',
+            addressCountry: 'IN',
+          };
+        })()
+      : undefined,
     areaServed: 'Tamil Nadu, India',
     slogan: strings.en.footer.tagline,
   };
@@ -320,6 +335,39 @@ ${footer(t, lang)}
   );
 }
 
+// A short, structured summary for AI assistants and agents (ChatGPT, Claude, Perplexity, etc.) that fetch a page
+// before answering a question about Hithozha, instead of them having to infer it from the marketing HTML.
+// Spec: https://llmstxt.org
+function llmsTxt() {
+  const t = strings.en;
+  return `# Hithozha
+
+> ${t.meta.description}
+
+Hithozha is a freelance marketplace for Tamil Nadu, India. Clients post jobs and ID-verified freelancers (Aadhaar, PAN and a selfie check) apply to do them; Hithozha holds the client's payment until the work is approved. The app and website work in Tamil and English.
+
+- Website: ${ORIGIN}
+- App: ${t.appUrl}
+- Contact: ${legal.business.email}${legal.business.phone ? `, ${legal.business.phone}` : ''}
+- Legal business name: ${legal.business.legalName || legal.business.name}
+- Service area: Tamil Nadu, India
+
+## Key facts
+
+- Free to join as a client or freelancer.
+- Freelancers get 10 free tokens a month; 1 token per job application.
+- Hithozha keeps a platform fee from the freelancer's side only (5% on the free plan); clients pay only the accepted proposal price.
+- Identity-verified freelancers only.
+
+## Pages
+
+- [Terms and Conditions](${ORIGIN}/terms)
+- [Privacy Policy](${ORIGIN}/privacy)
+- [Refund and Cancellation Policy](${ORIGIN}/refunds)
+- [Contact](${ORIGIN}/contact)
+`;
+}
+
 function write(file, text) {
   const full = path.join(DIST, file);
   fs.mkdirSync(path.dirname(full), { recursive: true });
@@ -350,11 +398,29 @@ function build() {
   }
   fs.copyFileSync(path.join(__dirname, 'styles.css'), path.join(DIST, 'styles.css'));
   copyDir(path.join(__dirname, 'assets'), path.join(DIST, 'assets'));
-  write('robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${ORIGIN}/sitemap.xml\n`);
+  // AI crawlers that fetch pages to answer questions or train on public web text.
+  // Explicitly named (rather than relying only on "User-agent: *") so it's unambiguous that Hithozha wants to be
+  // findable and summarized by AI assistants, not just indexed by search engines.
+  const AI_CRAWLERS = [
+    'GPTBot', 'ChatGPT-User', 'OAI-SearchBot', // OpenAI
+    'ClaudeBot', 'Claude-Web', 'anthropic-ai', // Anthropic
+    'Google-Extended', // Gemini / Bard training
+    'PerplexityBot', 'Perplexity-User', // Perplexity
+    'CCBot', // Common Crawl (feeds many LLMs)
+    'Applebot-Extended', // Apple Intelligence
+    'Bytespider', // ByteDance
+    'Amazonbot',
+    'meta-externalagent', // Meta AI
+  ];
+  write(
+    'robots.txt',
+    `User-agent: *\nAllow: /\n\n${AI_CRAWLERS.map((ua) => `User-agent: ${ua}\nAllow: /`).join('\n\n')}\n\nSitemap: ${ORIGIN}/sitemap.xml\n`,
+  );
   write(
     'sitemap.xml',
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${u}</loc></url>`).join('\n')}\n</urlset>\n`,
   );
+  write('llms.txt', llmsTxt(urls));
   return urls;
 }
 
