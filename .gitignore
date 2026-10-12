@@ -61,3 +61,6 @@ service-account*.json
 
 # Promo video project (large, not part of the app)
 /videos
+
+# /brag launch-video output (large render + third-party bundled music/SFX, not part of the app)
+/brag-output
