@@ -1,0 +1,13 @@
+{
+  "id": "P006",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I post in my apartment WhatsApp group and go with whoever a neighbour vouches for -- I don't go hunting on apps for a plumber or a salon person. Unless someone in my group has actually used this and said it worked out, it's just another app icon to me.",
+  "objection": "What happens if the person doesn't show up or does a shoddy job -- do I actually get my money back, or am I stuck arguing with customer care?",
+  "would_change_my_mind": "If a neighbour in my WhatsApp group had already used it and said the freelancer showed up and did the job properly, or if the app clearly spelled out a no-show/bad-work refund policy -- then I'd try it once.",
+  "price_too_cheap": 99,
+  "price_cheap": 299,
+  "price_expensive": 799,
+  "price_too_expensive": 1500
+}

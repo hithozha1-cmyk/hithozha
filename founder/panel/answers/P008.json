@@ -1,0 +1,13 @@
+{
+  "id": "P008",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "When I need a plumber or a tutor, I post in our apartment WhatsApp group and go with whoever a neighbour vouches for - that costs me nothing and someone I know is standing behind the recommendation. I don't see why I'd start opening an app for that.",
+  "objection": "This feels like it's made for English-speaking city people, not people like me - even if it's in Tamil, I don't know this app, I don't know these freelancers, and a 'verified' badge on a screen isn't the same as my neighbour saying 'I used him last month, he's good.'",
+  "would_change_my_mind": "If two or three people in my own building's WhatsApp group actually used it and said it worked out well, I might try it once myself.",
+  "price_too_cheap": 100,
+  "price_cheap": 400,
+  "price_expensive": 1200,
+  "price_too_expensive": 2500
+}

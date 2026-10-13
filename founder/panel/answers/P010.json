@@ -1,0 +1,13 @@
+{
+  "id": "P010",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I post in our apartment WhatsApp group and go with whoever a neighbour vouches for -- that has never let me down, so why would I hand my house keys to a profile I only found by scrolling an app?",
+  "objection": "Anyone can upload an ID card. 'Verified' on a screen means nothing to me until an actual person I know has had this electrician or tutor in their house and said it went fine.",
+  "would_change_my_mind": "If two or three people in my own WhatsApp group had already used it and said the freelancer showed up on time and did good work -- then I'd try it, because that's basically the same trust I already use, just with an app attached.",
+  "price_too_cheap": 150,
+  "price_cheap": 400,
+  "price_expensive": 900,
+  "price_too_expensive": 1500
+}

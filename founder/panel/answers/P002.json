@@ -1,0 +1,13 @@
+{
+  "id": "P002",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I already have a guy I call for plumbing, an AC man, a tailor -- people I've used for years or my neighbours vouched for. An app full of strangers, however verified, is not going to beat that overnight.",
+  "objection": "The 'verification' doesn't mean much to me when I already vet people myself by calling two or three and seeing who answers fast and quotes fair -- that's worked fine. And the 5% fee thing is about what the freelancer keeps, not what I pay, so it doesn't really pull me in as a customer.",
+  "would_change_my_mind": "If people in my own WhatsApp groups start saying they actually used it and got a good, fairly priced person -- or if my usual contact is suddenly unavailable and I need someone same-day -- I'd try it once to see.",
+  "price_too_cheap": 150,
+  "price_cheap": 350,
+  "price_expensive": 900,
+  "price_too_expensive": 1800
+}

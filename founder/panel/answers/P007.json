@@ -1,0 +1,13 @@
+{
+  "id": "P007",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I'll download it this week just to poke around, the way I do with every new local app - but I never finish a first booking unless something pushes me over, a discount code, a friend's referral, something. This ad doesn't give me that, so it just sits on my phone like the last three.",
+  "objection": "Identity verification tells me the freelancer is a real person, not that they're good at the job. I've called JustDial numbers and gotten dead ends before - a slicker app with a verified badge doesn't automatically fix 'will this person actually show up and do decent work.' And I still don't know if this is genuinely built in Tamil or just translated labels with English support bolted on.",
+  "would_change_my_mind": "A first-booking discount or referral code to actually push me to book, plus real customer ratings/reviews per freelancer (not just an identity check), and proof the Tamil experience is native, not translated.",
+  "price_too_cheap": 150,
+  "price_cheap": 500,
+  "price_expensive": 1500,
+  "price_too_expensive": 3000
+}

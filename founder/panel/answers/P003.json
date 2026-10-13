@@ -1,0 +1,13 @@
+{
+  "id": "P003",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I'll download it because I always try the new local apps first, but downloading isn't booking -- I'm not letting someone into my home or handing a kid over to a tutor just because an ad looked slick. I'd want to know people near me are actually using it.",
+  "objection": "Will there actually be enough verified freelancers near me when I open it, or will half the categories in Chennai/Coimbatore be empty with one or two profiles -- I've opened enough new local apps to know that's usually the case at launch.",
+  "would_change_my_mind": "If a neighbour or someone in my building WhatsApp group had already booked someone real through it and said it went fine, I'd try booking too.",
+  "price_too_cheap": 300,
+  "price_cheap": 800,
+  "price_expensive": 2000,
+  "price_too_expensive": 3500
+}
