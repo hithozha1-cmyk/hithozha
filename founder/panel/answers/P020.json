@@ -1,0 +1,13 @@
+{
+  "id": "P020",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "The 5% fee instead of 25% is a genuinely good number and I like that more of it goes to the person doing the work, but 'identity verification' isn't the same thing as 'this person is actually good at the job' -- Urban Company at least feels like it's checked that. I'm not letting a stranger into my house or tutoring something important on an app nobody I know has used yet.",
+  "objection": "Verified ID just means they are who they say they are, not that they won't mess up the plumbing or show up late. I have no reviews, ratings, or completed-job history to go on, and that's the thing I actually check before booking anyone unfamiliar.",
+  "would_change_my_mind": "If a neighbour or relative had actually used it and it went fine, or if the app showed real ratings/completed-job counts per freelancer so I could judge quality myself, not just that they passed an ID check.",
+  "price_too_cheap": 200,
+  "price_cheap": 400,
+  "price_expensive": 900,
+  "price_too_expensive": 1600
+}

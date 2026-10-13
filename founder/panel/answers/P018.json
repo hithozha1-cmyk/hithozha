@@ -1,0 +1,13 @@
+{
+  "id": "P018",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I already have someone I call for salon and cleaning through Urban Company, and I know what to expect from them. A new app, however cheap the booking fee is, is one more thing to learn and trust, and I don't have the patience for that right now.",
+  "objection": "Anyone can say 'verified' -- I don't know who's actually checking these freelancers or what happens if something goes wrong in my house. Urban Company I've at least used and nothing bad happened.",
+  "would_change_my_mind": "If a neighbour or someone in my building actually used it and the freelancer showed up on time and did good work, I'd try it for something Urban Company doesn't do well, like finding a good tutor.",
+  "price_too_cheap": 150,
+  "price_cheap": 400,
+  "price_expensive": 900,
+  "price_too_expensive": 1500
+}

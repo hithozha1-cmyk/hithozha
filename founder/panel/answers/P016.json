@@ -1,0 +1,13 @@
+{
+  "id": "P016",
+  "buys": true,
+  "purchases_first_month": 1,
+  "reason_code": "trust",
+  "reason": "The 5% fee instead of 25% and having it in Tamil are real pluses, so I'd try it once for something low-risk like a home cleaning, but that's as far as I'll go on a first try.",
+  "objection": "'Identity verified' just means they checked someone's ID card, not that the work is any good. I don't see ratings or reviews from actual customers anywhere in this -- and that's the first thing I check before I book anyone.",
+  "would_change_my_mind": "Show me star ratings and real customer reviews in Tamil for each freelancer, not just a verification badge, and I'd trust it enough to book bigger jobs like home repair too.",
+  "price_too_cheap": 150,
+  "price_cheap": 300,
+  "price_expensive": 700,
+  "price_too_expensive": 1200
+}

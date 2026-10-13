@@ -1,0 +1,13 @@
+{
+  "id": "P013",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I don't book anyone my family or a neighbour hasn't actually used -- an app badge saying someone is 'verified' doesn't tell me the plumber won't flood my kitchen. I've been burned by a JustDial number that just went dead, so a profile and a price on a screen isn't enough for me to let a stranger into my house.",
+  "objection": "Who are these freelancers really, and will there even be enough of them near me in Coimbatore -- or will I open the app for a weekend repair and find two tutors and nobody else?",
+  "would_change_my_mind": "If someone in my own WhatsApp group or a neighbour actually used a hithozha freelancer and vouched for them by name, I'd consider booking that same person through the app.",
+  "price_too_cheap": 200,
+  "price_cheap": 500,
+  "price_expensive": 1500,
+  "price_too_expensive": 3000
+}

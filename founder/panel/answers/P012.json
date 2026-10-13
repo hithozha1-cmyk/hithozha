@@ -1,0 +1,13 @@
+{
+  "id": "P012",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I don't go looking in an app for someone to fix things in my house -- I ask in the building WhatsApp group and go with whoever a neighbour already used. A new app with 'verified' freelancers doesn't tell me what happens the day the plumber doesn't turn up.",
+  "objection": "If the person doesn't show up, or shows up and does a shoddy job, do I actually get my money back, and from whom -- the app or the freelancer? That's not answered anywhere here.",
+  "would_change_my_mind": "If someone in my own WhatsApp group had actually used it and vouched for a good experience, plus a clear written guarantee that a no-show or bad job gets refunded without a fight.",
+  "price_too_cheap": 300,
+  "price_cheap": 800,
+  "price_expensive": 2500,
+  "price_too_expensive": 5000
+}

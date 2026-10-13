@@ -1,0 +1,13 @@
+{
+  "id": "P017",
+  "buys": true,
+  "purchases_first_month": 1,
+  "reason_code": "trust",
+  "reason": "I'm not dropping the electrician or the tuition guy I already trust, but for something new I need and don't have a regular person for, verified profiles beat calling five JustDial numbers and getting two dead ones.",
+  "objection": "I already have someone I call for this -- why switch? My usual contacts answer and show up, so there's no real reason to risk an app for the services I've already got sorted.",
+  "would_change_my_mind": "If my regular contacts stop picking up, or I need a service category I don't already have a trusted person for, I'd try booking it on the app instead of starting the JustDial calling routine from scratch.",
+  "price_too_cheap": 150,
+  "price_cheap": 400,
+  "price_expensive": 1200,
+  "price_too_expensive": 2500
+}
