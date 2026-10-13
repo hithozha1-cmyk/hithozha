@@ -1,0 +1,147 @@
+{
+ "business": "hithozha -- a Tamil-first app for booking hyper-local in-person services (home repair, tutoring, beauty/wellness, event services) in Tamil Nadu",
+ "seed": 997448,
+ "dealt": 20,
+ "answered": 20,
+ "skipped": [],
+ "buys": 3,
+ "passes": 17,
+ "buy_rate": 0.15,
+ "by_segment": [
+  [
+   "Small business owner needing recurring local services",
+   2,
+   0.5
+  ],
+  [
+   "Young urban professional (Chennai/Coimbatore)",
+   7,
+   0.14285714285714285
+  ],
+  [
+   "Middle-income household head (semi-urban)",
+   7,
+   0.14285714285714285
+  ],
+  [
+   "Older/traditional homeowner, less app-comfortable",
+   4,
+   0.0
+  ]
+ ],
+ "by_behaviour": [
+  [
+   "JustDial caller",
+   3,
+   0.6666666666666666
+  ],
+  [
+   "Reads every review first",
+   2,
+   0.5
+  ],
+  [
+   "Urban Company user (urban-only)",
+   3,
+   0.0
+  ],
+  [
+   "Tries new apps early",
+   2,
+   0.0
+  ],
+  [
+   "WhatsApp-group loyalist",
+   6,
+   0.0
+  ],
+  [
+   "Trusts only a known face",
+   2,
+   0.0
+  ],
+  [
+   "Deal hunter",
+   2,
+   0.0
+  ]
+ ],
+ "by_income": [
+  [
+   "under $385,000",
+   6,
+   0.3333333333333333
+  ],
+  [
+   "$461,000 and up",
+   7,
+   0.14285714285714285
+  ],
+  [
+   "$385,000 to $461,000",
+   7,
+   0.0
+  ]
+ ],
+ "why_not": [
+  [
+   "trust",
+   9,
+   [
+    "I don't know this app from anywhere -- no one in my building or my WhatsApp groups has used it, and you're asking me to put my card into something brand new just to save a bit on the freelancer's cut. Urban Company already takes care of the verification headache for me, so the 5% fee pitch doesn't move me when the thing I actually worry about is who's holding my payment details.",
+    "I'll download it because I always try the new local apps first, but downloading isn't booking -- I'm not letting someone into my home or handing a kid over to a tutor just because an ad looked slick. I'd want to know people near me are actually using it."
+   ],
+   [
+    "P001",
+    "P003"
+   ]
+  ],
+  [
+   "habit",
+   8,
+   [
+    "I already have a guy I call for plumbing, an AC man, a tailor -- people I've used for years or my neighbours vouched for. An app full of strangers, however verified, is not going to beat that overnight.",
+    "My WhatsApp group already tells me who is good for this kind of work -- a neighbour vouches and that is enough for me. I do not open some new app to book someone for a repair or a tuition class, Tamil or not."
+   ],
+   [
+    "P002",
+    "P005"
+   ]
+  ]
+ ],
+ "why_yes": [
+  [
+   "trust",
+   3,
+   [
+    "Naan JustDial-la rendu moonu number call pannitu than aalu edukuven, but pathi per phone eduthadhe illa, fake listing dhan. Idhula identity verification iruku nu sonnudhadhal, oru try edukalam nu nenaikiren, konjam risk kammi irukum nu feel aguthu.",
+    "The 5% fee instead of 25% and having it in Tamil are real pluses, so I'd try it once for something low-risk like a home cleaning, but that's as far as I'll go on a first try."
+   ],
+   [
+    "P004",
+    "P016"
+   ]
+  ]
+ ],
+ "flip": [
+  "If a few people I actually know -- in Tamil, not some English review on the website -- had used it and gotten their money back cleanly when something went wrong, and if I could pay via UPI on completion instead of upfront.",
+  "If people in my own WhatsApp groups start saying they actually used it and got a good, fairly priced person -- or if my usual contact is suddenly unavailable and I need someone same-day -- I'd try it once to see.",
+  "If a neighbour or someone in my building WhatsApp group had already booked someone real through it and said it went fine, I'd try booking too.",
+  "If two or three people in my own apartment WhatsApp group had actually booked someone through it and said it worked out well, I would try it.",
+  "If a neighbour in my WhatsApp group had already used it and said the freelancer showed up and did the job properly, or if the app clearly spelled out a no-show/bad-work refund policy -- then I'd try it once.",
+  "A first-booking discount or referral code to actually push me to book, plus real customer ratings/reviews per freelancer (not just an identity check), and proof the Tamil experience is native, not translated.",
+  "If two or three people in my own building's WhatsApp group actually used it and said it worked out well, I might try it once myself.",
+  "If two or three people in my apartment WhatsApp group had actually booked someone through it and gotten what they paid for, I'd try it once.",
+  "If two or three people in my own WhatsApp group had already used it and said the freelancer showed up on time and did good work -- then I'd try it, because that's basically the same trust I already use, just with an app attached.",
+  "If someone I actually know -- a relative, a neighbour, someone in my building's WhatsApp group -- used hithozha for a repair or event job and told me it went well, I'd try it once myself.",
+  "If someone in my own WhatsApp group had actually used it and vouched for a good experience, plus a clear written guarantee that a no-show or bad job gets refunded without a fight.",
+  "If someone in my own WhatsApp group or a neighbour actually used a hithozha freelancer and vouched for them by name, I'd consider booking that same person through the app.",
+  "If two or three people I actually know -- my brother-in-law, a neighbour -- used it and told me it worked out fine and was cheaper, I'd try it once for something I don't already have a contact for, like a tutor for my daughter.",
+  "If a neighbour or relative had already used hithozha and told me the Tamil was proper and the freelancer showed up and did good work, I'd try it for one small job to test it myself.",
+  "If a neighbour or someone in my building actually used it and the freelancer showed up on time and did good work, I'd try it for something Urban Company doesn't do well, like finding a good tutor.",
+  "If a couple of neighbours in my apartment WhatsApp group actually used it and said it worked, or if I could see real customer reviews and ratings in Tamil before paying anything.",
+  "If a neighbour or relative had actually used it and it went fine, or if the app showed real ratings/completed-job counts per freelancer so I could judge quality myself, not just that they passed an ID check."
+ ],
+ "purchases_first_month_per_buyer": 1.0,
+ "price_answers": 20
+}
