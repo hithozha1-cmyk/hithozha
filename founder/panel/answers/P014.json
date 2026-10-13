@@ -1,0 +1,13 @@
+{
+  "id": "P014",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I already have a plumber, an electrician and a tutor I call, people my street or my cousin vouched for -- I don't need an app to find them for me, and switching to some stranger off a screen for the same job doesn't save me anything.",
+  "objection": "Verification on an app is just a tick mark from a company I don't know -- it's not the same as my neighbour telling me this fellow did a good job in his house. If something goes wrong I want a person I can shout at, not a support ticket.",
+  "would_change_my_mind": "If two or three people I actually know -- my brother-in-law, a neighbour -- used it and told me it worked out fine and was cheaper, I'd try it once for something I don't already have a contact for, like a tutor for my daughter.",
+  "price_too_cheap": 100,
+  "price_cheap": 300,
+  "price_expensive": 800,
+  "price_too_expensive": 1500
+}
