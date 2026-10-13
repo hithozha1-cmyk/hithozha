@@ -1,0 +1,13 @@
+{
+  "id": "P009",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I don't know this app or anyone who's used it, and I'm not putting my card details into something new just to book a plumber. If someone in my building group has actually used it and it worked, that's different -- until then I'll keep asking around on WhatsApp like I always do.",
+  "objection": "I don't trust giving payment details to a new app -- and 'identity verification' is just words on a screen, I can't check that myself the way a neighbour's recommendation lets me check.",
+  "would_change_my_mind": "If two or three people in my apartment WhatsApp group had actually booked someone through it and gotten what they paid for, I'd try it once.",
+  "price_too_cheap": 150,
+  "price_cheap": 400,
+  "price_expensive": 1200,
+  "price_too_expensive": 2500
+}

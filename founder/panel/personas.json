@@ -1,0 +1,222 @@
+[
+ {
+  "id": "P001",
+  "name": "Luis",
+  "age": 49,
+  "segment": "Young urban professional (Chennai/Coimbatore)",
+  "income": 845000,
+  "behaviour": "Urban Company user (urban-only)",
+  "behaviour_how": "Already pays a premium for a verified pro via an app, mainly for beauty/cleaning; price-sensitive about the ~25% markup it implies.",
+  "objection": "I don't trust giving payment details to a new app",
+  "habit": "you prefer speaking/reading Tamil for anything important, even if you understand English"
+ },
+ {
+  "id": "P002",
+  "name": "Celine",
+  "age": 24,
+  "segment": "Middle-income household head (semi-urban)",
+  "income": 297000,
+  "behaviour": "JustDial caller",
+  "behaviour_how": "Searches JustDial, calls two or three numbers, picks on price and who answers fastest; expects some fake/dead listings.",
+  "objection": "I already have someone I call for this -- why switch?",
+  "habit": "you prefer speaking/reading Tamil for anything important, even if you understand English"
+ },
+ {
+  "id": "P003",
+  "name": "Olivia",
+  "age": 44,
+  "segment": "Young urban professional (Chennai/Coimbatore)",
+  "income": 304000,
+  "behaviour": "Tries new apps early",
+  "behaviour_how": "Downloads new local apps to see what's there; rarely completes a first booking without a push.",
+  "objection": "Will there be enough freelancers near me, or will I open the app and find nobody?",
+  "habit": "you ask a neighbour or relative before trying an unfamiliar service person in your home"
+ },
+ {
+  "id": "P004",
+  "name": "Nia",
+  "age": 35,
+  "segment": "Young urban professional (Chennai/Coimbatore)",
+  "income": 346000,
+  "behaviour": "JustDial caller",
+  "behaviour_how": "Searches JustDial, calls two or three numbers, picks on price and who answers fastest; expects some fake/dead listings.",
+  "objection": "What happens if the person doesn't show up or does a bad job -- do I get my money back?",
+  "habit": "you prefer speaking/reading Tamil for anything important, even if you understand English"
+ },
+ {
+  "id": "P005",
+  "name": "Clara",
+  "age": 37,
+  "segment": "Young urban professional (Chennai/Coimbatore)",
+  "income": 695000,
+  "behaviour": "WhatsApp-group loyalist",
+  "behaviour_how": "Posts in a residents'/apartment WhatsApp group and picks whoever a neighbour vouches for; never opens an app for this.",
+  "objection": "This feels like it's for English-speaking city people, not people like me",
+  "habit": "you prefer speaking/reading Tamil for anything important, even if you understand English"
+ },
+ {
+  "id": "P006",
+  "name": "Sienna",
+  "age": 33,
+  "segment": "Middle-income household head (semi-urban)",
+  "income": 406000,
+  "behaviour": "WhatsApp-group loyalist",
+  "behaviour_how": "Posts in a residents'/apartment WhatsApp group and picks whoever a neighbour vouches for; never opens an app for this.",
+  "objection": "What happens if the person doesn't show up or does a bad job -- do I get my money back?",
+  "habit": "you've used Urban Company at least once if you live in Chennai or Coimbatore, mainly for salon/cleaning"
+ },
+ {
+  "id": "P007",
+  "name": "Min",
+  "age": 28,
+  "segment": "Young urban professional (Chennai/Coimbatore)",
+  "income": 879000,
+  "behaviour": "Tries new apps early",
+  "behaviour_how": "Downloads new local apps to see what's there; rarely completes a first booking without a push.",
+  "objection": "Is this app actually in Tamil, or just translated labels with English support underneath?",
+  "habit": "you've called a JustDial number before and gotten a wrong or dead number at least once"
+ },
+ {
+  "id": "P008",
+  "name": "Ravi",
+  "age": 51,
+  "segment": "Middle-income household head (semi-urban)",
+  "income": 279000,
+  "behaviour": "WhatsApp-group loyalist",
+  "behaviour_how": "Posts in a residents'/apartment WhatsApp group and picks whoever a neighbour vouches for; never opens an app for this.",
+  "objection": "This feels like it's for English-speaking city people, not people like me",
+  "habit": "you're in at least one apartment or residents' WhatsApp group that shares service recommendations"
+ },
+ {
+  "id": "P009",
+  "name": "Hugo",
+  "age": 42,
+  "segment": "Older/traditional homeowner, less app-comfortable",
+  "income": 450000,
+  "behaviour": "WhatsApp-group loyalist",
+  "behaviour_how": "Posts in a residents'/apartment WhatsApp group and picks whoever a neighbour vouches for; never opens an app for this.",
+  "objection": "I don't trust giving payment details to a new app",
+  "habit": "you've called a JustDial number before and gotten a wrong or dead number at least once"
+ },
+ {
+  "id": "P010",
+  "name": "Dana",
+  "age": 26,
+  "segment": "Middle-income household head (semi-urban)",
+  "income": 431000,
+  "behaviour": "WhatsApp-group loyalist",
+  "behaviour_how": "Posts in a residents'/apartment WhatsApp group and picks whoever a neighbour vouches for; never opens an app for this.",
+  "objection": "Is this app actually in Tamil, or just translated labels with English support underneath?",
+  "habit": "you ask a neighbour or relative before trying an unfamiliar service person in your home"
+ },
+ {
+  "id": "P011",
+  "name": "Malik",
+  "age": 32,
+  "segment": "Small business owner needing recurring local services",
+  "income": 1110000,
+  "behaviour": "Trusts only a known face",
+  "behaviour_how": "Will only use someone a family member or neighbour has personally used before.",
+  "objection": "This feels like it's for English-speaking city people, not people like me",
+  "habit": "you've called a JustDial number before and gotten a wrong or dead number at least once"
+ },
+ {
+  "id": "P012",
+  "name": "Hamza",
+  "age": 45,
+  "segment": "Older/traditional homeowner, less app-comfortable",
+  "income": 315000,
+  "behaviour": "WhatsApp-group loyalist",
+  "behaviour_how": "Posts in a residents'/apartment WhatsApp group and picks whoever a neighbour vouches for; never opens an app for this.",
+  "objection": "What happens if the person doesn't show up or does a bad job -- do I get my money back?",
+  "habit": "you've called a JustDial number before and gotten a wrong or dead number at least once"
+ },
+ {
+  "id": "P013",
+  "name": "Grace",
+  "age": 55,
+  "segment": "Young urban professional (Chennai/Coimbatore)",
+  "income": 385000,
+  "behaviour": "Trusts only a known face",
+  "behaviour_how": "Will only use someone a family member or neighbour has personally used before.",
+  "objection": "Will there be enough freelancers near me, or will I open the app and find nobody?",
+  "habit": "you've called a JustDial number before and gotten a wrong or dead number at least once"
+ },
+ {
+  "id": "P014",
+  "name": "Raj",
+  "age": 33,
+  "segment": "Older/traditional homeowner, less app-comfortable",
+  "income": 419000,
+  "behaviour": "Deal hunter",
+  "behaviour_how": "Compares two or three quotes before committing, even for small jobs.",
+  "objection": "I already have someone I call for this -- why switch?",
+  "habit": "you ask a neighbour or relative before trying an unfamiliar service person in your home"
+ },
+ {
+  "id": "P015",
+  "name": "Andre",
+  "age": 52,
+  "segment": "Middle-income household head (semi-urban)",
+  "income": 433000,
+  "behaviour": "Deal hunter",
+  "behaviour_how": "Compares two or three quotes before committing, even for small jobs.",
+  "objection": "Is this app actually in Tamil, or just translated labels with English support underneath?",
+  "habit": "you ask a neighbour or relative before trying an unfamiliar service person in your home"
+ },
+ {
+  "id": "P016",
+  "name": "Pablo",
+  "age": 33,
+  "segment": "Middle-income household head (semi-urban)",
+  "income": 304000,
+  "behaviour": "Reads every review first",
+  "behaviour_how": "Won't book anyone without checking ratings/reviews, in Tamil if possible.",
+  "objection": "How do I know this 'verified' freelancer is actually any good?",
+  "habit": "you've used Urban Company at least once if you live in Chennai or Coimbatore, mainly for salon/cleaning"
+ },
+ {
+  "id": "P017",
+  "name": "Idris",
+  "age": 29,
+  "segment": "Small business owner needing recurring local services",
+  "income": 894000,
+  "behaviour": "JustDial caller",
+  "behaviour_how": "Searches JustDial, calls two or three numbers, picks on price and who answers fastest; expects some fake/dead listings.",
+  "objection": "I already have someone I call for this -- why switch?",
+  "habit": "you ask a neighbour or relative before trying an unfamiliar service person in your home"
+ },
+ {
+  "id": "P018",
+  "name": "Priya",
+  "age": 41,
+  "segment": "Older/traditional homeowner, less app-comfortable",
+  "income": 461000,
+  "behaviour": "Urban Company user (urban-only)",
+  "behaviour_how": "Already pays a premium for a verified pro via an app, mainly for beauty/cleaning; price-sensitive about the ~25% markup it implies.",
+  "objection": "I already have someone I call for this -- why switch?",
+  "habit": "you've used Urban Company at least once if you live in Chennai or Coimbatore, mainly for salon/cleaning"
+ },
+ {
+  "id": "P019",
+  "name": "Tariq",
+  "age": 55,
+  "segment": "Middle-income household head (semi-urban)",
+  "income": 428000,
+  "behaviour": "Reads every review first",
+  "behaviour_how": "Won't book anyone without checking ratings/reviews, in Tamil if possible.",
+  "objection": "I don't trust giving payment details to a new app",
+  "habit": "you're in at least one apartment or residents' WhatsApp group that shares service recommendations"
+ },
+ {
+  "id": "P020",
+  "name": "Tomas",
+  "age": 24,
+  "segment": "Young urban professional (Chennai/Coimbatore)",
+  "income": 899000,
+  "behaviour": "Urban Company user (urban-only)",
+  "behaviour_how": "Already pays a premium for a verified pro via an app, mainly for beauty/cleaning; price-sensitive about the ~25% markup it implies.",
+  "objection": "How do I know this 'verified' freelancer is actually any good?",
+  "habit": "you ask a neighbour or relative before trying an unfamiliar service person in your home"
+ }
+]

@@ -1,0 +1,102 @@
+{
+ "n": 20,
+ "seed": 997448,
+ "customer": {
+  "business": "hithozha -- a Tamil-first app for booking hyper-local in-person services (home repair, tutoring, beauty/wellness, event services) in Tamil Nadu",
+  "target": "Tamil Nadu residents, 22 to 55, in urban and semi-urban areas (Chennai, Coimbatore, Madurai-tier cities), who currently find local services via WhatsApp groups, local referral, or JustDial/Urban Company",
+  "where": "Tamil Nadu (Chennai, Coimbatore, Madurai and similar cities)",
+  "age": [
+   22,
+   55
+  ],
+  "segments": [
+   {
+    "name": "Young urban professional (Chennai/Coimbatore)",
+    "share": 0.35,
+    "income": [
+     300000,
+     900000
+    ]
+   },
+   {
+    "name": "Middle-income household head (semi-urban)",
+    "share": 0.35,
+    "income": [
+     180000,
+     450000
+    ]
+   },
+   {
+    "name": "Older/traditional homeowner, less app-comfortable",
+    "share": 0.2,
+    "income": [
+     200000,
+     600000
+    ]
+   },
+   {
+    "name": "Small business owner needing recurring local services",
+    "share": 0.1,
+    "income": [
+     400000,
+     1200000
+    ]
+   }
+  ],
+  "behaviours": [
+   {
+    "name": "WhatsApp-group loyalist",
+    "share": 0.28,
+    "how": "Posts in a residents'/apartment WhatsApp group and picks whoever a neighbour vouches for; never opens an app for this."
+   },
+   {
+    "name": "JustDial caller",
+    "share": 0.18,
+    "how": "Searches JustDial, calls two or three numbers, picks on price and who answers fastest; expects some fake/dead listings."
+   },
+   {
+    "name": "Urban Company user (urban-only)",
+    "share": 0.14,
+    "how": "Already pays a premium for a verified pro via an app, mainly for beauty/cleaning; price-sensitive about the ~25% markup it implies."
+   },
+   {
+    "name": "Reads every review first",
+    "share": 0.12,
+    "how": "Won't book anyone without checking ratings/reviews, in Tamil if possible."
+   },
+   {
+    "name": "Deal hunter",
+    "share": 0.1,
+    "how": "Compares two or three quotes before committing, even for small jobs."
+   },
+   {
+    "name": "Trusts only a known face",
+    "share": 0.1,
+    "how": "Will only use someone a family member or neighbour has personally used before."
+   },
+   {
+    "name": "Tries new apps early",
+    "share": 0.08,
+    "how": "Downloads new local apps to see what's there; rarely completes a first booking without a push."
+   }
+  ],
+  "objections": [
+   "I already have someone I call for this -- why switch?",
+   "How do I know this 'verified' freelancer is actually any good?",
+   "What happens if the person doesn't show up or does a bad job -- do I get my money back?",
+   "Is this app actually in Tamil, or just translated labels with English support underneath?",
+   "JustDial/WhatsApp is free -- what am I paying extra for?",
+   "Will there be enough freelancers near me, or will I open the app and find nobody?",
+   "I don't trust giving payment details to a new app",
+   "This feels like it's for English-speaking city people, not people like me"
+  ],
+  "habits": [
+   "you're in at least one apartment or residents' WhatsApp group that shares service recommendations",
+   "you've called a JustDial number before and gotten a wrong or dead number at least once",
+   "you prefer speaking/reading Tamil for anything important, even if you understand English",
+   "you ask a neighbour or relative before trying an unfamiliar service person in your home",
+   "you've used Urban Company at least once if you live in Chennai or Coimbatore, mainly for salon/cleaning"
+  ]
+ },
+ "pitch": "hithozha, an app for booking local services in Tamil Nadu -- home repair, tutoring, beauty and\nwellness, event help and more -- fully in Tamil or English, your choice.\nEvery freelancer who lists a fixed-price package has passed identity verification before you can\nbook them.\nhithozha takes about a 5% booking fee from the freelancer, far below the roughly 25% other\nservices apps charge -- so the price you see is closer to what the freelancer actually earns.\nBrowse by category, see the price and the freelancer's profile up front, and book directly in\nthe app -- no calling five numbers to find out who's real.\nAvailable now on Android and the web at hithozha.in."
+}
