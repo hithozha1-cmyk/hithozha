@@ -15,7 +15,10 @@ import { colors, type } from '@/theme';
 
 import { Empty, ErrorLine, Loading } from './ui';
 
-const ICONS = ['video', 'monitor', 'pen-tool', 'megaphone', 'camera', 'book-open', 'file-text', 'mic', 'shapes'];
+const ICONS = [
+  'pen-line', 'palette', 'video', 'music', 'code', 'brain', 'megaphone', 'briefcase',
+  'headset', 'ruler', 'graduation-cap', 'heart-pulse', 'sparkles', 'gamepad-2', 'boxes', 'package',
+];
 const SLUG = /^[a-z0-9-]{2,40}$/;
 
 type Draft = { id: string | null; slug: string; nameEn: string; nameTa: string; icon: string; sort: string; active: boolean };

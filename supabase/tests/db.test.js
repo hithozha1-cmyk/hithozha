@@ -155,7 +155,8 @@ const bootstrap = `
   await rejects('freelancer cannot grant themselves premium', () => user(freelancerF, () => q(`update public.freelancer_profiles set is_premium = true where user_id = $1`, [freelancerF])), '42501');
 
   // ---- categories --------------------------------------------------------
-  check('categories seeded', (await anon(() => one(`select count(*)::int c from public.categories`))).c === 8);
+  check('categories seeded', (await anon(() => one(`select count(*)::int c from public.categories`))).c === 16);
+  check('subcategories seeded', (await anon(() => one(`select count(*)::int c from public.subcategories`))).c === 346);
   await rejects('categories are admin-write only', () => user(clientA, () => q(`insert into public.categories (slug, name_en, name_ta, icon) values ('x','x','x','x')`)), '42501');
 
   // ---- companies ---------------------------------------------------------
@@ -201,7 +202,7 @@ const bootstrap = `
     return user(uid, () =>
       one(
         `insert into public.jobs (client_id, company_id, title, description, category_slug, job_type, hours_per_week, budget_min_paise, budget_max_paise, work_mode, city)
-         values ($1, $2, 'Logo for my bakery', 'I need a clean logo in Tamil and English for my shop', 'graphic-design', $3, $4, 100000, 500000, $5, $6) returning id`,
+         values ($1, $2, 'Logo for my bakery', 'I need a clean logo in Tamil and English for my shop', 'logo-design', $3, $4, 100000, 500000, $5, $6) returning id`,
         [uid, v.company_id, v.job_type, v.hours, v.mode, v.city]));
   };
   const jobA = await job(clientA);
@@ -213,13 +214,13 @@ const bootstrap = `
   await rejects('in-person job needs a city', () => job(clientA, { mode: 'in_person' }), '23514');
   check('in-person job with a city is accepted', !!(await job(clientA, { mode: 'in_person', city: 'madurai' })).id);
   await rejects('freelancer cannot post a job', () => job(freelancerF), '42501');
-  await rejects('cannot post as someone else', () => user(clientA, () => q(`insert into public.jobs (client_id, title, description, category_slug, job_type, budget_min_paise, budget_max_paise, work_mode) values ($1,'Hello world','A long enough description here','writing','one_time',100,200,'online')`, [outsider])), '42501');
+  await rejects('cannot post as someone else', () => user(clientA, () => q(`insert into public.jobs (client_id, title, description, category_slug, job_type, budget_min_paise, budget_max_paise, work_mode) values ($1,'Hello world','A long enough description here','blog-article-writing','one_time',100,200,'online')`, [outsider])), '42501');
   const companyJob = await job(owner, { company_id: company.id });
   check('company owner posts under their company', !!companyJob.id);
   await rejects('cannot attach a company you do not own', () => job(clientA, { company_id: company.id }), '42501');
   const embedded = await user(freelancerF, () => one(`select j.title, c.name, c.verification_status from public.jobs j join public.companies c on c.id = j.company_id where j.id = $1`, [companyJob.id]));
   check('freelancer sees a job with its company details', embedded.name === 'Acme Foods' && embedded.verification_status === 'verified');
-  await rejects('locked job fields (category, type, budget currency) cannot be edited', () => user(clientA, () => q(`update public.jobs set category_slug = 'writing' where id = $1`, [jobA.id])), '42501');
+  await rejects('locked job fields (category, type, budget currency) cannot be edited', () => user(clientA, () => q(`update public.jobs set category_slug = 'blog-article-writing' where id = $1`, [jobA.id])), '42501');
   const strangerClose = await user(outsider, () => db.query(`update public.jobs set status = 'closed' where id = $1`, [jobA.id]));
   check('others cannot close my job', strangerClose.affectedRows === 0);
 
@@ -516,13 +517,13 @@ const bootstrap = `
   check('admin sees where to pay in the payout list', (await user(admin, () => q(`select * from public.admin_payouts_due()`))).every((d) => d.upi_id === null || d.upi_id === 'freelancerf@okaxis'));
 
   // categories
-  await rejects('non-admins cannot add categories', () => user(clientA, () => q(`select public.admin_upsert_category(null, 'cooking', 'Cooking', 'சமையல்', 'book-open', 9, true)`)), '42501');
-  await rejects('categories cannot be written directly any more', () => user(admin, () => q(`insert into public.categories (slug, name_en, name_ta, icon) values ('x1', 'X', 'X', 'mic')`)), '42501');
-  const cat = (await user(admin, () => one(`select public.admin_upsert_category(null, 'cooking', 'Cooking', 'சமையல்', 'book-open', 9, true) as id`))).id;
+  await rejects('non-admins cannot add categories', () => user(clientA, () => q(`select public.admin_upsert_category(null, 'cooking', 'Cooking', 'சமையல்', 'sparkles', 9, true)`)), '42501');
+  await rejects('categories cannot be written directly any more', () => user(admin, () => q(`insert into public.categories (slug, name_en, name_ta, icon) values ('x1', 'X', 'X', 'sparkles')`)), '42501');
+  const cat = (await user(admin, () => one(`select public.admin_upsert_category(null, 'cooking', 'Cooking', 'சமையல்', 'sparkles', 9, true) as id`))).id;
   check('admin adds a category', (await user(clientA, () => q(`select * from public.categories where slug = 'cooking'`))).length === 1);
-  await user(admin, () => q(`select public.admin_upsert_category($1, 'cooking', 'Home cooking', 'வீட்டு சமையல்', 'book-open', 9, false)`, [cat]));
+  await user(admin, () => q(`select public.admin_upsert_category($1, 'cooking', 'Home cooking', 'வீட்டு சமையல்', 'sparkles', 9, false)`, [cat]));
   check('admin edits a category', (await one(`select name_en, is_active from public.categories where id = $1`, [cat])).is_active === false);
-  await rejects('a category needs a Tamil name', () => user(admin, () => q(`select public.admin_upsert_category(null, 'baking', 'Baking', '', 'mic', 10, true)`)), '22023');
+  await rejects('a category needs a Tamil name', () => user(admin, () => q(`select public.admin_upsert_category(null, 'baking', 'Baking', '', 'sparkles', 10, true)`)), '22023');
 
   // the audit log
   const log = await user(admin, () => q(`select * from public.admin_audit_log_list(100, 0)`));
@@ -742,7 +743,7 @@ const bootstrap = `
 
   // ---- migration 0023: fixed-price packages -----------------------------------------
   const addPackage = (uid, o = {}) => user(uid, () => one(
-    `insert into public.service_packages (title, description, category_slug, price_paise, delivery_days) values ($1, $2, 'graphic-design', $3, $4) returning id`,
+    `insert into public.service_packages (title, description, category_slug, price_paise, delivery_days) values ($1, $2, 'logo-design', $3, $4) returning id`,
     [o.title ?? 'Logo design', o.description ?? 'A clean logo for your shop with two changes', o.price ?? 150000, o.days ?? 3]));
   await service(() => q(`update public.profiles set verification_status = 'none' where id = $1`, [freelancerG]));
   await rejects('an unverified freelancer cannot publish a package', () => addPackage(freelancerG), '42501');
@@ -754,7 +755,7 @@ const bootstrap = `
   const pkg = (await addPackage(freelancerF)).id;
   check('a verified freelancer can publish a package', !!pkg);
   check('clients can see an active package', (await user(clientA, () => q(`select id from public.service_packages where id = $1`, [pkg]))).length === 1);
-  await rejects('a package cannot be created for someone else', () => user(freelancerG, () => q(`insert into public.service_packages (freelancer_id, title, description, category_slug, price_paise, delivery_days) values ($1, 'Logo design', 'A clean logo for your shop with two changes', 'graphic-design', 150000, 3)`, [freelancerF])), '42501');
+  await rejects('a package cannot be created for someone else', () => user(freelancerG, () => q(`insert into public.service_packages (freelancer_id, title, description, category_slug, price_paise, delivery_days) values ($1, 'Logo design', 'A clean logo for your shop with two changes', 'logo-design', 150000, 3)`, [freelancerF])), '42501');
   await user(clientA, () => q(`update public.service_packages set price_paise = 5000 where id = $1`, [pkg]));
   check('others cannot change a package', (await one(`select price_paise from public.service_packages where id = $1`, [pkg])).price_paise === 150000);
   await user(clientA, () => q(`delete from public.service_packages where id = $1`, [pkg]));

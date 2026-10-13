@@ -1,6 +1,6 @@
-import { Check, ChevronDown } from 'lucide-react-native';
-import { useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Check, ChevronDown, Search } from 'lucide-react-native';
+import { useMemo, useState } from 'react';
+import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -17,11 +17,20 @@ type Props = {
   error?: string | null;
 };
 
+/** Long lists (e.g. the 346 service subcategories) get a search box; short ones don't need it. */
+const SEARCH_THRESHOLD = 8;
+
 export function Select({ label, placeholder, value, options, onChange, error }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const selected = options.find((option) => option.value === value);
+  const showSearch = options.length > SEARCH_THRESHOLD;
+  const filtered = useMemo(
+    () => (showSearch && query.trim() ? options.filter((o) => o.label.toLowerCase().includes(query.trim().toLowerCase())) : options),
+    [options, query, showSearch],
+  );
 
   return (
     <View style={styles.wrapper}>
@@ -44,13 +53,43 @@ export function Select({ label, placeholder, value, options, onChange, error }: 
         </Text>
       ) : null}
 
-      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <Pressable accessibilityLabel={t('common.cancel')} style={styles.backdrop} onPress={() => setOpen(false)} />
+      <Modal
+        visible={open}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setOpen(false);
+          setQuery('');
+        }}
+      >
+        <Pressable
+          accessibilityLabel={t('common.cancel')}
+          style={styles.backdrop}
+          onPress={() => {
+            setOpen(false);
+            setQuery('');
+          }}
+        />
         <View style={[styles.sheet, { paddingBottom: insets.bottom + 8 }]}>
           <Text style={styles.sheetTitle}>{label ?? placeholder}</Text>
+          {showSearch ? (
+            <View style={styles.searchRow}>
+              <Search size={18} color={colors.muted} strokeWidth={1.8} />
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder={t('common.search')}
+                placeholderTextColor={colors.muted}
+                style={styles.searchInput}
+                accessibilityLabel={t('common.search')}
+                autoCorrect={false}
+              />
+            </View>
+          ) : null}
           <FlatList
-            data={options}
+            data={filtered}
             keyExtractor={(item) => item.value}
+            keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => {
               const active = item.value === value;
               return (
@@ -60,6 +99,7 @@ export function Select({ label, placeholder, value, options, onChange, error }: 
                   onPress={() => {
                     onChange(item.value);
                     setOpen(false);
+                    setQuery('');
                   }}
                   style={({ pressed }) => [styles.option, pressed && { backgroundColor: colors.background }]}
                 >
@@ -102,6 +142,20 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   sheetTitle: { ...type.subheading, color: colors.text, paddingHorizontal: 20, paddingBottom: 8 },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 20,
+    marginBottom: 8,
+    minHeight: 44,
+    paddingHorizontal: 14,
+    borderRadius: radius.input,
+    borderWidth: 1.5,
+    borderColor: colors.inputBorder,
+    backgroundColor: colors.background,
+  },
+  searchInput: { ...type.body, color: colors.text, flex: 1, paddingVertical: 0 },
   option: {
     minHeight: layout.minTouch + 8,
     paddingHorizontal: 20,

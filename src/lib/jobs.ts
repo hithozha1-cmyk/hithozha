@@ -84,12 +84,17 @@ export const activeFilterCount = (filters: JobFilters): number =>
 export const hasActiveFilters = (filters: JobFilters): boolean =>
   activeFilterCount(filters) > 0 || sanitizeSearch(filters.query) !== '';
 
-export async function fetchOpenJobs(filters: JobFilters = EMPTY_FILTERS): Promise<Job[] | null> {
+/**
+ * `filters.category` is a top-level category slug (what the browse chips show), but
+ * `jobs.category_slug` always holds a subcategory slug. Callers resolve the category to its
+ * subcategory slugs (e.g. from `useSubcategories`) and pass them here so the filter matches.
+ */
+export async function fetchOpenJobs(filters: JobFilters = EMPTY_FILTERS, subcategorySlugs?: string[]): Promise<Job[] | null> {
   let query = supabase.from('jobs').select(JOB_SELECT).eq('status', 'open');
 
   const term = sanitizeSearch(filters.query);
   if (term) query = query.or(`title.ilike.*${term}*,description.ilike.*${term}*`);
-  if (filters.category) query = query.eq('category_slug', filters.category);
+  if (filters.category) query = subcategorySlugs ? query.in('category_slug', subcategorySlugs) : query.eq('category_slug', filters.category);
   if (filters.jobType) query = query.eq('job_type', filters.jobType);
   if (filters.city) query = query.eq('work_mode', 'in_person').eq('city', filters.city);
 

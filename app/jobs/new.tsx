@@ -11,7 +11,9 @@ import { RadioCard } from '@/components/RadioCard';
 import { Screen } from '@/components/Screen';
 import { Select } from '@/components/Select';
 import { useCategories } from '@/hooks/useCategories';
+import { useSubcategories } from '@/hooks/useSubcategories';
 import { CITY_KEYS } from '@/lib/cities';
+import { subcategoryOptions } from '@/lib/categoryOptions';
 import {
   HOURS_OPTIONS,
   JOB_TYPES,
@@ -37,6 +39,7 @@ export default function PostJobScreen() {
   const router = useRouter();
   const { session, profile, company } = useAuth();
   const { categories } = useCategories();
+  const { subcategories } = useSubcategories();
 
   const [jobType, setJobType] = useState<JobType>('one_time');
   const [hours, setHours] = useState<string | null>(null);
@@ -54,8 +57,8 @@ export default function PostJobScreen() {
   const postingAsCompany = profile?.client_type === 'company' ? company : null;
 
   const categoryOptions = useMemo(
-    () => categories.map((c) => ({ value: c.slug, label: i18n.language === 'ta' ? c.name_ta : c.name_en })),
-    [categories, i18n.language],
+    () => subcategoryOptions(categories, subcategories, i18n.language),
+    [categories, subcategories, i18n.language],
   );
   const hoursOptions = useMemo(
     () => HOURS_OPTIONS.map((count) => ({ value: String(count), label: t('jobs.post.hoursOption', { count }) })),

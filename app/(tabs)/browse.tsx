@@ -11,6 +11,7 @@ import { JobCard } from '@/components/JobCard';
 import { Screen } from '@/components/Screen';
 import { Select } from '@/components/Select';
 import { useCategories } from '@/hooks/useCategories';
+import { useSubcategories } from '@/hooks/useSubcategories';
 import { CITY_KEYS } from '@/lib/cities';
 import {
   EMPTY_FILTERS,
@@ -32,6 +33,7 @@ export default function BrowseScreen() {
   const router = useRouter();
   const { profile } = useAuth();
   const { categories } = useCategories();
+  const { subcategories } = useSubcategories();
   // Home sends people here with a category or search words already chosen.
   const params = useLocalSearchParams<{ category?: string; q?: string }>();
 
@@ -57,12 +59,19 @@ export default function BrowseScreen() {
     return () => clearTimeout(timer);
   }, [searchText]);
 
+  // The chips show top-level categories, but jobs are tagged by subcategory — resolve the
+  // selected category to the subcategory slugs under it so the query actually matches.
+  const categorySubSlugs = useMemo(
+    () => (filters.category ? subcategories.filter((s) => s.category_slug === filters.category).map((s) => s.slug) : undefined),
+    [filters.category, subcategories],
+  );
+
   const load = useCallback(
     async (pullToRefresh = false) => {
       const request = ++latest.current;
       if (pullToRefresh) setRefreshing(true);
       else if (jobs !== null) setSearching(true);
-      const result = await fetchOpenJobs(filters);
+      const result = await fetchOpenJobs(filters, categorySubSlugs);
       // A newer search has started since this one; its answer is the one that counts.
       if (request !== latest.current) return;
       setFailed(result === null);
@@ -72,7 +81,7 @@ export default function BrowseScreen() {
       setRefreshing(false);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filters],
+    [filters, categorySubSlugs],
   );
 
   // Runs when the tab appears and again whenever the filters change, so a new job shows up too.

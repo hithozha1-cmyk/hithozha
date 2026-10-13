@@ -30,5 +30,18 @@ export type Category = {
   is_active?: boolean;
 };
 
+/** A granular service type within a Category (e.g. "Logo design" under "Graphics & Design"). This is
+ * the slug jobs and service_packages actually tag by; Category is a browse/grouping concept only. */
+export type Subcategory = {
+  id: string;
+  category_slug: string;
+  slug: string;
+  name_en: string;
+  name_ta: string;
+  description_en: string;
+  sort_order: number;
+  is_active?: boolean;
+};
+
 export const isFreelancerRole = (role: Role | null): boolean => role === 'freelancer' || role === 'both';
 export const isClientRole = (role: Role | null): boolean => role === 'client' || role === 'both';

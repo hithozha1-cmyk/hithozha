@@ -11,6 +11,8 @@ import { Screen } from '@/components/Screen';
 import { Select } from '@/components/Select';
 import { StatusChip } from '@/components/StatusChip';
 import { useCategories } from '@/hooks/useCategories';
+import { useSubcategories } from '@/hooks/useSubcategories';
+import { subcategoryOptions } from '@/lib/categoryOptions';
 import { confirmAction } from '@/lib/confirm';
 import { formatINR } from '@/lib/money';
 import {
@@ -35,6 +37,7 @@ export default function PackagesScreen() {
   const router = useRouter();
   const { profile } = useAuth();
   const { categories } = useCategories();
+  const { subcategories } = useSubcategories();
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [plan, setPlan] = useState<MyPlan | null>(null);
@@ -59,8 +62,8 @@ export default function PackagesScreen() {
   }, [load]);
 
   const categoryOptions = useMemo(
-    () => categories.map((c) => ({ value: c.slug, label: i18n.language === 'ta' ? c.name_ta : c.name_en })),
-    [categories, i18n.language],
+    () => subcategoryOptions(categories, subcategories, i18n.language),
+    [categories, subcategories, i18n.language],
   );
   const set = <K extends keyof PackageFormValues>(key: K, value: PackageFormValues[K]) => setValues((previous) => ({ ...previous, [key]: value }));
   const error = (field: PackageField) => (errors[field] ? t(errors[field] as string) : null);
