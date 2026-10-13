@@ -1,0 +1,13 @@
+{
+  "id": "P006",
+  "buys": true,
+  "purchases_first_month": 1,
+  "reason_code": "trust",
+  "reason": "The pay-only-after-the-job-is-done part is exactly what I'd ask anyway, so it got my attention. But for this kind of thing I go by who my neighbours vouch for, not an app, so I'd only try it once on something small to see if it actually works the way it says.",
+  "objection": "What if the freelancer disputes it and the refund takes forever, and the ratings near me are still thin -- a handful of completed jobs isn't really proof yet.",
+  "would_change_my_mind": "If someone in my own WhatsApp group had actually used it and said the refund worked without a fight.",
+  "price_too_cheap": 200,
+  "price_cheap": 500,
+  "price_expensive": 1200,
+  "price_too_expensive": 2500
+}

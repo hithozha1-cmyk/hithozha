@@ -1,0 +1,13 @@
+{
+  "id": "P008",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "Why will I download some new app when I can just ask in our apartment WhatsApp group and someone will say 'oh that fellow is good, use him'? That has worked for me for years and costs nothing to ask.",
+  "objection": "If only a few bookings have actually happened near me, that means almost nobody I know has used this person yet -- so it's really just a stranger with a rating, not someone a neighbour has vouched for. I don't know if I can trust that over my own group.",
+  "would_change_my_mind": "If two or three people in my own apartment WhatsApp group actually used it and said it worked -- then I'd try it, because that's the same as a neighbour vouching for someone, just through the app.",
+  "price_too_cheap": 150,
+  "price_cheap": 400,
+  "price_expensive": 1200,
+  "price_too_expensive": 2500
+}

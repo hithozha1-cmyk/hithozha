@@ -1,0 +1,13 @@
+{
+  "id": "P005",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I don't go looking in an app for this -- I post in our apartment WhatsApp group and book whoever a neighbour already vouches for. That person comes with proof I trust for free; an app I've never heard of, with only a handful of bookings near me so far, doesn't give me that.",
+  "objection": "The pay-on-delivery protection is a nice safety net, but it doesn't tell me the freelancer is actually good at the job -- it just tells me I get my money back if they're bad. My neighbour's recommendation already tells me they're good, without any of that hassle.",
+  "would_change_my_mind": "If two or three people in my own building's WhatsApp group had actually booked someone through hithozha and said it went well, I'd try it -- right now it just feels like it's built for English-speaking city people, not for how we actually find people here.",
+  "price_too_cheap": 150,
+  "price_cheap": 400,
+  "price_expensive": 1000,
+  "price_too_expensive": 2000
+}

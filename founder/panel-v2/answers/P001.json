@@ -1,0 +1,13 @@
+{
+  "id": "P001",
+  "buys": true,
+  "purchases_first_month": 1,
+  "reason_code": "trust",
+  "reason": "The pay-on-delivery part is smart -- I'm not handing over money upfront to a brand new app, only a hold that gets released after I say the job is done. That's the one thing that makes me willing to try it once, instead of scrolling past like I usually would.",
+  "objection": "I still have to put my payment details into an app nobody around me has heard of, and you're telling me straight up that the number of completed bookings near me is still small -- so when I actually need someone this week, will there even be a decent rated pro in Coimbatore, or am I the test case?",
+  "would_change_my_mind": "A few people I actually know in Tamil Nadu using it and getting their refund or payout without a fight, and more than a couple of rated pros showing up near me -- then I'd book through it regularly instead of just once to test it.",
+  "price_too_cheap": 250,
+  "price_cheap": 500,
+  "price_expensive": 1200,
+  "price_too_expensive": 2000
+}

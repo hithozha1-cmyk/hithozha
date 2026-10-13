@@ -1,0 +1,13 @@
+{
+  "id": "P002",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I already have two or three numbers I call for this kind of work and they pick up fast -- why would I download a new app and hand my job to someone I've never used, especially when you're telling me yourself there are barely any completed bookings near me yet.",
+  "objection": "If the number of actual jobs done near me is still small, the ratings don't mean much -- I can't tell if these are real reliable pros or just the first few people who signed up.",
+  "would_change_my_mind": "If a few people in my own street or WhatsApp group actually used it and the freelancer near me had a real track record of jobs done, not just a badge, I'd try it once for something my usual contacts can't do.",
+  "price_too_cheap": 100,
+  "price_cheap": 300,
+  "price_expensive": 700,
+  "price_too_expensive": 1200
+}

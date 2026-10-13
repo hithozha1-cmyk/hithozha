@@ -1,0 +1,13 @@
+{
+  "id": "P007",
+  "buys": true,
+  "purchases_first_month": 1,
+  "reason_code": "trust",
+  "reason": "I'll download it and try it once because the pay-on-delivery escrow is the first real answer I've seen to the JustDial problem -- a dead-end number can't cost me money if I never release the payment. But I'm only testing it on one small job, not betting on it.",
+  "objection": "Is the app actually built in Tamil, or is it English software with translated labels bolted on -- and with only a handful of verified pros near me right now, will I even find someone good for what I need?",
+  "would_change_my_mind": "Seeing a decent number of real completed jobs and ratings from people near me in Coimbatore/Chennai, not just the badge, and confirming the Tamil in the app actually reads like Tamil and not a translation.",
+  "price_too_cheap": 150,
+  "price_cheap": 400,
+  "price_expensive": 900,
+  "price_too_expensive": 1800
+}

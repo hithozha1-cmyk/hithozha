@@ -1,0 +1,13 @@
+{
+  "id": "P010",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I post in our apartment WhatsApp group or ask a neighbour before I let anyone unfamiliar into my house -- I don't go looking in an app for this. The pay-on-delivery protection sounds fair, but it doesn't replace someone I know actually vouching for the person.",
+  "objection": "You're telling me the number of real bookings near me is still small while you onboard the first batch -- so basically nobody around me has actually used this yet. That's exactly the kind of unknown person my neighbours warn each other about.",
+  "would_change_my_mind": "If two or three people in my own building or WhatsApp group had actually booked someone through it and said it went fine, I'd give it a try.",
+  "price_too_cheap": 150,
+  "price_cheap": 400,
+  "price_expensive": 1200,
+  "price_too_expensive": 2500
+}

@@ -1,0 +1,13 @@
+{
+  "id": "P009",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I don't put my payment details into some new app I've never heard of -- I go by who my building WhatsApp group vouches for, that's worked fine for me for years. The pay-on-delivery thing sounds nice on paper but I've been burned by JustDial numbers before, so a rating screen doesn't tell me much when you say the booking numbers near me are still small.",
+  "objection": "If barely anyone near me has actually booked yet, how do I know the 'verified pro' showing up is any better than a random JustDial contact -- I'm not going to be the one testing that out.",
+  "would_change_my_mind": "If two or three neighbours in my own WhatsApp group actually used it, got a good job done, and told me their money came back fine when something went wrong -- then I'd consider trying it, not before.",
+  "price_too_cheap": 200,
+  "price_cheap": 500,
+  "price_expensive": 1500,
+  "price_too_expensive": 3000
+}
