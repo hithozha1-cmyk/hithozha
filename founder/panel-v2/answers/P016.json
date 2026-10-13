@@ -1,0 +1,13 @@
+{
+  "id": "P016",
+  "buys": true,
+  "purchases_first_month": 1,
+  "reason_code": "trust",
+  "reason": "The pay-on-delivery thing is what actually gets me to try it -- if my money sits held until I confirm the job is done right, that's real insurance against the usual horror story. I'll book once to test it, not switch my habits yet.",
+  "objection": "How do I know this 'verified' freelancer is actually any good -- a badge and a rating number don't tell me if the ratings are real or just early reviews from the freelancer's own circle, and they've said themselves the pool near me is still small.",
+  "would_change_my_mind": "Seeing the completed-job counts and ratings near Chennai actually grow over a couple months, and reading real reviews in Tamil from people who sound like genuine customers, not planted ones.",
+  "price_too_cheap": 100,
+  "price_cheap": 300,
+  "price_expensive": 800,
+  "price_too_expensive": 1500
+}

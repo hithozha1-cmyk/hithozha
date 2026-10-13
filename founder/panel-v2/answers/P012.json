@@ -1,0 +1,13 @@
+{
+  "id": "P012",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "For something like a plumber or a tutor I ask in the residents' WhatsApp group and go with who my neighbour vouches for -- that has worked fine for me, so I don't see why I'd start downloading some new app for a person I still don't actually know.",
+  "objection": "What happens if the fellow doesn't turn up or does a shoddy job -- do I really get my money back, or is that just something written on the screen? I've called a JustDial number before and gotten a dead line, so I don't hand over trust to an app's promise until I've seen it work for someone I know.",
+  "would_change_my_mind": "If two or three people in my building actually used it, got a refund when a job went bad, and showed me on their phone how it works, I might try it once.",
+  "price_too_cheap": 150,
+  "price_cheap": 500,
+  "price_expensive": 1500,
+  "price_too_expensive": 3000
+}

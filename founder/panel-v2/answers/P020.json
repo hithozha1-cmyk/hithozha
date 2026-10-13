@@ -1,0 +1,13 @@
+{
+  "id": "P020",
+  "buys": true,
+  "purchases_first_month": 1,
+  "reason_code": "trust",
+  "reason": "The pay-on-delivery escrow and the 5% fee instead of Urban Company's ~25% markup is a real reason to try it once, but I'm not betting a big job on a freelancer I've never heard of just because an app shows a badge.",
+  "objection": "You're telling me the booking numbers near me are still small while you onboard the first batch - so how do I know those few ratings aren't just the founder's friends, and that this 'verified' freelancer is actually any good?",
+  "would_change_my_mind": "If a neighbour or relative I actually trust has booked through hithozha and the freelancer showed up and did a good job, I'd stop asking around and just use the app.",
+  "price_too_cheap": 150,
+  "price_cheap": 400,
+  "price_expensive": 1200,
+  "price_too_expensive": 2500
+}

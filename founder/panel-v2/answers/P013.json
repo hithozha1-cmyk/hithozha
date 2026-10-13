@@ -1,0 +1,13 @@
+{
+  "id": "P013",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I don't book anyone off an app's own star rating, I book who my sister or my neighbour has actually sent to their house. The app saying straight up that the number of real bookings near me is 'still small' is exactly the thing that scares me off, not something that reassures me.",
+  "objection": "If I open it in my area and there's barely anyone with real completed jobs yet, I'm the one stuck waiting around for some unknown person to show up at my house, same as calling a dead JustDial number.",
+  "would_change_my_mind": "If someone in my own family or on my street actually used it for a real job and told me it worked, I'd try it for that one freelancer, not the app in general.",
+  "price_too_cheap": 150,
+  "price_cheap": 400,
+  "price_expensive": 1500,
+  "price_too_expensive": 3000
+}

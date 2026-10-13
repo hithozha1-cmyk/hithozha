@@ -1,0 +1,13 @@
+{
+  "id": "P011",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I don't book a stranger to come fix something in my shop or home just because an app shows a rating -- I book who my cousin or my neighbour has actually used. This app has nobody I know on it yet, and it says itself the bookings near me are still small, so right now it's just another app promising what JustDial already promised me before giving me a dead number.",
+  "objection": "If barely anyone near me has actually booked through it yet, that rating and job-count mean nothing for my area -- I'd be the test case, not someone following a known good experience.",
+  "would_change_my_mind": "If someone in my own circle -- a relative, a neighbour, another shop owner I know -- used it first and told me the freelancer actually showed up and did the job right, I'd try it myself.",
+  "price_too_cheap": 150,
+  "price_cheap": 400,
+  "price_expensive": 900,
+  "price_too_expensive": 1600
+}
