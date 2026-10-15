@@ -9,6 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Enrol, NotAdmin, SignIn, Verify } from '@/admin/Access';
 import { useAdminAccess } from '@/admin/adminAccess';
+import { AuthProvider } from '@/providers/AuthProvider';
 import '@/i18n';
 
 /**
@@ -47,9 +48,11 @@ export default function AdminLayout() {
       {access === 'enrol' ? <Enrol onDone={() => void reevaluate()} onSignOut={() => void signOut()} /> : null}
       {access === 'verify' && factorId ? <Verify factorId={factorId} onDone={() => void reevaluate()} onSignOut={() => void signOut()} /> : null}
       {access === 'ready' ? (
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-        </Stack>
+        <AuthProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+          </Stack>
+        </AuthProvider>
       ) : null}
     </SafeAreaProvider>
   );
