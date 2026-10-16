@@ -1191,6 +1191,7 @@
     "current": "உங்கள் திட்டம்",
     "free": "இலவசம்",
     "perMonth": "மாதம் {{price}}",
+    "perMonthSuffix": "/மாதம்",
     "perYear": "ஆண்டுக்கு {{price}} (2 மாதங்கள் இலவசம்)",
     "lines": {
       "tokens": "ஒவ்வொரு மாதமும் {{count}} டோக்கன்கள்",

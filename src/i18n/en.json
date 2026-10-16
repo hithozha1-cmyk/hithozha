@@ -1191,6 +1191,7 @@
     "current": "Your plan",
     "free": "Free",
     "perMonth": "{{price}} a month",
+    "perMonthSuffix": "/month",
     "perYear": "{{price}} a year (2 months free)",
     "lines": {
       "tokens": "{{count}} tokens every month",
