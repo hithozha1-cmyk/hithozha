@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors, radius } from '@/theme';
+import { colors, radius, shadows } from '@/theme';
 
 type Props = {
   children: ReactNode;
@@ -20,11 +20,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     padding: 16,
+    ...shadows.soft,
   },
   hero: {
     backgroundColor: colors.night,
     borderColor: colors.night,
     borderRadius: radius.hero,
     padding: 20,
+    ...shadows.medium,
   },
 });

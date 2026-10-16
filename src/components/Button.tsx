@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors, layout, radius, type } from '@/theme';
+import { colors, layout, radius, shadows, type } from '@/theme';
 
 type Variant = 'primary' | 'outline' | 'dark';
 
@@ -33,6 +33,7 @@ export function Button({ title, onPress, variant = 'primary', loading = false, d
       onPress={onPress}
       style={({ pressed }) => [
         styles.base,
+        variant !== 'outline' && styles.elevated,
         { backgroundColor: pressed ? scheme.pressed : scheme.bg, borderColor: scheme.border },
         inactive && styles.inactive,
         style,
@@ -60,5 +61,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  elevated: shadows.soft,
   inactive: { opacity: 0.55 },
 });
