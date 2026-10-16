@@ -250,6 +250,7 @@
         "freelancer": "A problem was reported. Our team is looking at it. Nothing moves until we decide."
       }
     },
+    "autoApprove": "If you don't respond by {{date}}, the payment is released to the freelancer automatically. Report a problem below if something is wrong.",
     "escrow": {
       "heldTitle": "Payment is held safely",
       "heldBody": {

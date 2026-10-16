@@ -44,8 +44,10 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
   );
 }
 
+const AUTO_APPROVE_DAYS = 7;
+
 export default function OrderDetailScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
@@ -234,6 +236,16 @@ export default function OrderDetailScreen() {
         <StatusChip label={t(`orders.status.${order.status}`)} tone={ORDER_TONE[order.status]} />
       </View>
       <Text style={styles.hint}>{t(`orders.hint.${order.status}.${role}`)}</Text>
+      {isClient && order.status === 'delivered' && order.delivered_at ? (
+        <Text style={styles.hint}>
+          {t('orders.autoApprove', {
+            date: new Date(new Date(order.delivered_at).getTime() + AUTO_APPROVE_DAYS * 86400000).toLocaleDateString(
+              i18n.language === 'ta' ? 'ta-IN' : 'en-IN',
+              { day: 'numeric', month: 'long' },
+            ),
+          })}
+        </Text>
+      ) : null}
 
       <Pressable
         accessibilityRole="button"
