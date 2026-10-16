@@ -7,7 +7,7 @@ import { Avatar } from '@/components/Avatar';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { budgetRange, isRecurring, posterName, type Job } from '@/lib/jobs';
-import { colors, radius, type } from '@/theme';
+import { colors, radius, shadows, type } from '@/theme';
 
 export function JobCard({ job }: { job: Job }) {
   const { t } = useTranslation();
@@ -67,9 +67,8 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 16,
     borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.card,
+    ...shadows.soft,
   },
   pressed: { backgroundColor: colors.background },
   poster: { flexDirection: 'row', alignItems: 'center', gap: 10 },

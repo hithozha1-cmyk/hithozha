@@ -24,7 +24,7 @@ import {
 } from '@/lib/jobs';
 import { isClientRole } from '@/lib/types';
 import { useAuth } from '@/providers/AuthProvider';
-import { colors, layout, radius, type } from '@/theme';
+import { colors, layout, radius, shadows, type } from '@/theme';
 
 const SEARCH_DELAY_MS = 350;
 
@@ -227,10 +227,9 @@ const styles = StyleSheet.create({
     marginHorizontal: layout.screenPadding,
     paddingLeft: 16,
     paddingRight: 6,
-    borderRadius: radius.card,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    borderRadius: radius.pill,
     backgroundColor: colors.card,
+    ...shadows.soft,
   },
   searchInput: { ...type.small, flex: 1, fontSize: 15, color: colors.text, minHeight: 44 },
   clearSearch: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },

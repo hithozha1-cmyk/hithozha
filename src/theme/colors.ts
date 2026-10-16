@@ -5,7 +5,7 @@ export const colors = {
   night: '#1A1A2E',
   nightPressed: '#2B2B4A',
   accent: '#2E3170',
-  background: '#FAFAF7',
+  background: '#F3F1EA',
   card: '#FFFFFF',
   border: '#EBEAE5',
   inputBorder: '#DAD9D2',

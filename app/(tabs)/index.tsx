@@ -13,7 +13,7 @@ import { useWide } from '@/hooks/useWide';
 import { categoryIcon } from '@/lib/categoryIcons';
 import { isClientRole } from '@/lib/types';
 import { useAuth } from '@/providers/AuthProvider';
-import { colors, layout, radius, type } from '@/theme';
+import { colors, layout, radius, shadows, type } from '@/theme';
 
 export default function HomeScreen() {
   const { t, i18n } = useTranslation();
@@ -102,17 +102,16 @@ const styles = StyleSheet.create({
   greetingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   header: { gap: 2 },
   greeting: { ...type.body, color: colors.muted },
-  headline: { ...type.title, fontSize: 26, color: colors.text },
+  headline: { ...type.title, fontSize: 28, letterSpacing: -0.4, color: colors.text },
   search: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     minHeight: 52,
     paddingHorizontal: 16,
-    borderRadius: radius.card,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    borderRadius: radius.pill,
     backgroundColor: colors.card,
+    ...shadows.soft,
   },
   searchInput: { ...type.small, flex: 1, fontSize: 15, color: colors.text, minHeight: 44 },
   banner: { gap: 10 },
@@ -125,7 +124,7 @@ const styles = StyleSheet.create({
   tileCell: { width: '25%', paddingHorizontal: 4, paddingBottom: 14 },
   tileCellWide: { width: '12.5%' },
   tile: { alignItems: 'center', gap: 6 },
-  tileIcon: { width: 56, height: 56, borderRadius: radius.card, alignItems: 'center', justifyContent: 'center' },
+  tileIcon: { width: 56, height: 56, borderRadius: radius.card, alignItems: 'center', justifyContent: 'center', ...shadows.soft },
   tileLabel: { ...type.caption, color: colors.text, textAlign: 'center' },
   retry: { gap: 4, padding: 16, borderRadius: radius.card, backgroundColor: colors.tintRedSoft, minHeight: 44 },
   retryText: { ...type.small, color: colors.text },

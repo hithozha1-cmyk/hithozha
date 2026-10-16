@@ -17,14 +17,11 @@ const styles = StyleSheet.create({
   base: {
     backgroundColor: colors.card,
     borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.border,
     padding: 16,
     ...shadows.soft,
   },
   hero: {
     backgroundColor: colors.night,
-    borderColor: colors.night,
     borderRadius: radius.hero,
     padding: 20,
     ...shadows.medium,
