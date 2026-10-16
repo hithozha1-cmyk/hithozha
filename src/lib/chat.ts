@@ -6,6 +6,10 @@ export type Message = {
   sender_id: string;
   body: string;
   was_redacted: boolean;
+  file_path: string | null;
+  file_name: string | null;
+  file_size: number | null;
+  file_mime: string | null;
   created_at: string;
 };
 
@@ -29,7 +33,7 @@ export const CONVERSATION_SELECT =
   'id, proposal_id, job_id, client_id, freelancer_id, last_message_at, created_at, ' +
   'job:jobs!job_id(title), client:profiles!client_id(full_name, avatar_url), freelancer:profiles!freelancer_id(full_name, avatar_url)';
 
-const MESSAGE_COLUMNS = 'id, conversation_id, sender_id, body, was_redacted, created_at';
+const MESSAGE_COLUMNS = 'id, conversation_id, sender_id, body, was_redacted, file_path, file_name, file_size, file_mime, created_at';
 
 export async function fetchConversations(): Promise<Conversation[] | null> {
   const { data, error } = await supabase
@@ -68,9 +72,18 @@ export async function fetchMessages(conversationId: string): Promise<Message[] |
   return error ? null : ((data ?? []) as Message[]);
 }
 
+export type OutgoingFile = { path: string; name: string; size: number; mime: string };
+
 /** Sends through the server, which scans and redacts the text before saving it. */
-export async function sendMessage(conversationId: string, body: string): Promise<Message | null> {
-  const { data, error } = await supabase.rpc('send_message', { p_conversation_id: conversationId, p_body: body });
+export async function sendMessage(conversationId: string, body: string, file?: OutgoingFile): Promise<Message | null> {
+  const { data, error } = await supabase.rpc('send_message', {
+    p_conversation_id: conversationId,
+    p_body: body,
+    p_file_path: file?.path ?? null,
+    p_file_name: file?.name ?? null,
+    p_file_size: file?.size ?? null,
+    p_file_mime: file?.mime ?? null,
+  });
   return error || !data ? null : (data as Message);
 }
 

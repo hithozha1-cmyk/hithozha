@@ -530,7 +530,12 @@
     "safetyNote": "Phone numbers, emails, links and requests to pay outside Hithozha are hidden. Keep everything here so your payment stays protected.",
     "redactedBadge": "Some details were hidden for your safety",
     "notFoundTitle": "Conversation not found",
-    "notFoundBody": "This conversation is not available."
+    "notFoundBody": "This conversation is not available.",
+    "attach": "Attach a file",
+    "attachTooLarge": "That file is too large. The limit is 20 MB.",
+    "attachFailed": "We could not attach that file. Please try again.",
+    "removeAttachment": "Remove attachment",
+    "opening": "Opening..."
   },
   "reviews": {
     "title": "Rate your experience",
