@@ -14,7 +14,7 @@ import { useWide } from '@/hooks/useWide';
 import { currentLanguage } from '@/i18n';
 import { LEGAL_PAGES, legalContent } from '@/legal/content';
 import { supabase } from '@/lib/supabase';
-import { colors, layout, radius, type } from '@/theme';
+import { colors, layout, radius, shadows, type } from '@/theme';
 
 type Mode = 'signIn' | 'signUp';
 type FieldErrors = { email?: string; password?: string };
@@ -249,6 +249,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
     gap: 14,
+    ...shadows.medium,
   },
   greeting: { ...type.display, color: colors.onDark, marginTop: 8 },
   tagline: { ...type.body, fontSize: 16, color: colors.onDarkMuted },
@@ -275,8 +276,8 @@ const styles = StyleSheet.create({
   footerWide: { paddingHorizontal: 0, paddingTop: 20 },
   wideContent: { justifyContent: 'center', paddingTop: 32, paddingBottom: 32 },
   wideRow: { flexDirection: 'row', gap: 28, alignItems: 'stretch' },
-  wideHero: { flex: 1, backgroundColor: colors.night, borderRadius: 32, padding: 48, gap: 16, justifyContent: 'center' },
-  wideCard: { flex: 1, backgroundColor: colors.card, borderRadius: 32, padding: 36, borderWidth: 1, borderColor: colors.border },
+  wideHero: { flex: 1, backgroundColor: colors.night, borderRadius: 32, padding: 48, gap: 16, justifyContent: 'center', ...shadows.medium },
+  wideCard: { flex: 1, backgroundColor: colors.card, borderRadius: 32, padding: 36, ...shadows.soft },
   terms: { ...type.small, color: colors.muted, textAlign: 'center' },
   legalRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', columnGap: 14 },
   legalLink: { minHeight: 44, justifyContent: 'center' },

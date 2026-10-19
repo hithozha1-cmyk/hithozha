@@ -9,7 +9,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { Screen } from '@/components/Screen';
 import { fetchConversations, type Conversation } from '@/lib/chat';
 import { useAuth } from '@/providers/AuthProvider';
-import { colors, layout, radius, type } from '@/theme';
+import { colors, layout, radius, shadows, type } from '@/theme';
 
 function ConversationRow({ conversation, userId }: { conversation: Conversation; userId: string }) {
   const router = useRouter();
@@ -113,9 +113,8 @@ const styles = StyleSheet.create({
     padding: 14,
     minHeight: 72,
     borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.card,
+    ...shadows.soft,
   },
   pressed: { backgroundColor: colors.background },
   rowText: { flex: 1, gap: 2 },

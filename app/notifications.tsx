@@ -9,7 +9,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { Screen } from '@/components/Screen';
 import { announceUnreadChanged, fetchNotifications, markRead, notificationHref, type AppNotification } from '@/lib/notifications';
 import { formatINR } from '@/lib/money';
-import { colors, radius, type } from '@/theme';
+import { colors, radius, shadows, type } from '@/theme';
 
 /** Everything that happened on the person's account, newest first. Tapping one opens the right screen. */
 export default function NotificationsScreen() {
@@ -116,8 +116,8 @@ const styles = StyleSheet.create({
   loader: { marginTop: 40 },
   markAll: { marginBottom: 12 },
   list: { gap: 10 },
-  row: { flexDirection: 'row', gap: 10, padding: 14, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, minHeight: 64 },
-  unread: { backgroundColor: colors.tintRedSoft, borderColor: colors.tintRed },
+  row: { flexDirection: 'row', gap: 10, padding: 14, borderRadius: radius.card, backgroundColor: colors.card, minHeight: 64, ...shadows.soft },
+  unread: { backgroundColor: colors.tintRedSoft },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary, marginTop: 7 },
   dotSpace: { width: 10 },
   text: { flex: 1, gap: 2 },

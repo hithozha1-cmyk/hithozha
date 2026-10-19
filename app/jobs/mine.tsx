@@ -10,7 +10,7 @@ import { Screen } from '@/components/Screen';
 import { StatusChip } from '@/components/StatusChip';
 import { budgetRange, fetchMyJobs, isRecurring, type MyJob } from '@/lib/jobs';
 import { useAuth } from '@/providers/AuthProvider';
-import { colors, layout, radius, type } from '@/theme';
+import { colors, layout, radius, shadows, type } from '@/theme';
 
 /** Every job this person has posted, with how many proposals are waiting on each. */
 export default function MyJobsScreen() {
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   list: { flexGrow: 1, padding: layout.screenPadding },
   separator: { height: 12 },
-  card: { gap: 10, padding: 16, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card },
+  card: { gap: 10, padding: 16, borderRadius: radius.card, backgroundColor: colors.card, ...shadows.soft },
   cardTitle: { ...type.subheading, color: colors.text },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   budget: { ...type.bodyStrong, color: colors.primaryPressed },

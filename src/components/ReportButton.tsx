@@ -7,7 +7,7 @@ import { Button } from '@/components/Button';
 import { FilterChips } from '@/components/FilterChips';
 import { Input } from '@/components/Input';
 import { REPORT_REASONS, submitReport, type ReportReason } from '@/lib/reports';
-import { colors, radius, type } from '@/theme';
+import { colors, radius, shadows, type } from '@/theme';
 
 /** A quiet "Report" link that opens a small form: why, and an optional note. */
 export function ReportButton({ targetType, targetId }: { targetType: 'user' | 'job'; targetId: string }) {
@@ -72,7 +72,7 @@ export function ReportNotice({ text }: { text: string }) {
 const styles = StyleSheet.create({
   link: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, alignSelf: 'flex-start' },
   linkText: { ...type.small, color: colors.muted },
-  box: { gap: 10, padding: 14, borderRadius: radius.card, backgroundColor: colors.card },
+  box: { gap: 10, padding: 14, borderRadius: radius.card, backgroundColor: colors.card, ...shadows.soft },
   title: { ...type.subheading, color: colors.text },
   message: { ...type.small },
   good: { color: colors.success },

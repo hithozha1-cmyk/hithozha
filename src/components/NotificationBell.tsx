@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
-import { colors, radius, type } from '@/theme';
+import { colors, radius, shadows, type } from '@/theme';
 
 /** The bell on the Home screen. Shows how many notifications are unread. */
 export function NotificationBell() {
@@ -30,7 +30,7 @@ export function NotificationBell() {
 }
 
 const styles = StyleSheet.create({
-  button: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
+  button: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill, backgroundColor: colors.card, ...shadows.soft },
   badge: { position: 'absolute', top: -2, right: -2, minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
   badgeText: { ...type.caption, color: colors.onDark },
 });

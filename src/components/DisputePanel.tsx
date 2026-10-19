@@ -7,7 +7,7 @@ import { ReasonAction } from '@/components/ReasonAction';
 import { Button } from '@/components/Button';
 import { formatINR } from '@/lib/money';
 import { openDispute, withdrawDispute, type Dispute, type Order } from '@/lib/orders';
-import { colors, radius, type } from '@/theme';
+import { colors, radius, shadows, type } from '@/theme';
 
 type Props = {
   order: Order;
@@ -89,8 +89,8 @@ export function DisputePanel({ order, dispute, userId, onChanged }: Props) {
 }
 
 const styles = StyleSheet.create({
-  box: { gap: 10, marginTop: 16, padding: 14, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card },
-  alert: { borderColor: colors.danger, backgroundColor: colors.tintRedSoft },
+  box: { gap: 10, marginTop: 16, padding: 14, borderRadius: radius.card, backgroundColor: colors.card, ...shadows.soft },
+  alert: { borderWidth: 1.5, borderColor: colors.danger, backgroundColor: colors.tintRedSoft },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   title: { ...type.label, color: colors.text },
   body: { ...type.body, color: colors.text },

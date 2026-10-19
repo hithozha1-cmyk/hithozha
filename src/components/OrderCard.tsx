@@ -7,7 +7,7 @@ import { CompanyLogo } from '@/components/CompanyLogo';
 import { StatusChip, type ChipTone } from '@/components/StatusChip';
 import { formatINR } from '@/lib/money';
 import type { Order, OrderStatus } from '@/lib/orders';
-import { colors, radius, type } from '@/theme';
+import { colors, radius, shadows, type } from '@/theme';
 
 export const ORDER_TONE: Record<OrderStatus, ChipTone> = {
   awaiting_payment: 'warning',
@@ -58,7 +58,7 @@ export function OrderCard({ order, userId }: { order: Order; userId: string }) {
 }
 
 const styles = StyleSheet.create({
-  card: { gap: 10, padding: 16, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card },
+  card: { gap: 10, padding: 16, borderRadius: radius.card, backgroundColor: colors.card, ...shadows.soft },
   pressed: { backgroundColor: colors.background },
   top: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   topText: { flex: 1, gap: 1 },
