@@ -32,14 +32,15 @@ type WebhookEvent = {
   };
 };
 
-// subscription.halted behaves like a pause (Razorpay stopped retrying a failed charge); everything
-// else maps straight onto the status check on public.subscriptions.
+// subscription.halted behaves like a pause (Razorpay stopped retrying a failed charge) and
+// subscription.resumed goes back to active; everything else maps straight onto the status
+// check on public.subscriptions. Razorpay has no "subscription.expired" event.
 const SUBSCRIPTION_STATUS: Record<string, string> = {
   'subscription.cancelled': 'cancelled',
   'subscription.completed': 'completed',
-  'subscription.expired': 'expired',
   'subscription.paused': 'paused',
   'subscription.halted': 'paused',
+  'subscription.resumed': 'active',
 };
 
 Deno.serve(async (req) => {
