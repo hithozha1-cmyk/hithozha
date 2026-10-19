@@ -11,10 +11,10 @@
 --   * Cancelling asks Razorpay to stop at the end of the paid period (cancel_at_cycle_end), so the
 --     membership the person already paid for keeps working until then.
 
-alter table public.plans add column razorpay_plan_id_month text;
-alter table public.plans add column razorpay_plan_id_year text;
+alter table public.plans add column if not exists razorpay_plan_id_month text;
+alter table public.plans add column if not exists razorpay_plan_id_year text;
 
-create table public.subscriptions (
+create table if not exists public.subscriptions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles (id) on delete cascade,
   audience text not null check (audience in ('freelancer', 'client')),
@@ -30,16 +30,18 @@ create table public.subscriptions (
   updated_at timestamptz not null default now()
 );
 
-create index subscriptions_user_idx on public.subscriptions (user_id, audience, created_at desc);
+create index if not exists subscriptions_user_idx on public.subscriptions (user_id, audience, created_at desc);
 
 alter table public.subscriptions enable row level security;
 revoke all on public.subscriptions from anon, authenticated;
 grant select on public.subscriptions to authenticated;
 
+drop policy if exists "people read their own subscriptions" on public.subscriptions;
 create policy "people read their own subscriptions"
   on public.subscriptions for select to authenticated
   using (user_id = auth.uid());
 
+drop trigger if exists subscriptions_set_updated_at on public.subscriptions;
 create trigger subscriptions_set_updated_at
   before update on public.subscriptions
   for each row execute function public.set_updated_at();
@@ -49,7 +51,7 @@ create trigger subscriptions_set_updated_at
 -- ---------------------------------------------------------------------------
 
 -- Caches the Razorpay plan id for a (plan_code, cycle) pair after it is created once.
-create function public.cache_razorpay_plan_id(p_plan_code text, p_cycle text, p_razorpay_plan_id text)
+create or replace function public.cache_razorpay_plan_id(p_plan_code text, p_cycle text, p_razorpay_plan_id text)
 returns void
 language plpgsql
 security definer
@@ -66,7 +68,7 @@ begin
 end;
 $$;
 
-create function public.record_subscription_created(
+create or replace function public.record_subscription_created(
   p_user uuid, p_audience text, p_plan_code text, p_cycle text,
   p_razorpay_subscription_id text, p_checkout_url text
 )
@@ -90,7 +92,7 @@ $$;
 -- ---------------------------------------------------------------------------
 
 -- subscription.activated or subscription.charged: the membership runs until this billing cycle's end.
-create function public.activate_subscription(p_razorpay_subscription_id text, p_current_period_end timestamptz)
+create or replace function public.activate_subscription(p_razorpay_subscription_id text, p_current_period_end timestamptz)
 returns void
 language plpgsql
 security definer
@@ -119,7 +121,7 @@ $$;
 
 -- subscription.cancelled, subscription.completed, subscription.expired, subscription.paused, subscription.halted:
 -- just record the status. The membership already expires at current_period_end on its own.
-create function public.set_subscription_status(p_razorpay_subscription_id text, p_status text)
+create or replace function public.set_subscription_status(p_razorpay_subscription_id text, p_status text)
 returns void
 language plpgsql
 security definer
@@ -139,7 +141,7 @@ $$;
 
 -- Read-only ownership check: returns the Razorpay id to cancel, or raises if this is not the
 -- caller's subscription or it is already past cancelling.
-create function public.subscription_for_cancel(p_subscription_id uuid)
+create or replace function public.subscription_for_cancel(p_subscription_id uuid)
 returns text
 language plpgsql
 stable
@@ -163,7 +165,7 @@ end;
 $$;
 
 -- Called only after Razorpay has confirmed the cancel-at-cycle-end request.
-create function public.mark_subscription_cancel_requested(p_subscription_id uuid)
+create or replace function public.mark_subscription_cancel_requested(p_subscription_id uuid)
 returns void
 language plpgsql
 security definer
